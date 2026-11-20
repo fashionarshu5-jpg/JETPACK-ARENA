@@ -816,36 +816,72 @@ function updateLobbyPlayersUI() {
   });
 }
 
-// Copy the complete invite URL and visibly confirm success for two seconds.
+// Copy the complete invite URL and expose the result as readable page text.
 const copyLinkBtn = document.getElementById('copyLinkBtn');
+const copyLinkStatus = document.getElementById('copyLinkStatus');
 let copyLinkResetTimer = null;
+
+function setCopyLinkStatus(message, isError = false) {
+  if (copyLinkStatus) {
+    copyLinkStatus.textContent = message;
+    copyLinkStatus.classList.toggle('error', isError);
+    copyLinkStatus.hidden = false;
+  }
+  copyLinkBtn.textContent = isError ? 'Copy Failed' : 'Copied!';
+  if (copyLinkResetTimer) clearTimeout(copyLinkResetTimer);
+  copyLinkResetTimer = setTimeout(() => {
+    copyLinkBtn.textContent = '📋 Copy Link';
+    if (copyLinkStatus) {
+      copyLinkStatus.hidden = true;
+      copyLinkStatus.textContent = '';
+      copyLinkStatus.classList.remove('error');
+    }
+    copyLinkResetTimer = null;
+  }, 4000);
+}
+
+function fallbackCopyText(text) {
+  const field = document.createElement('textarea');
+  field.value = text;
+  field.setAttribute('readonly', '');
+  field.style.position = 'fixed';
+  field.style.opacity = '0';
+  document.body.appendChild(field);
+  field.select();
+  field.setSelectionRange(0, field.value.length);
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch (_) {}
+  field.remove();
+  return copied;
+}
 
 copyLinkBtn.onclick = async () => {
   const roomCode = String(state.roomCode || '').trim().toUpperCase();
   if (!roomCode) {
-    copyLinkBtn.textContent = 'No Room Code';
+    setCopyLinkStatus('Create or join a room before copying an invite link.', true);
     return;
   }
 
-  const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomCode)}`;
+  const invite = new URL(window.location.href);
+  invite.searchParams.set('room', roomCode);
+  invite.hash = '';
+  const inviteUrl = invite.toString();
 
   try {
-    await navigator.clipboard.writeText(inviteUrl);
-    copyLinkBtn.textContent = 'Copied!';
-    copyLinkBtn.disabled = true;
-    if (copyLinkResetTimer) clearTimeout(copyLinkResetTimer);
-    copyLinkResetTimer = setTimeout(() => {
-      copyLinkBtn.textContent = '📋 Copy Link';
-      copyLinkBtn.disabled = false;
-      copyLinkResetTimer = null;
-    }, 2000);
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(inviteUrl);
+    } else if (!fallbackCopyText(inviteUrl)) {
+      throw new Error('Clipboard access is unavailable');
+    }
+    setCopyLinkStatus(`Invite link copied for room ${roomCode}: ${inviteUrl}`);
   } catch (error) {
-    console.error('Could not copy invite link:', error);
-    copyLinkBtn.textContent = 'Copy Failed';
-    setTimeout(() => {
-      copyLinkBtn.textContent = '📋 Copy Link';
-      copyLinkBtn.disabled = false;
-    }, 2000);
+    // Try the legacy selection-based copy path when Clipboard API permissions fail.
+    if (fallbackCopyText(inviteUrl)) {
+      setCopyLinkStatus(`Invite link copied for room ${roomCode}: ${inviteUrl}`);
+    } else {
+      console.error('Could not copy invite link:', error);
+      setCopyLinkStatus(`Copy failed. Share this link manually: ${inviteUrl}`, true);
+    }
   }
 };
 
@@ -892,6 +928,15 @@ if (leaveRoomBtn) {
     }
   };
 }
+
+// If the host closes or navigates away from the page, notify connected guests.
+// Browsers may terminate networking immediately on unload, so the explicit
+// LEAVE / CLOSE ROOM control remains the reliable, acknowledged close path.
+window.addEventListener('pagehide', () => {
+  if (state.isHost && state.roomCode && state.roomCode !== 'BOTS') {
+    try { broadcastToClients({ type: 'room_closed' }); } catch (_) {}
+  }
+});
 
 document.getElementById('whatsappShareBtn').onclick = () => {
   const url = `${location.origin}${location.pathname}?room=${state.roomCode}`;
