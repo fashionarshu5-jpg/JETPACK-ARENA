@@ -414,7 +414,7 @@ CHARACTERS.forEach((ch) => {
     syncSoldierUI();
     if (state.players[state.myId]) {
       state.players[state.myId].charId = ch.id;
-      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     }
   };
   charGridEl.appendChild(card);
@@ -489,7 +489,7 @@ syncLobbyMapPreview();
 mapSelectEl.onchange = (e) => {
   state.mapId = parseInt(e.target.value, 10) || 0;
   syncLobbyMapPreview();
-  if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+  if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
 };
 
 function formatClock(sec) {
@@ -613,6 +613,7 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
     id, name, charId, isBot,
+    team: state.selectedMode === 'tdm' ? (spawnIdx % 2) : null,
     x: sp.x, y: sp.y, vx: 0, vy: 0,
     facing: 1, aimAngle: 0,
     hp: 100, maxHp: 100, armor: 0, jetFuel: 100, boostTimer: 0,
@@ -651,7 +652,7 @@ document.getElementById('createRoomBtn').onclick = () => {
         delete state.players[conn.playerId];
         delete connections[conn.playerId];
         updateLobbyPlayersUI();
-        broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+        broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
       }
     });
   });
@@ -729,7 +730,7 @@ document.getElementById('startMatchBtn').onclick = () => {
     const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
-  broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+  broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
 
@@ -742,9 +743,9 @@ function handleHostReceive(conn, msg) {
     state.players[msg.id] = createPlayer(msg.id, msg.name, msg.charId, false, count);
     if (voiceChat.stream) attachVoiceCall(peer.call(conn.peer, voiceChat.stream));
     updateLobbyPlayersUI();
-    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     if (state.mode === 'playing') {
-      conn.send({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+      conn.send({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
     }
   } else if (msg.type === 'input') {
     const p = state.players[msg.id];
@@ -762,6 +763,8 @@ function handleClientReceive(msg) {
   if (msg.type === 'lobby_sync') {
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
+    if (msg.selectedMode) state.selectedMode = msg.selectedMode;
+    renderModeSelection();
     mapSelectEl.value = String(state.mapId);
     syncLobbyMapPreview();
     document.getElementById('waitingRoom').classList.remove('hidden');
@@ -773,6 +776,8 @@ function handleClientReceive(msg) {
     state.roomCode = msg.roomCode;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
+    if (msg.selectedMode) state.selectedMode = msg.selectedMode;
+    renderModeSelection();
     document.getElementById('matchOverModal').classList.add('hidden');
     startMatch();
   } else if (msg.type === 'state') {
@@ -905,13 +910,14 @@ document.getElementById('matchOverLobbyBtn').onclick = () => location.reload();
 document.getElementById('rematchBtn').onclick = () => {
   document.getElementById('matchOverModal').classList.add('hidden');
   if (state.isHost) {
+    state._progressAwarded = false;
     state.matchTime = state.selectedDuration;
     Object.values(state.players).forEach((p, idx) => {
       const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
       p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
     });
     state.mode = 'playing';
-    broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+    broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   }
 };
 
@@ -986,6 +992,7 @@ function addFxSprite(fxKey, x, y, size, life) {
 let matchStarting = false;
 async function startMatch() {
   if (matchStarting || state.mode === 'playing') return;
+  state._progressAwarded = false;
   matchStarting = true;
   await assetsReady;
   try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) {}
@@ -1023,6 +1030,7 @@ function updateKeyboardInput() {
 }
 
 function showMatchOverScreen() {
+  awardMatchProgress();
   state.mode = 'gameover';
   const rows = document.getElementById('finalLeaderboardRows');
   rows.innerHTML = '';
@@ -1280,6 +1288,8 @@ function explodeBlast(x, y, ownerId, radius, maxDmg, label) {
 
 function damagePlayer(target, amount, attackerId, weaponName) {
   if (target.hp <= 0) return;
+  const source = state.players[attackerId];
+  if (state.selectedMode === 'tdm' && source && source.id !== target.id && source.team === target.team) return;
   let rem = amount;
   if (target.armor > 0) {
     const absorbed = Math.min(target.armor, rem);
@@ -1313,7 +1323,7 @@ function computeBotAI(bot, dt) {
   }
   let nearest = null, bestDist = 9999;
   Object.values(state.players).forEach((o) => {
-    if (o.id !== bot.id && o.hp > 0) {
+    if (o.id !== bot.id && o.hp > 0 && !(state.selectedMode === 'tdm' && o.team === bot.team)) {
       const d = Math.hypot(o.x - bot.x, o.y - bot.y);
       if (d < bestDist) { bestDist = d; nearest = o; }
     }
@@ -1485,7 +1495,7 @@ function updateHudUI() {
   document.getElementById('fuelBar').style.width = `${Math.max(0, me.jetFuel == null ? 100 : me.jetFuel)}%`;
   document.getElementById('fuelText').textContent = `JET FUEL ${Math.ceil(me.jetFuel == null ? 100 : me.jetFuel)}`;
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
-  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • KILLS: ${me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
+  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${state.selectedMode === 'tdm' ? 'TEAM ' + (me.team === 0 ? 'GREEN' : 'GOLD') : 'FREE FOR ALL'} • KILLS: ${me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
@@ -1523,7 +1533,7 @@ function updateHudUI() {
       refreshSoldierCards();
       if (state.players[state.myId]) {
         state.players[state.myId].charId = character.id;
-        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
       }
     });
     soldierGrid.appendChild(card);
@@ -1558,3 +1568,74 @@ function updateHudUI() {
   refreshSoldierCards();
   refreshMapCards();
 })();
+
+
+// ==========================================================================
+/* MODE SELECTOR, LOCAL OPERATOR PROFILE & MATCH REWARDS */
+const progressionKey = 'do_operator_profile_v1';
+function loadOperatorProfile() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(progressionKey) || '{}');
+    return { xp: Math.max(0, Number(saved.xp) || 0), wins: Math.max(0, Number(saved.wins) || 0),
+      matches: Math.max(0, Number(saved.matches) || 0), kills: Math.max(0, Number(saved.kills) || 0),
+      missionKills: Math.max(0, Number(saved.missionKills) || 0) };
+  } catch (_) { return { xp: 0, wins: 0, matches: 0, kills: 0, missionKills: 0 }; }
+}
+const operatorProfile = loadOperatorProfile();
+state.playlist = localStorage.getItem('do_playlist') === 'competitive' ? 'competitive' : 'arcade';
+state.selectedMode = localStorage.getItem('do_mode') === 'tdm' ? 'tdm' : 'ffa';
+function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
+function saveOperatorProfile() {
+  localStorage.setItem(progressionKey, JSON.stringify(operatorProfile));
+  renderOperatorProfile();
+}
+function renderOperatorProfile() {
+  const level = operatorLevel(), intoLevel = operatorProfile.xp % 250;
+  document.getElementById('profileLevel').textContent = 'LEVEL ' + level;
+  document.getElementById('profileXp').textContent = operatorProfile.xp + ' XP';
+  document.getElementById('profileRecord').textContent = operatorProfile.wins + ' WINS • ' + operatorProfile.matches + ' MATCHES • ' + operatorProfile.kills + ' KILLS';
+  document.getElementById('missionProgress').textContent = Math.min(5, operatorProfile.missionKills) + ' / 5 • Reward: 100 XP';
+  document.getElementById('missionText').textContent = operatorProfile.missionKills >= 5 ? 'Mission complete — good work!' : 'Get 5 eliminations';
+}
+function renderModeSelection() {
+  document.querySelectorAll('[data-playlist]').forEach((b) => {
+    const active = b.dataset.playlist === state.playlist;
+    b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelectorAll('button[data-mode]').forEach((b) => {
+    const active = b.dataset.mode === state.selectedMode;
+    b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
+  });
+  const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
+  const modeName = state.selectedMode === 'tdm' ? 'Team Deathmatch' : 'Free for All';
+  document.getElementById('modeNotice').textContent = playlistName + ' • ' + modeName + ' selected';
+}
+document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
+  state.playlist = b.dataset.playlist; localStorage.setItem('do_playlist', state.playlist); renderModeSelection();
+}));
+document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
+  state.selectedMode = b.dataset.mode; localStorage.setItem('do_mode', state.selectedMode);
+  renderModeSelection();
+}));
+function awardMatchProgress() {
+  if (state._progressAwarded) return;
+  state._progressAwarded = true;
+  const me = state.players[state.myId];
+  if (!me) return;
+  const gainedKills = Math.max(0, me.kills);
+  const ranked = Object.values(state.players).sort((a,b) => b.kills-a.kills);
+  const won = state.selectedMode === 'tdm'
+    ? ranked.filter(p => p.team === me.team).reduce((n,p) => n+p.kills,0) >
+      ranked.filter(p => p.team !== me.team).reduce((n,p) => n+p.kills,0)
+    : ranked[0] && ranked[0].id === me.id;
+  const xpGain = 50 + gainedKills * 20 + (won ? 100 : 0);
+  operatorProfile.xp += xpGain; operatorProfile.kills += gainedKills; operatorProfile.matches += 1;
+  operatorProfile.missionKills += gainedKills;
+  if (won) operatorProfile.wins += 1;
+  if (operatorProfile.missionKills >= 5 && operatorProfile.missionKills - gainedKills < 5) operatorProfile.xp += 100;
+  saveOperatorProfile();
+  const reward = document.getElementById('profileRewardLine');
+  if (reward) reward.textContent = '+' + xpGain + ' XP earned' + (won ? ' • VICTORY BONUS +100 XP' : '');
+}
+renderModeSelection();
+renderOperatorProfile();

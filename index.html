@@ -107,6 +107,26 @@
         </section>
       </main>
 
+
+      <!-- GAME MODE & OPERATOR PROGRESSION -->
+      <section id="modeHub" class="mode-hub">
+        <div class="mode-hub-head"><div><span class="eyebrow">03 / PLAYLIST</span><h2>CHOOSE YOUR BATTLE</h2><p>Pick the rules before creating a room or starting practice.</p></div><div class="mode-profile"><span id="profileLevel">LEVEL 1</span><strong id="profileXp">0 XP</strong></div></div>
+        <div class="mode-tabs" role="group" aria-label="Playlist">
+          <button type="button" class="mode-tab selected" data-playlist="arcade" aria-pressed="true">🎮 ARCADE</button>
+          <button type="button" class="mode-tab" data-playlist="competitive" aria-pressed="false">🏆 COMPETITIVE</button>
+        </div>
+        <div class="mode-cards">
+          <button type="button" class="mode-card selected" data-mode="ffa" aria-pressed="true"><span class="mode-icon">⚔️</span><strong>FREE FOR ALL</strong><small>Every soldier fights for themselves. First to dominate.</small><b>PLAYABLE NOW</b></button>
+          <button type="button" class="mode-card" data-mode="tdm" aria-pressed="false"><span class="mode-icon">🛡️</span><strong>TEAM DEATHMATCH</strong><small>Two teams. Work together and lead the score.</small><b>PLAYABLE NOW</b></button>
+          <div class="mode-card mode-coming"><span class="mode-icon">🧟</span><strong>ZOMBIE SURVIVAL</strong><small>Survive escalating enemy waves.</small><b>COMING NEXT</b></div>
+          <div class="mode-card mode-coming"><span class="mode-icon">🚩</span><strong>CAPTURE THE FLAG</strong><small>Steal the enemy flag and defend yours.</small><b>COMING NEXT</b></div>
+          <div class="mode-card mode-coming"><span class="mode-icon">👹</span><strong>BOSS BATTLES</strong><small>Squad up against powerful bosses.</small><b>COMING NEXT</b></div>
+          <div class="mode-card mode-coming"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>Organized squad-versus-squad events.</small><b>COMING NEXT</b></div>
+        </div>
+        <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
+        <p id="modeNotice" class="mode-notice" aria-live="polite">Arcade • Free for All selected</p>
+      </section>
+
       <!-- WAITING ROOM (APPEARS WHEN HOSTING OR JOINED) -->
       <div id="waitingRoom" class="waiting-box hidden">
         <div class="room-banner">
