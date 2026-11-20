@@ -1,9 +1,10 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v19';
+const CACHE_NAME = 'doodle-outpost-all-modes-v20';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './game.js',
+  './3d.html', './3d.css', './3d.js',
   './manifest.json',
   './assets/doodle-outpost-logo.png', './assets/favicon.png',
   './assets/zombie-grunt.svg', './assets/zombie-armored.svg', './assets/outpost-titan.svg',
