@@ -1156,3 +1156,213 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
     flex-wrap: wrap;
   }
 }
+
+
+/* ==========================================================================
+   PREMIUM RESPONSIVE LOBBY — fixed viewport, one controlled scroll surface
+   ========================================================================= */
+#lobbyScreen.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+           max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+#lobbyScreen .lobby-shell {
+  width: min(100%, 1600px);
+  max-width: 1600px;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border: 1px solid rgba(190, 242, 100, .42);
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(132, 204, 22, .10), transparent 38%),
+    linear-gradient(145deg, rgba(17, 31, 20, .985), rgba(7, 15, 10, .99));
+  box-shadow: 0 24px 80px rgba(0,0,0,.58), inset 0 1px rgba(255,255,255,.055);
+  overscroll-behavior-y: contain;
+}
+#lobbyScreen .lobby-shell::-webkit-scrollbar { display: none; }
+#lobbyScreen .lobby-topbar {
+  position: relative;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom-color: rgba(190, 242, 100, .24);
+}
+#lobbyScreen .lobby-grid.redesign-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr);
+  align-items: stretch;
+  gap: clamp(12px, 1.25vw, 20px);
+}
+#lobbyScreen .tac-panel {
+  min-width: 0;
+  border-color: rgba(163, 230, 53, .28);
+  border-radius: 15px;
+  background:
+    linear-gradient(145deg, rgba(26, 44, 29, .98), rgba(11, 21, 14, .98));
+  box-shadow: inset 0 1px rgba(255,255,255,.045), 0 12px 32px rgba(0,0,0,.22);
+}
+#lobbyScreen .lobby-char-card,
+#lobbyScreen .lobby-map-card {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#lobbyScreen .lobby-char-card:focus-visible,
+#lobbyScreen .lobby-map-card:focus-visible,
+#lobbyScreen button:focus-visible,
+#lobbyScreen input:focus-visible {
+  outline: 2px solid #d9f99d;
+  outline-offset: 2px;
+}
+#lobbyScreen .lobby-char-card {
+  min-width: 0;
+  min-height: 82px;
+  border-color: rgba(148, 180, 128, .30);
+  background: linear-gradient(145deg, rgba(29, 47, 32, .98), rgba(13, 24, 16, .98));
+}
+#lobbyScreen .lobby-char-card.selected {
+  border-color: #c4f56c;
+  background: linear-gradient(145deg, rgba(57, 82, 36, .98), rgba(24, 43, 23, .98));
+  box-shadow: 0 0 0 1px rgba(190,242,100,.18), 0 0 20px rgba(163,230,53,.12);
+}
+#lobbyScreen .lobby-map-card {
+  border-color: rgba(148, 180, 128, .34);
+  box-shadow: 0 5px 14px rgba(0,0,0,.28);
+}
+#lobbyScreen .lobby-map-card.selected {
+  border-color: #c4f56c;
+  box-shadow: 0 0 0 1px rgba(190,242,100,.22), 0 0 20px rgba(163,230,53,.16);
+}
+#lobbyScreen .btn,
+#lobbyScreen .preset-btn,
+#lobbyScreen .icon-btn {
+  touch-action: manipulation;
+  transition: filter .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+#lobbyScreen .btn:hover,
+#lobbyScreen .preset-btn:hover,
+#lobbyScreen .icon-btn:hover { filter: brightness(1.10); }
+#lobbyScreen .lobby-footer { padding-bottom: 4px; }
+
+/* Tablet and phones, including landscape phones with a short viewport. */
+@media (max-width: 900px), (max-height: 560px) and (pointer: coarse) {
+  #lobbyScreen .lobby-shell {
+    width: 100%;
+    border-radius: 14px;
+    padding: clamp(10px, 2vw, 16px);
+  }
+  #lobbyScreen .lobby-grid.redesign-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  #lobbyScreen .lobby-character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  #lobbyScreen .lobby-char-card {
+    min-height: 82px;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 9px;
+    padding: 8px;
+  }
+  #lobbyScreen .lobby-char-card img {
+    width: 48px;
+    height: 60px;
+    flex: 0 0 48px;
+  }
+  #lobbyScreen .lobby-char-card strong { font-size: clamp(8px, 1.5vw, 10px); }
+  #lobbyScreen .lobby-char-card small { display: block; }
+  #lobbyScreen .lobby-map-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  #lobbyScreen .lobby-map-card {
+    min-height: 108px;
+    aspect-ratio: 1.55;
+  }
+  #lobbyScreen .lobby-map-card strong {
+    left: 8px;
+    bottom: 8px;
+    font-size: 10px;
+  }
+  #lobbyScreen .hero-operator {
+    min-height: 142px;
+    padding: 10px 14px;
+  }
+  #lobbyScreen .hero-operator img {
+    width: clamp(92px, 20vw, 132px);
+    height: 132px;
+  }
+  #lobbyScreen .mission-controls { margin-top: 4px; }
+  #lobbyScreen .lobby-topbar { align-items: center; }
+}
+@media (max-width: 560px) {
+  #lobbyScreen.overlay {
+    padding: max(5px, env(safe-area-inset-top)) max(5px, env(safe-area-inset-right))
+             max(5px, env(safe-area-inset-bottom)) max(5px, env(safe-area-inset-left));
+  }
+  #lobbyScreen .lobby-shell { padding: 10px; border-radius: 12px; }
+  #lobbyScreen .lobby-topbar { gap: 9px; padding-bottom: 10px; margin-bottom: 10px; }
+  #lobbyScreen .brand-wrap { min-width: 0; gap: 8px; }
+  #lobbyScreen .brand-icon { width: 42px; height: 42px; flex: 0 0 42px; }
+  #lobbyScreen .lobby-topbar h1 {
+    font-size: clamp(16px, 5vw, 21px);
+    letter-spacing: .8px;
+    overflow-wrap: anywhere;
+  }
+  #lobbyScreen .subtitle { font-size: 7px; letter-spacing: .35px; }
+  #lobbyScreen .topbar-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  #lobbyScreen .pill-badge { min-height: 30px; display: inline-flex; align-items: center; font-size: 8px; }
+  #lobbyScreen .icon-btn { width: 36px; height: 36px; }
+  #lobbyScreen .tac-panel { padding: 11px; gap: 10px; }
+  #lobbyScreen .panel-label { font-size: 13px; }
+  #lobbyScreen .section-count { padding: 5px 7px; font-size: 8px; }
+  #lobbyScreen .hero-operator { min-height: 126px; gap: 8px; padding: 9px; }
+  #lobbyScreen .hero-operator img { width: 88px; height: 116px; }
+  #lobbyScreen .hero-operator .op-meta h2 { font-size: clamp(14px, 4.2vw, 19px); }
+  #lobbyScreen .hero-operator .op-meta small { font-size: 8px; }
+  #lobbyScreen .operator-stats { padding: 6px 2px; }
+  #lobbyScreen .lobby-character-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  #lobbyScreen .lobby-char-card { min-height: 78px; padding: 6px; gap: 6px; }
+  #lobbyScreen .lobby-char-card img { width: 42px; height: 54px; flex-basis: 42px; }
+  #lobbyScreen .lobby-char-card strong { font-size: 8px; line-height: 1.25; }
+  #lobbyScreen .lobby-char-card small { font-size: 7px; }
+  #lobbyScreen .lobby-map-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  #lobbyScreen .lobby-map-card { min-height: 96px; aspect-ratio: 1.35; }
+  #lobbyScreen .lobby-map-card strong { left: 6px; right: 5px; bottom: 6px; font-size: 8px; }
+  #lobbyScreen .mission-controls { gap: 10px; padding-top: 9px; }
+  #lobbyScreen .action-stack { grid-template-columns: 1fr; gap: 8px; }
+  #lobbyScreen .btn, #lobbyScreen .preset-btn { min-height: 44px; }
+  #lobbyScreen .join-row { gap: 7px; }
+  #lobbyScreen .join-row input { min-width: 0; }
+  #lobbyScreen .lobby-footer { flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 360px) {
+  #lobbyScreen .lobby-shell { padding: 8px; }
+  #lobbyScreen .lobby-char-card { gap: 4px; padding: 5px; }
+  #lobbyScreen .lobby-char-card img { width: 36px; height: 48px; flex-basis: 36px; }
+  #lobbyScreen .lobby-char-card strong { font-size: 7px; }
+  #lobbyScreen .lobby-map-card { min-height: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #lobbyScreen *, #lobbyScreen *::before, #lobbyScreen *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
