@@ -1489,3 +1489,72 @@ function updateHudUI() {
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
+
+
+// ==========================================================================
+/* ARCADE LOBBY PICKERS — visual selectors wired to the existing game state */
+// ==========================================================================
+(function buildArcadeLobbyPickers() {
+  const soldierGrid = document.getElementById('lobbyCharacterGrid');
+  const mapGrid = document.getElementById('lobbyMapGrid');
+  if (!soldierGrid || !mapGrid) return;
+
+  function refreshSoldierCards() {
+    soldierGrid.querySelectorAll('.lobby-char-card').forEach((card) => {
+      const selected = Number(card.dataset.character) === state.myCharId;
+      card.classList.toggle('selected', selected);
+      card.setAttribute('aria-pressed', String(selected));
+    });
+  }
+
+  CHARACTERS.forEach((character) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'lobby-char-card' + (character.id === state.myCharId ? ' selected' : '');
+    card.dataset.character = String(character.id);
+    card.setAttribute('aria-pressed', String(character.id === state.myCharId));
+    card.innerHTML = '<img src="' + character.file + '" alt="" loading="lazy"><span><strong>' +
+      character.name + '</strong><small>OPERATOR 0' + (character.id + 1) +
+      '</small></span><b class="pick-check">✓</b>';
+    card.addEventListener('click', () => {
+      state.myCharId = character.id;
+      localStorage.setItem('do_char', String(character.id));
+      syncSoldierUI();
+      refreshSoldierCards();
+      if (state.players[state.myId]) {
+        state.players[state.myId].charId = character.id;
+        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+      }
+    });
+    soldierGrid.appendChild(card);
+  });
+
+  function refreshMapCards() {
+    mapGrid.querySelectorAll('.lobby-map-card').forEach((card) => {
+      const selected = Number(card.dataset.map) === state.mapId;
+      card.classList.toggle('selected', selected);
+      card.setAttribute('aria-pressed', String(selected));
+    });
+  }
+
+  MAPS.forEach((map) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
+    card.dataset.map = String(map.id);
+    card.setAttribute('aria-pressed', String(map.id === state.mapId));
+    card.innerHTML = '<img src="' + map.file + '" alt="" loading="lazy"><span class="map-number">' +
+      String(map.id + 1).padStart(2, '0') + '</span><strong>' + map.name +
+      '</strong><b class="map-check">✓</b>';
+    card.addEventListener('click', () => {
+      mapSelectEl.value = String(map.id);
+      mapSelectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      refreshMapCards();
+    });
+    mapGrid.appendChild(card);
+  });
+
+  mapSelectEl.addEventListener('change', refreshMapCards);
+  refreshSoldierCards();
+  refreshMapCards();
+})();

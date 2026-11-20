@@ -46,83 +46,66 @@
         </div>
       </header>
 
-      <!-- MAIN 2-COLUMN TACTICAL GRID -->
-      <div class="lobby-grid">
-        <!-- LEFT: OPERATOR FILE -->
-        <section class="tac-panel">
-          <div class="panel-label">OPERATOR FILE</div>
-          <div class="field-group">
+      <!-- FULL-SCREEN ARCADE LOBBY -->
+      <main class="lobby-grid redesign-grid">
+        <section class="tac-panel operator-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">01 / OPERATOR SELECT</span><div class="panel-label">CHOOSE YOUR SOLDIER</div></div>
+            <span class="section-count">09 OPERATORS</span>
+          </div>
+          <div class="field-group callsign-field">
             <label for="playerNameInput">SOLDIER CALLSIGN</label>
             <input type="text" id="playerNameInput" maxlength="14" placeholder="Enter callsign..." />
           </div>
-
-          <div id="openSoldierFromCard" class="operator-preview" title="Tap to change soldier in Settings">
+          <div id="openSoldierFromCard" class="operator-preview hero-operator" title="Open soldier settings">
+            <div class="hero-glow"></div>
             <img id="lobbyCharPreviewImg" src="./assets/char1.png" alt="Selected Soldier" />
             <div class="op-meta">
               <span class="op-index" id="lobbyCharIndex">SOLDIER 01 / 09</span>
               <h2 id="lobbyCharName">DESERT MEDIC</h2>
-              <small>Tap to switch soldier ⚙️</small>
+              <small>JETPACK ASSAULT SPECIALIST</small>
             </div>
+            <span class="hero-level">LVL 01</span>
           </div>
           <div class="operator-stats"><span><b>09</b> OPERATORS</span><span><b>JET</b> MOBILITY</span><span><b>HD</b> COMBAT</span></div>
-
-          <div class="cap-tags">
-            <span>∞ AMMO</span>
-            <span>JETPACK</span>
-            <span>FRAG</span>
-            <span>GAS</span>
-            <span>SMOKE</span>
-          </div>
+          <div class="subsection-title"><span>SELECT OPERATOR</span><span>01 — 09</span></div>
+          <div id="lobbyCharacterGrid" class="lobby-character-grid" aria-label="Select soldier"></div>
+          <div class="cap-tags"><span>∞ AMMO</span><span>JETPACK</span><span>FRAG</span><span>GAS</span><span>SMOKE</span></div>
         </section>
 
-        <!-- RIGHT: MISSION SETUP & JOIN -->
-        <section class="tac-panel">
-          <div class="panel-label">MISSION SETUP</div>
-
-          <div class="field-group">
-            <label for="mapSelect">ARENA MAP</label>
-            <select id="mapSelect">
-              <option value="0">01 - Desert Outpost</option>
-              <option value="1">02 - Underground Bunker</option>
-              <option value="2">03 - Abandoned Scrapyard</option>
-              <option value="3">04 - Jungle River Camp</option>
-              <option value="4">05 - Catacombs Mine</option>
-              <option value="5">06 - Arctic Snow Base</option>
-              <option value="6">07 - Reactor Core</option>
-              <option value="7">08 - Bio-Hazard Lab</option>
-              <option value="8">09 - Mountain Helipad</option>
-              <option value="9">10 - Maximum Prison</option>
+        <section class="tac-panel mission-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">02 / BATTLEFIELD</span><div class="panel-label">SELECT YOUR MAP</div></div>
+            <span class="section-count">10 MAPS</span>
+          </div>
+          <div class="field-group map-field">
+            <label for="mapSelect">ACTIVE THEATER</label>
+            <select id="mapSelect" aria-label="Arena map" class="visually-hidden-select">
+              <option value="0">01 - Desert Outpost</option><option value="1">02 - Underground Bunker</option><option value="2">03 - Abandoned Scrapyard</option><option value="3">04 - Jungle River Camp</option><option value="4">05 - Catacombs Mine</option><option value="5">06 - Arctic Snow Base</option><option value="6">07 - Reactor Core</option><option value="7">08 - Bio-Hazard Lab</option><option value="8">09 - Mountain Helipad</option><option value="9">10 - Maximum Prison</option>
             </select>
-            <div class="map-preview-card">
+            <div id="lobbyMapGrid" class="lobby-map-grid" aria-label="Select battlefield"></div>
+            <div class="map-preview-card legacy-map-preview">
               <img id="lobbyMapPreview" src="./assets/map1.png.jpeg" alt="Desert Outpost map preview" />
               <div class="map-preview-shade"></div>
               <div class="map-preview-caption"><span>ACTIVE THEATER</span><strong id="lobbyMapName">DESERT OUTPOST</strong></div>
               <span class="map-preview-index" id="lobbyMapIndex">01 / 10</span>
             </div>
           </div>
-
-          <div class="field-group">
-            <label>MATCH TIMER (<span id="lobbyTimerDisplay">05:00</span>)</label>
-            <div class="preset-row">
-              <button type="button" class="preset-btn" data-sec="180">3 MIN</button>
-              <button type="button" class="preset-btn active" data-sec="300">5 MIN</button>
-              <button type="button" class="preset-btn" data-sec="600">10 MIN</button>
+          <div class="mission-controls">
+            <div class="field-group">
+              <label>MATCH DURATION <span class="timer-readout" id="lobbyTimerDisplay">05:00</span></label>
+              <div class="preset-row"><button type="button" class="preset-btn" data-sec="180">3 MIN</button><button type="button" class="preset-btn active" data-sec="300">5 MIN</button><button type="button" class="preset-btn" data-sec="600">10 MIN</button></div>
             </div>
+            <div class="action-stack">
+              <button id="createRoomBtn" class="btn btn-lime">⚔ CREATE ROOM</button>
+              <button id="soloBotsBtn" class="btn btn-amber">▶ PRACTICE VS BOTS</button>
+            </div>
+            <div class="join-divider"><span>OR JOIN YOUR FRIEND</span></div>
+            <div class="join-row"><input type="text" id="roomCodeInput" maxlength="4" placeholder="ROOM CODE (E.G. K9X2)" style="text-transform:uppercase;" /><button id="joinRoomBtn" class="btn btn-outline-lime">JOIN</button></div>
+            <div id="connectionStatus" class="status-text">Up to 6 players • Friends only in private rooms</div>
           </div>
-
-          <div class="action-stack">
-            <button id="createRoomBtn" class="btn btn-lime">CREATE ROOM</button>
-            <button id="soloBotsBtn" class="btn btn-amber">PRACTICE VS BOTS</button>
-          </div>
-
-          <div class="join-divider"><span>OR JOIN FRIEND</span></div>
-          <div class="join-row">
-            <input type="text" id="roomCodeInput" maxlength="4" placeholder="CODE (E.G. K9X2)" style="text-transform:uppercase;" />
-            <button id="joinRoomBtn" class="btn btn-outline-lime">JOIN</button>
-          </div>
-          <div id="connectionStatus" class="status-text">Exact joined players only (no extra bots in friend rooms)</div>
         </section>
-      </div>
+      </main>
 
       <!-- WAITING ROOM (APPEARS WHEN HOSTING OR JOINED) -->
       <div id="waitingRoom" class="waiting-box hidden">
