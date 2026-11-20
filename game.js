@@ -409,6 +409,8 @@ const state = {
 const voiceChat = { enabled: false, stream: null, audioCtx: null, peerGains: {} };
 const MAX_VOICE_DISTANCE = 650;
 let peer = null, connections = {}, hostConn = null, lastFrameTime = 0;
+let gameLoopRafId = null;
+let matchStartToken = 0;
 
 // Build 9 Soldier Cards inside Settings Drawer & Sync Operator File Card
 const charGridEl = document.getElementById('characterGrid');
@@ -492,7 +494,7 @@ musicBtn.onclick = () => {
   refreshAudioButtons();
 };
 
-document.getElementById('drawerExitMatchBtn').onclick = () => location.reload();
+document.getElementById('drawerExitMatchBtn').onclick = returnToLobby;
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
@@ -1096,8 +1098,8 @@ document.getElementById('btnReload').onclick = () => {
 };
 document.getElementById('toggleScoreboardBtn').onclick = toggleScoreboard;
 document.getElementById('closeSbBtn').onclick = toggleScoreboard;
-document.getElementById('leaveMatchBtn').onclick = () => location.reload();
-document.getElementById('matchOverLobbyBtn').onclick = () => location.reload();
+document.getElementById('leaveMatchBtn').onclick = returnToLobby;
+document.getElementById('matchOverLobbyBtn').onclick = returnToLobby;
 document.getElementById('rematchBtn').onclick = () => {
   if (!state.isHost) return;
   document.getElementById('matchOverModal').classList.add('hidden');
@@ -1186,20 +1188,113 @@ function addFxSprite(fxKey, x, y, size, life) {
 let matchStarting = false;
 async function startMatch() {
   if (matchStarting || state.mode === 'playing') return;
-  state._progressAwarded = false;
+
+  const startToken = ++matchStartToken;
   matchStarting = true;
-  await assetsReady;
-  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) {}
-  state.mode = 'playing';
-  document.getElementById('lobbyScreen').classList.add('hidden');
-  settingsDrawer.classList.add('hidden');
-  document.getElementById('gameContainer').classList.remove('hidden');
-  syncSoldierUI();
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  lastFrameTime = performance.now();
+  state._progressAwarded = false;
+
+  try {
+    // Wait for the game assets before exposing the match UI.
+    await assetsReady;
+    if (startToken !== matchStartToken) return;
+
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch (_) {}
+
+    if (startToken !== matchStartToken) return;
+
+    state.mode = 'playing';
+    document.getElementById('lobbyScreen').classList.add('hidden');
+    settingsDrawer.classList.add('hidden');
+    document.getElementById('gameContainer').classList.remove('hidden');
+    document.getElementById('scoreboardModal').classList.add('hidden');
+    document.getElementById('matchOverModal').classList.add('hidden');
+
+    syncSoldierUI();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    lastFrameTime = performance.now();
+
+    if (gameLoopRafId !== null) cancelAnimationFrame(gameLoopRafId);
+    gameLoopRafId = requestAnimationFrame(gameLoop);
+  } catch (error) {
+    console.error('Could not start match:', error);
+    state.mode = 'menu';
+    document.getElementById('gameContainer').classList.add('hidden');
+    document.getElementById('lobbyScreen').classList.remove('hidden');
+    document.getElementById('connectionStatus').textContent = 'Could not load the match. Please try again.';
+  } finally {
+    if (startToken === matchStartToken) matchStarting = false;
+  }
+}
+
+// Return to the lobby without a page reload. This stops the render loop,
+// clears match-only state, and tears down any room connection cleanly.
+function returnToLobby() {
+  ++matchStartToken;
   matchStarting = false;
-  requestAnimationFrame(gameLoop);
+
+  if (gameLoopRafId !== null) {
+    cancelAnimationFrame(gameLoopRafId);
+    gameLoopRafId = null;
+  }
+  window.removeEventListener('resize', resizeCanvas);
+
+  // Let room members know before the host tears down the PeerJS session.
+  const wasHost = Boolean(state.isHost);
+  const wasRoom = Boolean(state.roomCode && state.roomCode !== 'BOTS');
+  if (wasHost && wasRoom) {
+    try { broadcastToClients({ type: 'room_closed' }); } catch (error) { console.warn(error); }
+  }
+
+  Object.values(connections).forEach((connection) => {
+    try { connection.close(); } catch (error) { console.warn(error); }
+  });
+  connections = {};
+
+  if (hostConn) {
+    try { hostConn.close(); } catch (error) { console.warn(error); }
+    hostConn = null;
+  }
+
+  if (peer) {
+    try { peer.destroy(); } catch (error) { console.warn(error); }
+    peer = null;
+  }
+
+  state.mode = 'menu';
+  state.isHost = true;
+  state.roomCode = '';
+  state.players = {};
+  state.matchTime = state.selectedDuration;
+  state.bullets = [];
+  state.grenades = [];
+  state.clouds = [];
+  state.fxList = [];
+  state.killFeed = [];
+  state.zombies = [];
+  state.zombieKills = 0;
+  state.zombieWave = 1;
+  state.ctfFlags = null;
+  state.ctfScore = [0, 0];
+  state.boss = null;
+  state._progressAwarded = false;
+
+  document.getElementById('gameContainer').classList.add('hidden');
+  document.getElementById('lobbyScreen').classList.remove('hidden');
+  document.getElementById('waitingRoom').classList.add('hidden');
+  document.getElementById('scoreboardModal').classList.add('hidden');
+  document.getElementById('matchOverModal').classList.add('hidden');
+  document.getElementById('settingsDrawer').classList.add('hidden');
+  const modeHub = document.getElementById('modeHub');
+  if (modeHub) modeHub.classList.add('hidden');
+
+  document.getElementById('displayRoomCode').textContent = '----';
+  document.getElementById('connectionStatus').textContent = 'Up to 6 players • Friends only in private rooms';
+  document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
 }
 
 let viewWidth = 0, viewHeight = 0, renderDpr = 1;
@@ -1267,7 +1362,7 @@ function gameLoop(now) {
   updateCamera();
   renderGame();
   updateHudUI();
-  if (state.mode !== 'gameover') requestAnimationFrame(gameLoop);
+  gameLoopRafId = state.mode === 'playing' ? requestAnimationFrame(gameLoop) : null;
 }
 
 function stepHostSimulation(dt, now) {
