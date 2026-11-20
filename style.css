@@ -1007,3 +1007,152 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
   #lobbyScreen .action-stack { grid-template-columns:1fr; }
   #lobbyScreen .lobby-topbar { align-items:flex-start; }
 }
+
+
+/* RESPONSIVE LOBBY FIX — one natural page scroller, including on phones */
+@media (max-width: 1100px) {
+  #lobbyScreen.overlay {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  #lobbyScreen .lobby-shell {
+    max-height: none;
+    height: auto;
+    overflow: visible;
+    margin: 10px auto;
+  }
+  #lobbyScreen .lobby-grid.redesign-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #lobbyScreen .tac-panel {
+    overflow: visible;
+  }
+}
+@media (max-width: 560px) {
+  #lobbyScreen.overlay {
+    padding: max(6px, env(safe-area-inset-top)) 6px max(12px, env(safe-area-inset-bottom));
+  }
+  #lobbyScreen .lobby-shell {
+    width: 100%;
+    min-height: 0;
+    padding: 10px;
+    margin: 0 auto;
+    border-radius: 12px;
+  }
+  #lobbyScreen .lobby-topbar {
+    gap: 10px;
+    align-items: center;
+  }
+  #lobbyScreen .brand-wrap {
+    min-width: 0;
+    gap: 8px;
+  }
+  #lobbyScreen .lobby-topbar h1 {
+    font-size: clamp(16px, 5vw, 20px);
+    letter-spacing: 1px;
+    overflow-wrap: anywhere;
+  }
+  #lobbyScreen .subtitle {
+    font-size: 8px;
+    line-height: 1.35;
+    letter-spacing: .4px;
+  }
+  #lobbyScreen .topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  #lobbyScreen .pill-badge {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+  }
+  #lobbyScreen .tac-panel {
+    padding: 12px;
+    gap: 11px;
+  }
+  #lobbyScreen .hero-operator {
+    min-height: 138px;
+    gap: 10px;
+    padding: 10px;
+  }
+  #lobbyScreen .hero-operator img {
+    width: clamp(88px, 28vw, 116px);
+    height: 132px;
+    flex: 0 0 auto;
+  }
+  #lobbyScreen .hero-operator .op-meta h2 {
+    font-size: clamp(15px, 4.5vw, 20px);
+    overflow-wrap: anywhere;
+  }
+  #lobbyScreen .lobby-character-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  #lobbyScreen .lobby-char-card {
+    min-height: 96px;
+    padding: 7px 3px;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 5px;
+  }
+  #lobbyScreen .lobby-char-card img {
+    width: 42px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+  #lobbyScreen .lobby-char-card strong {
+    font-size: clamp(7px, 2.2vw, 9px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  #lobbyScreen .lobby-char-card small {
+    display: none;
+  }
+  #lobbyScreen .lobby-map-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  #lobbyScreen .lobby-map-card {
+    min-height: 112px;
+    aspect-ratio: 1.45;
+  }
+  #lobbyScreen .lobby-map-card strong {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  #lobbyScreen .mission-controls {
+    gap: 12px;
+  }
+  #lobbyScreen .action-stack {
+    grid-template-columns: 1fr;
+  }
+  #lobbyScreen .btn,
+  #lobbyScreen .preset-btn,
+  #lobbyScreen .join-row .btn {
+    min-height: 46px;
+    font-size: 12px;
+  }
+  #lobbyScreen .join-row {
+    align-items: stretch;
+  }
+  #lobbyScreen .join-row input {
+    min-width: 0;
+  }
+  #lobbyScreen .lobby-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+@media (max-width: 360px) {
+  #lobbyScreen .lobby-character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #lobbyScreen .topbar-actions {
+    flex-wrap: wrap;
+  }
+}
