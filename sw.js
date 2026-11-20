@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-redesign-v8';
+const CACHE_NAME = 'doodle-outpost-premium-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -44,5 +44,36 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  e.respondWith(caches.match(e.request).then((cached) => cached || fetch(e.request)));
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== self.location.origin) return;
+
+  const requestUrl = new URL(e.request.url);
+  const isAppShell = e.request.mode === 'navigate' ||
+    /\\.(?:html|css|js)$/.test(requestUrl.pathname);
+
+  if (isAppShell) {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const fresh = await fetch(e.request, { cache: 'no-store' });
+        if (fresh && fresh.ok) await cache.put(e.request, fresh.clone());
+        return fresh;
+      } catch (_) {
+        return (await cache.match(e.request)) ||
+          (e.request.mode === 'navigate' ? await cache.match('./index.html') : undefined) ||
+          Response.error();
+      }
+    })());
+    return;
+  }
+
+  e.respondWith((async () => {
+    const cached = await caches.match(e.request);
+    if (cached) return cached;
+    const fresh = await fetch(e.request);
+    if (fresh && fresh.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(e.request, fresh.clone());
+    }
+    return fresh;
+  })());
 });
