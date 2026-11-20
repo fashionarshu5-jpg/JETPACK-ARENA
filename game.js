@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
 // ==========================================================================
 // 1. TRANSPARENT SPRITE LOADER
 // ==========================================================================
-const ASSET_TOTAL = 49;
+const ASSET_TOTAL = 50;
 let assetLoaded = 0, assetFailed = 0, assetGateResolve;
 const assetsReady = new Promise((resolve) => { assetGateResolve = resolve; });
 function reportAsset(src, ok) {
@@ -98,7 +98,9 @@ const PROP_FILES = {
   cave: './assets/prop_cave.png'
 };
 
-const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {} };
+const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {}, zombies: [], boss: null };
+['./assets/zombie-grunt.svg','./assets/zombie-armored.svg'].forEach((src,idx) => { const img=new Image(); img.onload=()=>{ SPRITES.zombies[idx]=img; }; img.src=src; });
+{ const img=new Image(); img.onload=()=>{ SPRITES.boss=img; }; img.src='./assets/outpost-titan.svg'; }
 CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => { SPRITES.chars[idx] = c; }));
 WEAPONS.forEach((wp, idx) => loadTransparentSprite(wp.file, (c) => { SPRITES.weapons[idx] = c; }));
 GRENADE_TYPES.forEach((gr, idx) => loadTransparentSprite(gr.file, (c) => { SPRITES.grenades[idx] = c; }));
@@ -272,6 +274,7 @@ const MAPS = [
 ];
 
 const MAP_IMAGES = MAPS.map((m) => {
+  if (!m.file) { reportAsset('procedural map fallback', true); return null; }
   const img = new Image(); img.decoding = 'async';
   img.onload = () => reportAsset(m.file, true);
   img.onerror = () => reportAsset(m.file, false);
@@ -382,6 +385,8 @@ function stopBackgroundMusic() {
 const MAX_PLAYERS = 6;
 const state = {
   mode: 'menu',
+  zombies: [], zombieKills: 0, zombieWave: 1, zombieSpawnClock: 1.5,
+  ctfFlags: null, ctfScore: [0, 0], boss: null, battleZone: { x: 1200, y: 600, radius: 1120, minRadius: 180 },
   isHost: true,
   roomCode: '',
   mapId: 0,
@@ -628,7 +633,7 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
     id, name, charId, isBot, kind: 'survivor',
-    team: state.selectedMode === 'tdm' ? (spawnIdx % 2) : null,
+    team: ['tdm', 'ctf', 'clan'].includes(state.selectedMode) ? (spawnIdx % 2) : null,
     x: sp.x, y: sp.y, vx: 0, vy: 0,
     facing: 1, aimAngle: 0,
     hp: 100, maxHp: 100, armor: 0, jetFuel: 100, boostTimer: 0,
@@ -638,10 +643,29 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
 }
 
 function syncPlayerTeams() {
-  const players = Object.values(state.players);
-  players.forEach((player, index) => {
-    player.team = state.selectedMode === 'tdm' ? index % 2 : null;
+  Object.values(state.players).forEach((player, index) => {
+    player.team = ['tdm','ctf','clan'].includes(state.selectedMode) ? index % 2 : null;
   });
+}
+function resetModeObjectives() {
+  state.zombies=[]; state.zombieKills=0; state.zombieWave=1; state.zombieSpawnClock=1.5;
+  state.ctfScore=[0,0];
+  state.ctfFlags=state.selectedMode==='ctf' ? [
+    {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
+    {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
+  ] : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:1800,maxHp:1800,attackClock:1.2,phase:1} : null;
+  state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
+  Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
+}
+function modeTeamMode(){ return ['tdm','ctf','clan'].includes(state.selectedMode); }
+function getModeLabel(){ return ({ffa:'Free for All',tdm:'Team Deathmatch',zombie:'Zombie Survival',ctf:'Capture the Flag',boss:'Boss Battle',br:'Battle Royale',clan:'Clan Wars'})[state.selectedMode] || 'Free for All'; }
+function checkObjectiveEnd(){
+  const alive=Object.values(state.players).filter(p=>p.hp>0);
+  if(state.selectedMode==='br' && alive.length<=1) state.matchTime=0;
+  if(state.selectedMode==='ctf' && state.ctfScore.some(score=>score>=3)) state.matchTime=0;
+  if(state.selectedMode==='boss' && state.boss && state.boss.hp<=0) state.matchTime=0;
+  if(state.selectedMode==='zombie' && alive.length===0) state.matchTime=0;
 }
 
 function generateRoomCode() {
@@ -707,6 +731,7 @@ document.getElementById('soloBotsBtn').onclick = () => {
   state.players = {};
   state.players[state.myId] = createPlayer(state.myId, state.myName, state.myCharId, false, 0);
   addBotsUpTo(MAX_PLAYERS);
+  syncPlayerTeams(); resetModeObjectives();
   startMatch();
 };
 
@@ -753,8 +778,8 @@ document.getElementById('startMatchBtn').onclick = () => {
     const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
-  state.zombies = []; state.zombieKills = 0; state.zombieWave = 1; state.zombieSpawnClock = 1.5;
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  resetModeObjectives();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
@@ -807,6 +832,7 @@ function handleClientReceive(msg) {
     startMatch();
   } else if (msg.type === 'state') {
     state.players = msg.players;
+    state.ctfFlags=msg.ctfFlags||state.ctfFlags;state.ctfScore=msg.ctfScore||state.ctfScore;state.boss=msg.boss||state.boss;state.battleZone=msg.battleZone||state.battleZone;
     state.zombies = msg.zombies || [];
     state.zombieWave = msg.zombieWave || 1;
     state.zombieKills = msg.zombieKills || 0;
@@ -946,8 +972,8 @@ document.getElementById('rematchBtn').onclick = () => {
     p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
     p.deadTimer = 0; p.lastShot = 0; p.lastGrenade = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
-  syncPlayerTeams();
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  resetModeObjectives(); syncPlayerTeams();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
@@ -1063,6 +1089,7 @@ function updateKeyboardInput() {
 
 function showMatchOverScreen() {
   awardMatchProgress();
+  const modeBadge=document.querySelector('#matchOverModal .pill-badge');if(modeBadge)modeBadge.textContent=getModeLabel().toUpperCase()+' • MATCH COMPLETE';
   state.mode = 'gameover';
   const rows = document.getElementById('finalLeaderboardRows');
   rows.innerHTML = '';
@@ -1085,7 +1112,7 @@ function gameLoop(now) {
     if (state.isHost) {
       stepHostSimulation(dt, now);
       broadcastToClients({
-        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0, bullets: state.bullets,
+        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0, ctfFlags:state.ctfFlags,ctfScore:state.ctfScore,boss:state.boss,battleZone:state.battleZone,bullets: state.bullets,
         grenades: state.grenades, clouds: state.clouds, fxList: state.fxList,
         killFeed: state.killFeed, matchTime: state.matchTime, mapId: state.mapId
       });
@@ -1093,6 +1120,7 @@ function gameLoop(now) {
       hostConn.send({ type: 'input', id: state.myId, input });
     }
 
+    checkObjectiveEnd();
     if (state.matchTime <= 0) {
       showMatchOverScreen();
     }
@@ -1115,7 +1143,7 @@ function stepHostSimulation(dt, now) {
 
     if (p.hp <= 0) {
       p.deadTimer -= dt;
-      if (p.deadTimer <= 0) {
+      if (p.deadTimer <= 0 && state.selectedMode !== 'br') {
         const sp = activeMap.spawns[(idx + Math.floor(Math.random() * 6)) % activeMap.spawns.length];
         p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = 100; p.armor = 0;
       }
@@ -1159,7 +1187,7 @@ function stepHostSimulation(dt, now) {
     } else {
       if (state.zombieSpawnClock <= 0 && state.zombies.length < Math.min(18, 5 + state.zombieWave * 2)) {
         const edge = Math.random() < .5 ? 45 : WORLD.width - 45;
-        state.zombies.push({ id: 'z_' + Math.random().toString(36).slice(2), x: edge, y: 900, hp: 55 + state.zombieWave * 8, maxHp: 55 + state.zombieWave * 8, speed: 68 + state.zombieWave * 5, attackClock: 0, wave: state.zombieWave });
+        state.zombies.push({ id:'z_'+Math.random().toString(36).slice(2),x:edge,y:900,hp:55+state.zombieWave*8,maxHp:55+state.zombieWave*8,speed:68+state.zombieWave*5,attackClock:0,wave:state.zombieWave,spriteIdx:Math.random()<.22?1:0 });
         state.zombieSpawnClock = Math.max(.65, 2.8 - state.zombieWave * .16);
       }
       
@@ -1196,12 +1224,34 @@ function stepHostSimulation(dt, now) {
     }
   }
 
+  // Co-op boss movement and close-range attacks.
+  if(state.selectedMode==='boss' && state.boss && state.boss.hp>0){
+    const boss=state.boss, survivors=Object.values(state.players).filter(p=>p.hp>0);
+    if(survivors.length){ let target=survivors[0], nearest=Infinity; survivors.forEach(p=>{const d=Math.hypot(p.x-boss.x,p.y-boss.y);if(d<nearest){nearest=d;target=p;}});
+      boss.x+=Math.sign(target.x-boss.x)*(42+(1-boss.hp/boss.maxHp)*35)*dt;
+      boss.y+=Math.max(-1,Math.min(1,(target.y-boss.y)/180))*24*dt; boss.phase=boss.hp<boss.maxHp*.35?3:boss.hp<boss.maxHp*.7?2:1;
+      boss.attackClock-=dt; if(nearest<108 && boss.attackClock<=0){damagePlayer(target,24+boss.phase*5,null,'OUTPOST TITAN');boss.attackClock=Math.max(.55,1.35-boss.phase*.2);}
+    }
+  }
+  // CTF flags follow carriers; capture requires your own flag at home.
+  if(state.selectedMode==='ctf' && state.ctfFlags){
+    state.ctfFlags.forEach(flag=>{const carrier=flag.carrierId&&state.players[flag.carrierId];if(carrier&&carrier.hp>0){flag.x=carrier.x;flag.y=carrier.y-42;}else if(flag.carrierId){flag.carrierId=null;flag.x=flag.homeX;flag.y=flag.homeY;}});
+    Object.values(state.players).forEach(p=>{if(p.hp<=0)return;const own=state.ctfFlags[p.team],enemy=state.ctfFlags[1-p.team];
+      if(enemy.carrierId===p.id){if(Math.hypot(p.x-own.homeX,p.y-own.homeY)<78&&!own.carrierId&&own.x===own.homeX){state.ctfScore[p.team]++;enemy.carrierId=null;enemy.x=enemy.homeX;enemy.y=enemy.homeY;p.carryingFlag=null;state.killFeed.unshift(p.name+' CAPTURED THE FLAG!');state.killFeed.length=Math.min(4,state.killFeed.length);}}
+      else if(!enemy.carrierId&&Math.hypot(p.x-enemy.x,p.y-enemy.y)<42){enemy.carrierId=p.id;p.carryingFlag=enemy.team;}
+      if(!own.carrierId&&(own.x!==own.homeX||own.y!==own.homeY)&&Math.hypot(p.x-own.x,p.y-own.y)<42){own.x=own.homeX;own.y=own.homeY;}
+    });
+  }
+  // Battle Royale zone contracts and damages players outside its boundary.
+  if(state.selectedMode==='br'){const zone=state.battleZone;zone.radius=Math.max(zone.minRadius,zone.radius-3.8*dt);Object.values(state.players).forEach(p=>{if(p.hp>0&&Math.hypot(p.x-zone.x,p.y-zone.y)>zone.radius)damagePlayer(p,9*dt,null,'OUTSIDE THE ZONE');});}
+
   // Bullets & Rockets
   for (let i = state.bullets.length - 1; i >= 0; i--) {
     const b = state.bullets[i];
     b.x += b.vx; b.y += b.vy; b.life -= dt;
 
     const hitWall = platforms.some((pl) => b.x > pl.x && b.x < pl.x + pl.w && b.y > pl.y && b.y < pl.y + pl.h);
+    if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0&&Math.hypot(b.x-state.boss.x,b.y-state.boss.y)<76){state.boss.hp=Math.max(0,state.boss.hp-(b.damage||12));addFxSprite('sparks',b.x,b.y,44,.2);state.bullets.splice(i,1);continue;}
     let hitPlayer = null;
 
     for (const p of Object.values(state.players)) {
@@ -1370,7 +1420,8 @@ function explodeBlast(x, y, ownerId, radius, maxDmg, label) {
 function damagePlayer(target, amount, attackerId, weaponName) {
   if (target.hp <= 0) return;
   const source = state.players[attackerId];
-  if (state.selectedMode === 'tdm' && source && source.id !== target.id && source.team === target.team) return;
+  if (modeTeamMode() && source && source.id !== target.id && source.team === target.team) return;
+  if(['zombie','boss'].includes(state.selectedMode)&&source&&source.id!==target.id)return;
   let rem = amount;
   if (target.armor > 0) {
     const absorbed = Math.min(target.armor, rem);
@@ -1396,6 +1447,16 @@ function damagePlayer(target, amount, attackerId, weaponName) {
 }
 
 function computeBotAI(bot, dt) {
+  if(state.selectedMode==='zombie'){
+    const z=(state.zombies||[]).reduce((best,item)=>!best||Math.hypot(item.x-bot.x,item.y-bot.y)<Math.hypot(best.x-bot.x,best.y-bot.y)?item:best,null);
+    if(!z)return {moveX:0,moveY:0,aimX:1,aimY:0,shooting:false};
+    const dx=z.x-bot.x,dy=z.y-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:d>230?Math.sign(dx)*.65:0,moveY:dy< -70?-.75:0,aimX:dx/d,aimY:dy/d,shooting:d<720};
+  }
+  if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0){const dx=state.boss.x-bot.x,dy=state.boss.y-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:d>330?Math.sign(dx)*.45:0,moveY:dy< -90?-.65:0,aimX:dx/d,aimY:dy/d,shooting:d<760};}
+  if(state.selectedMode==='ctf'){
+    const own=state.ctfFlags&&state.ctfFlags[bot.team],enemy=state.ctfFlags&&state.ctfFlags[1-bot.team];
+    if(own&&enemy){const tx=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeX:enemy.x,ty=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeY:enemy.y;const dx=tx-bot.x,dy=ty-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:Math.sign(dx)*.72,moveY:dy< -70?-.65:0,aimX:dx/d,aimY:dy/d,shooting:false};}
+  }
   bot.aiTimer -= dt;
   if (bot.aiTimer <= 0) {
     bot.aiTimer = 0.8 + Math.random() * 1.1;
@@ -1404,7 +1465,7 @@ function computeBotAI(bot, dt) {
   }
   let nearest = null, bestDist = 9999;
   Object.values(state.players).forEach((o) => {
-    if (o.id !== bot.id && o.hp > 0 && !(state.selectedMode === 'tdm' && o.team === bot.team)) {
+    if (o.id !== bot.id && o.hp > 0 && !(modeTeamMode() && o.team === bot.team)) {
       const d = Math.hypot(o.x - bot.x, o.y - bot.y);
       if (d < bestDist) { bestDist = d; nearest = o; }
     }
@@ -1465,6 +1526,8 @@ function renderGame() {
 
   if (state.selectedMode === 'zombie') {
     (state.zombies || []).forEach(z => {
+      const zombieSprite=SPRITES.zombies[z.spriteIdx||0];
+      if(zombieSprite){ctx.save();ctx.drawImage(zombieSprite,z.x-34,z.y-44,68,88);ctx.fillStyle='#111827';ctx.fillRect(z.x-22,z.y-54,44,5);ctx.fillStyle='#84cc16';ctx.fillRect(z.x-22,z.y-54,44*Math.max(0,z.hp/z.maxHp),5);ctx.restore();return;}
       ctx.save(); ctx.translate(z.x,z.y); ctx.fillStyle='#65a30d'; ctx.strokeStyle='#17230d'; ctx.lineWidth=3;
       ctx.beginPath(); ctx.arc(0,-12,15,0,Math.PI*2); ctx.fill(); ctx.stroke();
       ctx.fillRect(-12,-2,24,28); ctx.strokeRect(-12,-2,24,28);
@@ -1472,6 +1535,9 @@ function renderGame() {
       ctx.fillStyle='#fef08a'; ctx.fillRect(-6,-15,4,3); ctx.fillRect(4,-15,4,3); ctx.restore();
     });
   }
+  if(state.selectedMode==='boss'&&state.boss){const b=state.boss;ctx.save();if(SPRITES.boss)ctx.drawImage(SPRITES.boss,b.x-90,b.y-90,180,180);else{ctx.fillStyle='#7c2d12';ctx.beginPath();ctx.arc(b.x,b.y,65,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#111827';ctx.fillRect(b.x-76,b.y-112,152,10);ctx.fillStyle='#ef4444';ctx.fillRect(b.x-76,b.y-112,152*Math.max(0,b.hp/b.maxHp),10);ctx.restore();}
+  if(state.selectedMode==='ctf'&&state.ctfFlags)state.ctfFlags.forEach(flag=>{ctx.save();ctx.strokeStyle=flag.team===0?'#22c55e':'#f59e0b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(flag.x,flag.y);ctx.lineTo(flag.x,flag.y-66);ctx.stroke();ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.moveTo(flag.x,flag.y-66);ctx.lineTo(flag.x+34,flag.y-55);ctx.lineTo(flag.x,flag.y-42);ctx.closePath();ctx.fill();ctx.restore();});
+  if(state.selectedMode==='br'&&state.battleZone){ctx.save();ctx.strokeStyle='#fb7185';ctx.lineWidth=8;ctx.setLineDash([24,18]);ctx.beginPath();ctx.arc(state.battleZone.x,state.battleZone.y,state.battleZone.radius,0,Math.PI*2);ctx.stroke();ctx.restore();}
   Object.values(state.players).forEach((p) => { if (p.hp > 0) drawCharacterAndWeapon(p); });
 
   for (const g of state.grenades) {
@@ -1586,7 +1652,8 @@ function updateHudUI() {
   document.getElementById('fuelBar').style.width = `${Math.max(0, me.jetFuel == null ? 100 : me.jetFuel)}%`;
   document.getElementById('fuelText').textContent = `JET FUEL ${Math.ceil(me.jetFuel == null ? 100 : me.jetFuel)}`;
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
-  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${state.selectedMode === 'tdm' ? 'TEAM ' + (me.team === 0 ? 'GREEN' : 'GOLD') : 'FREE FOR ALL'} • KILLS: ${me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
+  const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
+  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${modeTeamMode()?'TEAM '+(me.team===0?'GREEN':'GOLD'):getModeLabel().toUpperCase()} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
@@ -1674,7 +1741,8 @@ function loadOperatorProfile() {
 }
 const operatorProfile = loadOperatorProfile();
 state.playlist = localStorage.getItem('do_playlist') === 'competitive' ? 'competitive' : 'arcade';
-state.selectedMode = localStorage.getItem('do_mode') === 'tdm' ? 'tdm' : 'ffa';
+const savedMode=localStorage.getItem('do_mode');
+state.selectedMode=['ffa','tdm','zombie','ctf','boss','br','clan'].includes(savedMode)?savedMode:'ffa';
 function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
 function saveOperatorProfile() {
   localStorage.setItem(progressionKey, JSON.stringify(operatorProfile));
@@ -1698,16 +1766,19 @@ function renderModeSelection() {
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
   const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
-  const modeName = state.selectedMode === 'tdm' ? 'Team Deathmatch' : state.selectedMode === 'zombie' ? 'Zombie Survival' : 'Free for All';
-  if (state.selectedMode === 'zombie') document.getElementById('modeNotice').textContent = playlistName + ' • Zombie Survival selected • Quarantine District';
-  document.getElementById('modeNotice').textContent = playlistName + ' • ' + modeName + ' selected';
+  const modeName=getModeLabel();
+  const guide=document.getElementById('modeGuide');
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Private 3v3 team battle. Invite clanmates to a room and fight as a squad. Results contribute to your local operator record.'};
+  if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
+  document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
 }
 document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
   state.playlist = b.dataset.playlist; localStorage.setItem('do_playlist', state.playlist); renderModeSelection();
 }));
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
   state.selectedMode = b.dataset.mode;
-  if (state.selectedMode === 'zombie') state.mapId = 10;
+  if(state.selectedMode==='zombie')state.mapId=10;
+  if(state.selectedMode==='boss')state.mapId=6;
   localStorage.setItem('do_mode', state.selectedMode);
   if (state.mode !== 'playing' && state.mode !== 'gameover') {
     syncPlayerTeams();
@@ -1724,10 +1795,12 @@ function awardMatchProgress() {
   if (!me) return;
   const gainedKills = Math.max(0, me.kills);
   const ranked = Object.values(state.players).sort((a,b) => b.kills-a.kills);
-  const won = state.selectedMode === 'tdm'
-    ? ranked.filter(p => p.team === me.team).reduce((n,p) => n+p.kills,0) >
-      ranked.filter(p => p.team !== me.team).reduce((n,p) => n+p.kills,0)
-    : ranked[0] && ranked[0].id === me.id;
+  const won = state.selectedMode==='ctf' ? state.ctfScore[me.team] > state.ctfScore[1-me.team]
+    : ['tdm','clan'].includes(state.selectedMode) ? ranked.filter(p=>p.team===me.team).reduce((n,p)=>n+p.kills,0)>ranked.filter(p=>p.team!==me.team).reduce((n,p)=>n+p.kills,0)
+    : state.selectedMode==='zombie' ? Object.values(state.players).some(p=>p.hp>0)&&state.matchTime<=0
+    : state.selectedMode==='boss' ? !!state.boss&&state.boss.hp<=0
+    : state.selectedMode==='br' ? Object.values(state.players).filter(p=>p.hp>0).length===1&&me.hp>0
+    : ranked[0]&&ranked[0].id===me.id;
   const xpGain = 50 + gainedKills * 20 + (won ? 100 : 0);
   operatorProfile.xp += xpGain; operatorProfile.kills += gainedKills; operatorProfile.matches += 1;
   operatorProfile.missionKills += gainedKills;
