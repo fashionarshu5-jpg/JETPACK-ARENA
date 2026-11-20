@@ -1366,3 +1366,38 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
     animation-duration: .01ms !important;
   }
 }
+
+
+/* MOBILE LOBBY SCROLL FIX
+   Keep the existing lobby appearance. Restore native touch gestures and let
+   the outer lobby overlay scroll naturally on phones and tablets. */
+#lobbyScreen,
+#lobbyScreen * {
+  touch-action: auto;
+}
+#lobbyScreen.overlay {
+  touch-action: pan-y pinch-zoom;
+}
+@media (max-width: 1100px) {
+  #lobbyScreen.overlay {
+    position: fixed;
+    inset: 0;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+    padding: max(6px, env(safe-area-inset-top)) 6px max(12px, env(safe-area-inset-bottom));
+  }
+  #lobbyScreen .lobby-shell {
+    width: 100%;
+    height: auto;
+    min-height: 100%;
+    max-height: none;
+    overflow: visible;
+    flex: 0 0 auto;
+    margin: 0 auto;
+  }
+}
