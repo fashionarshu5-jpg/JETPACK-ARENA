@@ -652,7 +652,7 @@ document.getElementById('createRoomBtn').onclick = () => {
         delete state.players[conn.playerId];
         delete connections[conn.playerId];
         updateLobbyPlayersUI();
-        broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+        broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
       }
     });
   });
@@ -730,7 +730,7 @@ document.getElementById('startMatchBtn').onclick = () => {
     const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
-  broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+  broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
 
@@ -743,9 +743,9 @@ function handleHostReceive(conn, msg) {
     state.players[msg.id] = createPlayer(msg.id, msg.name, msg.charId, false, count);
     if (voiceChat.stream) attachVoiceCall(peer.call(conn.peer, voiceChat.stream));
     updateLobbyPlayersUI();
-    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     if (state.mode === 'playing') {
-      conn.send({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+      conn.send({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
     }
   } else if (msg.type === 'input') {
     const p = state.players[msg.id];
@@ -910,13 +910,14 @@ document.getElementById('matchOverLobbyBtn').onclick = () => location.reload();
 document.getElementById('rematchBtn').onclick = () => {
   document.getElementById('matchOverModal').classList.add('hidden');
   if (state.isHost) {
+    state._progressAwarded = false;
     state.matchTime = state.selectedDuration;
     Object.values(state.players).forEach((p, idx) => {
       const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
       p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
     });
     state.mode = 'playing';
-    broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId });
+    broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   }
 };
 
@@ -991,6 +992,7 @@ function addFxSprite(fxKey, x, y, size, life) {
 let matchStarting = false;
 async function startMatch() {
   if (matchStarting || state.mode === 'playing') return;
+  state._progressAwarded = false;
   matchStarting = true;
   await assetsReady;
   try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) {}
@@ -1531,7 +1533,7 @@ function updateHudUI() {
       refreshSoldierCards();
       if (state.players[state.myId]) {
         state.players[state.myId].charId = character.id;
-        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
       }
     });
     soldierGrid.appendChild(card);
