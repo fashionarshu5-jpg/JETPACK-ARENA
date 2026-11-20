@@ -26,3 +26,6 @@ Then visit `http://localhost:8000`.
 - GitHub Pages hosts the static game files; it does not provide a multiplayer signaling server. Friend-room connectivity uses the PeerJS cloud service loaded from jsDelivr and can be affected by that service, browser networking, or firewall restrictions.
 - The game uses a service worker for offline asset caching. After updates, refresh the page once if an older cached version appears.
 - This repository contains a fan-made game project. Make sure you have the rights to publish all included artwork, audio, and other assets before making the repository public.
+
+## Visual refresh
+The deployment lobby has been refreshed with an illustrated map preview, larger operator presentation, military-green arcade styling, responsive layout, and the Doodle Outpost logo. The original canvas game, controls, bot practice, and PeerJS room flow are retained. Select a map in Mission Setup to update its preview.

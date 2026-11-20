@@ -476,8 +476,19 @@ document.getElementById('drawerExitMatchBtn').onclick = () => location.reload();
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
+function syncLobbyMapPreview() {
+  const map = MAPS[state.mapId] || MAPS[0];
+  const preview = document.getElementById('lobbyMapPreview');
+  const name = document.getElementById('lobbyMapName');
+  const index = document.getElementById('lobbyMapIndex');
+  if (preview) { preview.src = map.file; preview.alt = `${map.name} map preview`; }
+  if (name) name.textContent = map.name.toUpperCase();
+  if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / 10`;
+}
+syncLobbyMapPreview();
 mapSelectEl.onchange = (e) => {
   state.mapId = parseInt(e.target.value, 10) || 0;
+  syncLobbyMapPreview();
   if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
 };
 
@@ -752,6 +763,7 @@ function handleClientReceive(msg) {
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
     mapSelectEl.value = String(state.mapId);
+    syncLobbyMapPreview();
     document.getElementById('waitingRoom').classList.remove('hidden');
     document.getElementById('displayRoomCode').textContent = state.roomCode;
     document.getElementById('startMatchBtn').classList.add('hidden');
