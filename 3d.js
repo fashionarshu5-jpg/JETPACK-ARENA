@@ -42,10 +42,11 @@ const fpWeapon=new THREE.Group();const gunBody=box(fpWeapon,.32,-.25,-.72,.18,.1
 const raycaster=new THREE.Raycaster();const aim=new THREE.Vector2(0,0);const targets=[];bots.forEach(b=>b.traverse(o=>{if(o.isMesh)targets.push(o)}));
 let mode='menu',cameraMode='third',health=100,kills=0,elapsed=0,frameCount=0,fpsTime=0,moveX=0,moveZ=0,fireHeld=false,keys={},yaw=0,pitch=0,velocityY=0,lastShot=0;
 const $=s=>document.querySelector(s);
+function shouldShowTouchControls(){return Boolean(window.matchMedia?.('(max-width:650px), (pointer:coarse)').matches||navigator.maxTouchPoints>0);}
 function toast(t){const el=$('#toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.opacity=0,1600)}
 function setCamera(m){cameraMode=m;$('#cameraLabel').textContent=m.toUpperCase()+' PERSON';$('#cameraToggle').textContent='CAMERA: '+m.toUpperCase();player.visible=m==='third';fpWeapon.visible=m==='first';$('#crosshair').classList.toggle('hidden',false);if(m==='first')camera.position.set(0,1.65,0)}
 function applyQuality(q){const dpr=q==='low'?1:q==='medium'?Math.min(devicePixelRatio,1.25):Math.min(devicePixelRatio,1.7);renderer.setPixelRatio(dpr);renderer.shadowMap.enabled=q==='high';sun.castShadow=q==='high';sun.shadow.mapSize.set(1024,1024);scene.fog.far=q==='low'?105:145;toast('GRAPHICS: '+q.toUpperCase())}
-function deploy(){mode='playing';cameraMode=$('#cameraChoice').value;applyQuality($('#quality').value);setCamera(cameraMode);$('#menu').classList.add('hidden');$('#mission').classList.remove('hidden');$('#cameraToggle').classList.remove('hidden');$('#crosshair').classList.remove('hidden');if(innerWidth<651)$('#mobilePad').classList.remove('hidden');toast('DEPLOYED — TRAINING ZONE');if(innerWidth>700)canvas.requestPointerLock?.()}
+function deploy(){mode='playing';cameraMode=$('#cameraChoice').value;applyQuality($('#quality').value);setCamera(cameraMode);$('#menu').classList.add('hidden');$('#mission').classList.remove('hidden');$('#cameraToggle').classList.remove('hidden');$('#crosshair').classList.remove('hidden');if(shouldShowTouchControls())$('#mobilePad').classList.remove('hidden');toast('DEPLOYED — TRAINING ZONE');if(innerWidth>700)canvas.requestPointerLock?.()}
 $('#deploy').addEventListener('click',deploy);
 $('#cameraToggle').addEventListener('click',()=>setCamera(cameraMode==='third'?'first':'third'));
 $('#resume').addEventListener('click',()=>{mode='playing';$('#pause').classList.add('hidden');if(innerWidth>700)canvas.requestPointerLock?.()});
