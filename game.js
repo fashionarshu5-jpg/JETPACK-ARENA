@@ -1639,3 +1639,23 @@ function awardMatchProgress() {
 }
 renderModeSelection();
 renderOperatorProfile();
+
+// Quick-access game mode panel. Selection still uses the existing live mode state.
+(function wireGameModePanel() {
+  const panel = document.getElementById('modeHub');
+  const openBtn = document.getElementById('lobbyGameModesBtn');
+  const closeBtn = document.getElementById('closeModeHubBtn');
+  if (!panel || !openBtn || !closeBtn) return;
+  function setOpen(open) {
+    panel.classList.toggle('mode-hub-open', open);
+    openBtn.setAttribute('aria-expanded', String(open));
+    if (open) closeBtn.focus();
+    else openBtn.focus();
+  }
+  openBtn.addEventListener('click', () => setOpen(!panel.classList.contains('mode-hub-open')));
+  closeBtn.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && panel.classList.contains('mode-hub-open')) setOpen(false);
+  });
+})();
+
