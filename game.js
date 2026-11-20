@@ -258,7 +258,7 @@ const MAPS = [
     spawns: [{ x: 450, y: 390 }, { x: 450, y: 560 }, { x: 2020, y: 420 }, { x: 2120, y: 610 }, { x: 850, y: 910 }, { x: 1550, y: 910 }]
   },
   {
-    id: 10, name: 'Quarantine District', file: '',
+    id: 10, name: 'Quarantine District', file: './assets/map_outpost.png',
     platforms: [
       { x: 140, y: 565, w: 500, h: 24 }, { x: 720, y: 440, w: 460, h: 24 },
       { x: 1320, y: 560, w: 500, h: 24 }, { x: 1840, y: 430, w: 380, h: 24 },
@@ -392,7 +392,7 @@ const state = {
   mapId: 0,
   myId: 'p_' + Math.random().toString(36).substring(2, 7),
   myName: localStorage.getItem('do_name') || 'Harsh',
-  myCharId: parseInt(localStorage.getItem('do_char') || '0', 10),
+  myCharId: Math.max(0, Math.min(CHARACTERS.length - 1, Number.parseInt(localStorage.getItem('do_char') || '0', 10) || 0)),
   myGrenadeType: 0,
   players: {},
   bullets: [],
@@ -496,18 +496,30 @@ document.getElementById('drawerExitMatchBtn').onclick = () => location.reload();
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
+mapSelectEl.innerHTML = MAPS.map((map) =>
+  `<option value="${map.id}">${String(map.id + 1).padStart(2, '0')} - ${map.name}</option>`
+).join('');
+function syncMapCountLabels() {
+  const countLabel = MAPS.length + ' MAPS';
+  const topCount = document.getElementById('mapCountLabel');
+  const cardCount = document.getElementById('mapCardCount');
+  if (topCount) topCount.textContent = countLabel;
+  if (cardCount) cardCount.textContent = countLabel;
+}
 function syncLobbyMapPreview() {
   const map = MAPS[state.mapId] || MAPS[0];
   const preview = document.getElementById('lobbyMapPreview');
   const name = document.getElementById('lobbyMapName');
   const index = document.getElementById('lobbyMapIndex');
-  if (preview) { preview.src = map.file; preview.alt = `${map.name} map preview`; }
+  if (preview) { preview.src = map.file || './assets/map_outpost.png'; preview.alt = `${map.name} map preview`; }
   if (name) name.textContent = map.name.toUpperCase();
-  if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / 10`;
+  if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / ${MAPS.length}`;
 }
+syncMapCountLabels();
 syncLobbyMapPreview();
 mapSelectEl.onchange = (e) => {
-  state.mapId = parseInt(e.target.value, 10) || 0;
+  state.mapId = Number.parseInt(e.target.value, 10);
+  if (!Number.isInteger(state.mapId) || !MAPS[state.mapId]) state.mapId = 0;
   syncLobbyMapPreview();
   if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
 };
@@ -704,24 +716,67 @@ document.getElementById('createRoomBtn').onclick = () => {
   });
 };
 
-document.getElementById('joinRoomBtn').onclick = () => {
+const joinRoomBtn = document.getElementById('joinRoomBtn');
+let joinAttemptTimer = null;
+let joinAttemptSettled = false;
+function finishJoinFailure(message) {
+  if (joinAttemptSettled) return;
+  joinAttemptSettled = true;
+  if (joinAttemptTimer) { clearTimeout(joinAttemptTimer); joinAttemptTimer = null; }
+  if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
+  if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
+  joinRoomBtn.disabled = false;
+  joinRoomBtn.textContent = 'JOIN';
+  document.getElementById('connectionStatus').textContent = message;
+}
+joinRoomBtn.onclick = () => {
   const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  if (code.length !== 4) return;
+  if (code.length !== 4 || joinRoomBtn.disabled) return;
   state.isHost = false;
   state.roomCode = code;
+  joinAttemptSettled = false;
+  joinRoomBtn.disabled = true;
+  joinRoomBtn.textContent = 'JOINING…';
   document.getElementById('connectionStatus').textContent = 'Joining room ' + code + '...';
-
-  peer = new Peer();
-  bindIncomingVoiceCalls();
-  peer.on('open', () => {
-    hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: false });
-    hostConn.on('open', () => {
-      document.getElementById('connectionStatus').textContent = 'Joined! Waiting for Host to start...';
-      hostConn.send({ type: 'join', id: state.myId, name: state.myName, charId: state.myCharId });
-      if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
+  joinAttemptTimer = setTimeout(() => {
+    finishJoinFailure('Room not found / could not join. Check the code and try again.');
+  }, 12000);
+  try {
+    peer = new Peer();
+    bindIncomingVoiceCalls();
+    peer.on('open', () => {
+      if (joinAttemptSettled) return;
+      try {
+        hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: false });
+        hostConn.on('open', () => {
+          if (joinAttemptSettled) return;
+          joinAttemptSettled = true;
+          if (joinAttemptTimer) { clearTimeout(joinAttemptTimer); joinAttemptTimer = null; }
+          joinRoomBtn.disabled = false;
+          joinRoomBtn.textContent = 'JOIN';
+          document.getElementById('connectionStatus').textContent = 'Joined! Waiting for Host to start...';
+          hostConn.send({ type: 'join', id: state.myId, name: state.myName, charId: state.myCharId });
+          if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
+        });
+        hostConn.on('data', (msg) => handleClientReceive(msg));
+        hostConn.on('error', () => finishJoinFailure('Room not found / could not join. Check the code and try again.'));
+        hostConn.on('close', () => {
+          if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
+        });
+      } catch (_) {
+        finishJoinFailure('Could not connect to that room. Check the code and try again.');
+      }
     });
-    hostConn.on('data', (msg) => handleClientReceive(msg));
-  });
+    peer.on('error', (error) => {
+      const unavailable = error && (error.type === 'peer-unavailable' || error.type === 'network' || error.type === 'server-error');
+      finishJoinFailure(unavailable
+        ? 'Room not found / could not join. Check the code and try again.'
+        : 'Could not connect to that room. Please try again.');
+    });
+    peer.on('disconnected', () => finishJoinFailure('Connection lost while joining. Please try again.'));
+  } catch (_) {
+    finishJoinFailure('Could not start the join request. Please try again.');
+  }
 };
 
 document.getElementById('soloBotsBtn').onclick = () => {
@@ -1711,13 +1766,15 @@ function updateHudUI() {
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
     card.dataset.map = String(map.id);
     card.setAttribute('aria-pressed', String(map.id === state.mapId));
-    card.innerHTML = '<img src="' + map.file + '" alt="" loading="lazy"><span class="map-number">' +
+    card.innerHTML = '<img src="' + (map.file || './assets/map_outpost.png') + '" alt="" loading="lazy"><span class="map-number">' +
       String(map.id + 1).padStart(2, '0') + '</span><strong>' + map.name +
       '</strong><b class="map-check">✓</b>';
     card.addEventListener('click', () => {
+      state.mapId = map.id;
       mapSelectEl.value = String(map.id);
-      mapSelectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      syncLobbyMapPreview();
       refreshMapCards();
+      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     });
     mapGrid.appendChild(card);
   });
