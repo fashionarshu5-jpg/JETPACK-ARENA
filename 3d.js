@@ -59,8 +59,8 @@ function shoot(){if(mode!=='playing'||performance.now()-lastShot<180)return;last
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)}addEventListener('resize',resize);resize();
 const movePad=$('#movePad');let touchId=null,lookTouchId=null,lastLookX=0,lastLookY=0;const lookPad=$('#lookPad');lookPad?.addEventListener('pointerdown',e=>{if(mode!=='playing')return;lookTouchId=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookPad.setPointerCapture(lookTouchId)});lookPad?.addEventListener('pointermove',e=>{if(e.pointerId!==lookTouchId||mode!=='playing')return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.004,-.8,.8)});function endLook(e){if(e.pointerId===lookTouchId)lookTouchId=null}lookPad?.addEventListener('pointerup',endLook);lookPad?.addEventListener('pointercancel',endLook);movePad?.addEventListener('pointerdown',e=>{touchId=e.pointerId;movePad.setPointerCapture(touchId);updatePad(e)});movePad?.addEventListener('pointermove',e=>{if(e.pointerId===touchId)updatePad(e)});movePad?.addEventListener('pointerup',()=>{touchId=null;moveX=moveZ=0;movePad.querySelector('i').style.transform='translate(0,0)'});function updatePad(e){const r=movePad.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.34),dy=(e.clientY-r.top-r.height/2)/(r.height*.34);moveX=Math.max(-1,Math.min(1,dx));moveZ=Math.max(-1,Math.min(1,dy));movePad.querySelector('i').style.transform='translate('+moveX*25+'px,'+moveZ*25+'px)'}
 $('#mobileFire').addEventListener('pointerdown',e=>{e.preventDefault();fireHeld=true;shoot()});$('#mobileFire').addEventListener('pointerup',()=>fireHeld=false);$('#mobileFire').addEventListener('pointercancel',()=>fireHeld=false);$('#mobileJump').addEventListener('click',()=>{if(player.position.y<.05)velocityY=7});
-function update(dt){if(mode!=='playing')return;elapsed+=dt;soldierMixers.forEach(mixer=>mixer.update(dt));const forward=(keys.KeyW?1:0)-(keys.KeyS?1:0)-moveZ,right=(keys.KeyD?1:0)-(keys.KeyA?1:0)+moveX;const dir=new THREE.Vector3(right,0,-forward);if(dir.lengthSq()>1)dir.normalize();dir.applyAxisAngle(new THREE.Vector3(0,1,0),yaw);player.position.addScaledVector(dir,dt*7);player.position.x=THREE.MathUtils.clamp(player.position.x,-39,39);player.position.z=THREE.MathUtils.clamp(player.position.z,-34,34);velocityY-=18*dt;player.position.y=Math.max(0,player.position.y+velocityY*dt);if(player.position.y===0)velocityY=0;player.rotation.y=yaw;
- bots.forEach((b,i)=>{if(!b.parent)return;b.userData.phase+=dt*.35;b.position.x+=Math.sin(b.userData.phase)*dt*.7;b.position.z+=Math.cos(b.userData.phase*.8)*dt*.45;b.rotation.y=Math.atan2(player.position.x-b.position.x,player.position.z-b.position.z)});
+function update(dt){if(mode!=='playing')return;elapsed+=dt;soldierMixers.forEach(mixer=>mixer.update(dt));const forward=(keys.KeyW?1:0)-(keys.KeyS?1:0)-moveZ,right=(keys.KeyD?1:0)-(keys.KeyA?1:0)+moveX;const dir=new THREE.Vector3(right,0,-forward);if(dir.lengthSq()>1)dir.normalize();dir.applyAxisAngle(new THREE.Vector3(0,1,0),yaw);player.position.addScaledVector(dir,dt*7);player.position.x=THREE.MathUtils.clamp(player.position.x,-39,39);player.position.z=THREE.MathUtils.clamp(player.position.z,-34,34);velocityY-=18*dt;player.position.y=Math.max(0,player.position.y+velocityY*dt);if(player.position.y===0)velocityY=0;player.rotation.y=yaw;if(player.userData.assetModel)setSoldierRole(player.userData.assetModel,dir.lengthSq()>.01?'Run':'Idle');
+ bots.forEach((b,i)=>{if(!b.parent)return;b.userData.phase+=dt*.35;b.position.x+=Math.sin(b.userData.phase)*dt*.7;b.position.z+=Math.cos(b.userData.phase*.8)*dt*.45;b.rotation.y=Math.atan2(player.position.x-b.position.x,player.position.z-b.position.z);if(b.userData.assetModel)setSoldierRole(b.userData.assetModel,'Walk')});
  if(cameraMode==='third'){const offset=new THREE.Vector3(0,3.2,7.2).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);const desired=player.position.clone().add(offset);desired.y+=Math.sin(pitch)*3.2;camera.position.lerp(desired,1-Math.pow(.001,dt));const look=player.position.clone().add(new THREE.Vector3(0,1.35,0));look.x-=Math.sin(yaw)*1.8;look.z-=Math.cos(yaw)*1.8;look.y+=Math.sin(pitch)*9;camera.lookAt(look)}else{camera.position.copy(player.position).add(new THREE.Vector3(0,1.65,0));camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;fpWeapon.position.x=.0+Math.sin(elapsed*7)*.008;fpWeapon.position.y=Math.cos(elapsed*7)*.006}
  if(fireHeld)shoot();
 }
@@ -116,11 +116,20 @@ function prepareSoldierModel(model, targetHeight=2.25) {
 function playSoldierAnimation(model, clips, role='Idle') {
   if (!clips?.length) return null;
   const mixer = new THREE.AnimationMixer(model);
-  const clip = THREE.AnimationClip.findByName(clips, role) ||
-    THREE.AnimationClip.findByName(clips, 'Idle') || clips[0];
-  if (clip) mixer.clipAction(clip).reset().play();
+  model.userData.animationActions = {};
+  clips.forEach(clip => { model.userData.animationActions[clip.name.toLowerCase()] = mixer.clipAction(clip); });
+  const first = model.userData.animationActions[role.toLowerCase()] || model.userData.animationActions.idle;
+  if (first) first.reset().play();
+  model.userData.activeAnimation = first || null;
   soldierMixers.push(mixer);
   return mixer;
+}
+function setSoldierRole(model, role) {
+  const next = model?.userData?.animationActions?.[role.toLowerCase()];
+  if (!next || next === model.userData.activeAnimation) return;
+  model.userData.activeAnimation?.fadeOut(0.18);
+  next.reset().fadeIn(0.18).play();
+  model.userData.activeAnimation = next;
 }
 async function installRealSoldiers() {
   const jobs = [getSoldierAsset(soldierAssetUrls[0]), ...bots.map((_,i)=>getSoldierAsset(soldierAssetUrls[(i+1)%soldierAssetUrls.length]))];
@@ -146,6 +155,8 @@ async function installRealSoldiers() {
     bots[i].userData.assetModel = model;
     bots[i].userData.mixer = playSoldierAnimation(model, gltf.animations, 'Idle');
   }
+  targets.length = 0;
+  bots.forEach(bot => bot.traverse(node => { if (node.isMesh) targets.push(node); }));
   const failed = loaded.filter(item=>item.status==='rejected').length;
   if (failed) console.warn('Some external soldier models could not be loaded; procedural fallback remains active.', failed);
 }
