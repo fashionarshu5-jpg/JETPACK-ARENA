@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-zombie-survival-v15';
+const CACHE_NAME = 'doodle-outpost-all-modes-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './game.js',
   './manifest.json',
   './assets/doodle-outpost-logo.png', './assets/favicon.png',
+  './assets/zombie-grunt.svg', './assets/zombie-armored.svg', './assets/outpost-titan.svg',
   './assets/char1.png', './assets/char2.png', './assets/char3.png',
   './assets/char4.png', './assets/char5.png', './assets/char6.png',
   './assets/char7.png', './assets/char8.png', './assets/char9.png',

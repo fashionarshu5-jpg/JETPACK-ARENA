@@ -1718,3 +1718,9 @@ button.mode-card.selected{border-color:#a3e635;background:linear-gradient(145deg
   .mode-hub.mode-hub-open .mode-card { min-height:76px; padding:7px; }
   .mode-hub.mode-hub-open .mode-card .mode-icon { font-size:17px; }
 }
+
+
+/* Seven-mode playlist and mode-specific guide */
+.mode-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.mode-card{min-height:142px}.mode-guide{margin:10px 0 4px;padding:10px 12px;border:1px solid rgba(163,230,53,.22);border-radius:10px;background:rgba(163,230,53,.06);color:#d9e6cc;font-size:12px;line-height:1.5}
+.mode-card[data-mode="ctf"] .mode-icon{color:#fbbf24}.mode-card[data-mode="boss"] .mode-icon{color:#fb7185}.mode-card[data-mode="br"] .mode-icon{color:#f97316}.mode-card[data-mode="clan"] .mode-icon{color:#a78bfa}
+@media(max-width:900px){.mode-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.mode-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mode-card{min-height:126px;padding:9px}.mode-card small{font-size:10px}.mode-guide{font-size:11px}}
