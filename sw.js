@@ -48,7 +48,7 @@ self.addEventListener('fetch', (e) => {
 
   const requestUrl = new URL(e.request.url);
   const isAppShell = e.request.mode === 'navigate' ||
-    /\\.(?:html|css|js)$/.test(requestUrl.pathname);
+    /\.(?:html|css|js)$/.test(requestUrl.pathname);
 
   if (isAppShell) {
     e.respondWith((async () => {
