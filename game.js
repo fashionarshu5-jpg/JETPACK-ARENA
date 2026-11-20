@@ -814,11 +814,82 @@ function updateLobbyPlayersUI() {
   });
 }
 
-document.getElementById('copyLinkBtn').onclick = () => {
-  navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${state.roomCode}`);
-  document.getElementById('copyLinkBtn').textContent = '✅ Copied';
-  setTimeout(() => (document.getElementById('copyLinkBtn').textContent = '📋 Copy Link'), 1800);
+// Copy the complete invite URL and visibly confirm success for two seconds.
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+let copyLinkResetTimer = null;
+
+copyLinkBtn.onclick = async () => {
+  const roomCode = String(state.roomCode || '').trim().toUpperCase();
+  if (!roomCode) {
+    copyLinkBtn.textContent = 'No Room Code';
+    return;
+  }
+
+  const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomCode)}`;
+
+  try {
+    await navigator.clipboard.writeText(inviteUrl);
+    copyLinkBtn.textContent = 'Copied!';
+    copyLinkBtn.disabled = true;
+    if (copyLinkResetTimer) clearTimeout(copyLinkResetTimer);
+    copyLinkResetTimer = setTimeout(() => {
+      copyLinkBtn.textContent = '📋 Copy Link';
+      copyLinkBtn.disabled = false;
+      copyLinkResetTimer = null;
+    }, 2000);
+  } catch (error) {
+    console.error('Could not copy invite link:', error);
+    copyLinkBtn.textContent = 'Copy Failed';
+    setTimeout(() => {
+      copyLinkBtn.textContent = '📋 Copy Link';
+      copyLinkBtn.disabled = false;
+    }, 2000);
+  }
 };
+
+
+// Leave this room (or close it if you are the host). This action is separate
+// from EXIT TO LOBBY so navigating away from a match cannot destroy the room.
+const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+if (leaveRoomBtn) {
+  leaveRoomBtn.onclick = () => {
+    const isHost = Boolean(state.isHost);
+    const message = isHost
+      ? 'Close this room and disconnect all players?'
+      : 'Leave this multiplayer room?';
+    if (!window.confirm(message)) return;
+
+    leaveRoomBtn.disabled = true;
+    leaveRoomBtn.textContent = isHost ? 'CLOSING ROOM…' : 'LEAVING ROOM…';
+
+    const finishLeaving = () => {
+      if (hostConn) {
+        try { hostConn.close(); } catch (error) { console.warn(error); }
+        hostConn = null;
+      }
+      if (peer) {
+        try { peer.destroy(); } catch (error) { console.warn(error); }
+        peer = null;
+      }
+      window.location.reload();
+    };
+
+    if (isHost) {
+      // Give the room-closed message a moment to reach connected players
+      // before destroying the PeerJS host connection.
+      broadcastToClients({ type: 'room_closed' });
+      setTimeout(() => {
+        Object.values(connections).forEach((connection) => {
+          try { connection.close(); } catch (error) { console.warn(error); }
+        });
+        connections = {};
+        finishLeaving();
+      }, 250);
+    } else {
+      finishLeaving();
+    }
+  };
+}
 
 document.getElementById('whatsappShareBtn').onclick = () => {
   const url = `${location.origin}${location.pathname}?room=${state.roomCode}`;
@@ -898,6 +969,17 @@ function handleClientReceive(msg) {
     state.killFeed = msg.killFeed;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
+  } else if (msg.type === 'room_closed') {
+    alert('The room host has closed this room.');
+    if (hostConn) {
+      try { hostConn.close(); } catch (error) { console.warn(error); }
+      hostConn = null;
+    }
+    if (peer) {
+      try { peer.destroy(); } catch (error) { console.warn(error); }
+      peer = null;
+    }
+    window.location.reload();
   }
 }
 
