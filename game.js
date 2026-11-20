@@ -254,6 +254,20 @@ const MAPS = [
       { kind: 'sandbag', x: 1180, y: 950, w: 130, h: 42 }
     ],
     spawns: [{ x: 450, y: 390 }, { x: 450, y: 560 }, { x: 2020, y: 420 }, { x: 2120, y: 610 }, { x: 850, y: 910 }, { x: 1550, y: 910 }]
+  },
+  {
+    id: 10, name: 'Quarantine District', file: '',
+    platforms: [
+      { x: 140, y: 565, w: 500, h: 24 }, { x: 720, y: 440, w: 460, h: 24 },
+      { x: 1320, y: 560, w: 500, h: 24 }, { x: 1840, y: 430, w: 380, h: 24 },
+      { x: 920, y: 790, w: 560, h: 24 }, { x: 30, y: 1020, w: 2340, h: 40 }
+    ],
+    props: [
+      { kind: 'container', x: 230, y: 455, w: 180, h: 110 },
+      { kind: 'crate', x: 900, y: 738, w: 68, h: 52 },
+      { kind: 'tower', x: 1940, y: 220, w: 140, h: 210 }
+    ],
+    spawns: [{ x: 390, y: 500 }, { x: 920, y: 380 }, { x: 1530, y: 500 }, { x: 1950, y: 370 }, { x: 1050, y: 730 }, { x: 1350, y: 730 }]
   }
 ];
 
@@ -269,7 +283,8 @@ lobbyArtwork.onerror = () => reportAsset('./assets/lobby_bg.png', false);
 lobbyArtwork.src = './assets/lobby_bg.png';
 
 function getActivePlatforms() {
-  return BORDER_PLATFORMS.concat((MAPS[state.mapId] || MAPS[0]).platforms);
+  const mapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
+  return BORDER_PLATFORMS.concat((MAPS[mapId] || MAPS[0]).platforms);
 }
 
 // ==========================================================================
@@ -609,10 +624,10 @@ document.getElementById('drawerMicBtn').onclick = toggleProximityMic;
 // 6. ROOM CREATION, JOINING & EXACT PLAYER COUNT
 // ==========================================================================
 function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
-  const activeMap = MAPS[state.mapId] || MAPS[0];
+  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
-    id, name, charId, isBot,
+    id, name, charId, isBot, kind: 'survivor',
     team: state.selectedMode === 'tdm' ? (spawnIdx % 2) : null,
     x: sp.x, y: sp.y, vx: 0, vy: 0,
     facing: 1, aimAngle: 0,
@@ -739,6 +754,7 @@ document.getElementById('startMatchBtn').onclick = () => {
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
   state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
+  state.zombies = []; state.zombieWave = 1; state.zombieSpawnClock = 1.5;
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
@@ -791,6 +807,8 @@ function handleClientReceive(msg) {
     startMatch();
   } else if (msg.type === 'state') {
     state.players = msg.players;
+    state.zombies = msg.zombies || [];
+    state.zombieWave = msg.zombieWave || 1;
     state.bullets = msg.bullets;
     state.grenades = msg.grenades;
     state.clouds = msg.clouds;
@@ -1066,7 +1084,7 @@ function gameLoop(now) {
     if (state.isHost) {
       stepHostSimulation(dt, now);
       broadcastToClients({
-        type: 'state', players: state.players, bullets: state.bullets,
+        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, bullets: state.bullets,
         grenades: state.grenades, clouds: state.clouds, fxList: state.fxList,
         killFeed: state.killFeed, matchTime: state.matchTime, mapId: state.mapId
       });
@@ -1089,7 +1107,7 @@ function gameLoop(now) {
 function stepHostSimulation(dt, now) {
   state.matchTime = Math.max(0, state.matchTime - dt);
   const platforms = getActivePlatforms();
-  const activeMap = MAPS[state.mapId] || MAPS[0];
+  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
 
   Object.values(state.players).forEach((p, idx) => {
     if (p.boostTimer > 0) p.boostTimer = Math.max(0, p.boostTimer - dt);
@@ -1127,6 +1145,52 @@ function stepHostSimulation(dt, now) {
 
     if (ctrl.shooting) fireWeapon(p, now);
   });
+
+  // Zombie Survival: host-authoritative enemy waves.
+  if (state.selectedMode === 'zombie') {
+    state.zombies = state.zombies || [];
+    state.zombieWave = state.zombieWave || 1;
+    state.zombieSpawnClock = (state.zombieSpawnClock || 0) - dt;
+    const aliveSurvivors = Object.values(state.players).filter(p => p.hp > 0);
+    if (aliveSurvivors.length === 0) {
+      state.matchTime = 0;
+    } else {
+      if (state.zombieSpawnClock <= 0 && state.zombies.length < Math.min(18, 5 + state.zombieWave * 2)) {
+        const edge = Math.random() < .5 ? 45 : WORLD.width - 45;
+        state.zombies.push({ id: 'z_' + Math.random().toString(36).slice(2), x: edge, y: 900, hp: 55 + state.zombieWave * 8, maxHp: 55 + state.zombieWave * 8, speed: 68 + state.zombieWave * 5, attackClock: 0, wave: state.zombieWave });
+        state.zombieSpawnClock = Math.max(.65, 2.8 - state.zombieWave * .16);
+      }
+      if (state.zombies.length === 0 && state.zombieSpawnClock < 0) state.zombieWave = Math.min(10, state.zombieWave + 1);
+      for (let zi = state.zombies.length - 1; zi >= 0; zi--) {
+        const z = state.zombies[zi];
+        let target = null, nearest = Infinity;
+        aliveSurvivors.forEach(p => { const d = Math.hypot(p.x-z.x,p.y-z.y); if (d < nearest) { nearest=d; target=p; } });
+        if (!target) continue;
+        const dx = target.x-z.x, dy = target.y-z.y;
+        z.x += Math.sign(dx) * z.speed * dt;
+        z.y += Math.max(-1, Math.min(1, dy / 80)) * z.speed * .22 * dt;
+        z.attackClock -= dt;
+        if (nearest < 48 && z.attackClock <= 0) {
+          damagePlayer(target, 12, null, 'ZOMBIE CLAWS');
+          z.attackClock = .9;
+        }
+        for (let bi = state.bullets.length - 1; bi >= 0; bi--) {
+          const bullet = state.bullets[bi];
+          if (Math.hypot(bullet.x-z.x, bullet.y-z.y) < 28) {
+            z.hp -= bullet.damage || 12;
+            state.bullets.splice(bi, 1);
+            if (z.hp <= 0) {
+              const killer = state.players[bullet.ownerId];
+              if (killer) killer.kills++;
+              addFxSprite('explosion', z.x, z.y, 70, .3);
+              state.zombies.splice(zi, 1);
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
 
   // Bullets & Rockets
   for (let i = state.bullets.length - 1; i >= 0; i--) {
@@ -1378,8 +1442,9 @@ function renderGame() {
   ctx.scale(state.camera.zoom, state.camera.zoom);
   ctx.translate(-state.camera.x, -state.camera.y);
 
-  const activeMap = MAPS[state.mapId] || MAPS[0];
-  const mapImg = MAP_IMAGES[state.mapId];
+  const activeMapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
+  const activeMap = MAPS[activeMapId] || MAPS[0];
+  const mapImg = MAP_IMAGES[activeMapId];
   if (mapImg && mapImg.complete && mapImg.naturalWidth > 0) {
     ctx.drawImage(mapImg, 0, 0, WORLD.width, WORLD.height);
   } else {
@@ -1394,6 +1459,15 @@ function renderGame() {
     if (pSprite) ctx.drawImage(pSprite, pr.x, pr.y, pr.w, pr.h);
   });
 
+  if (state.selectedMode === 'zombie') {
+    (state.zombies || []).forEach(z => {
+      ctx.save(); ctx.translate(z.x,z.y); ctx.fillStyle='#65a30d'; ctx.strokeStyle='#17230d'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,-12,15,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillRect(-12,-2,24,28); ctx.strokeRect(-12,-2,24,28);
+      ctx.fillStyle='#ef4444'; ctx.fillRect(-19,-37,38,4); ctx.fillStyle='#84cc16'; ctx.fillRect(-19,-37,38*Math.max(0,z.hp/z.maxHp),4);
+      ctx.fillStyle='#fef08a'; ctx.fillRect(-6,-15,4,3); ctx.fillRect(4,-15,4,3); ctx.restore();
+    });
+  }
   Object.values(state.players).forEach((p) => { if (p.hp > 0) drawCharacterAndWeapon(p); });
 
   for (const g of state.grenades) {
@@ -1500,7 +1574,7 @@ function drawCharacterAndWeapon(p) {
 function updateHudUI() {
   const me = state.players[state.myId];
   if (!me) return;
-  const activeMap = MAPS[state.mapId] || MAPS[0];
+  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
   document.getElementById('healthBar').style.width = `${Math.max(0, me.hp)}%`;
   document.getElementById('hpText').textContent = `HP ${Math.ceil(me.hp)}`;
   document.getElementById('armorBar').style.width = `${Math.min(100, me.armor || 0)}%`;
@@ -1620,7 +1694,8 @@ function renderModeSelection() {
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
   const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
-  const modeName = state.selectedMode === 'tdm' ? 'Team Deathmatch' : 'Free for All';
+  const modeName = state.selectedMode === 'tdm' ? 'Team Deathmatch' : state.selectedMode === 'zombie' ? 'Zombie Survival' : 'Free for All';
+  if (state.selectedMode === 'zombie') document.getElementById('modeNotice').textContent = playlistName + ' • Zombie Survival selected • Quarantine District';
   document.getElementById('modeNotice').textContent = playlistName + ' • ' + modeName + ' selected';
 }
 document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
@@ -1628,6 +1703,7 @@ document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('
 }));
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
   state.selectedMode = b.dataset.mode;
+  if (state.selectedMode === 'zombie') state.mapId = 10;
   localStorage.setItem('do_mode', state.selectedMode);
   if (state.mode !== 'playing' && state.mode !== 'gameover') {
     syncPlayerTeams();
