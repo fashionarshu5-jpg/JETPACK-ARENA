@@ -9,19 +9,19 @@
 <body>
 <div id="gameRoot">
   <canvas id="battlefield" aria-label="3D battlefield"></canvas>
-  <header class="top-hud"><a class="brand" href="./index.html">DOODLE OUTPOST <small>3D TACTICAL OPS</small></a><div class="hud-stats"><span id="health">HEALTH <b>100</b></span><span id="score">ELIMS <b>0</b></span><span id="fps">FPS --</span></div></header>
+  <header class="top-hud"><a class="brand" href="./index.html">JETPACK ARENA <small>3D TACTICAL OPS</small></a><div class="hud-stats"><span class="health-stat">HEALTH <b id="healthValue">100</b><i class="health-track"><i id="healthFill"></i></i></span><span id="score">ELIMS <b>0</b></span><span id="fps">FPS --</span><span class="ammo-stat"><b id="weaponName">ASSAULT RIFLE</b><span id="ammo">30 / 120</span></span></div></header>
   <section id="menu" class="screen">
-    <div class="menu-card"><p class="eyebrow">TACTICAL SIMULATION / 01</p><h1>DEPLOY TO<br><em>THE OUTPOST</em></h1><p class="intro">A first playable 3D combat prototype. Choose your camera and deploy into the training zone.</p>
+    <div class="menu-card"><p class="eyebrow">TACTICAL SIMULATION / 01</p><h1>DEPLOY TO<br><em>THE OUTPOST</em></h1><p class="intro">Enter the outpost, eliminate hostile operators and survive. Choose your camera and graphics quality before deployment.</p>
       <label>CAMERA VIEW<select id="cameraChoice"><option value="third">THIRD PERSON</option><option value="first">FIRST PERSON</option></select></label>
       <label>GRAPHICS QUALITY<select id="quality"><option value="low">LOW — PERFORMANCE</option><option value="medium" selected>MEDIUM — BALANCED</option><option value="high">HIGH — VISUALS</option></select></label>
       <button id="deploy" class="primary">DEPLOY / PRACTICE</button><a class="back" href="./index.html">← BACK TO CLASSIC GAME</a>
     </div>
   </section>
-  <section id="pause" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">OPERATOR PAUSED</p><h2>MISSION PAUSED</h2><button id="resume" class="primary">RESUME</button><button id="returnMenu" class="secondary">RETURN TO MENU</button></div></section>
+  <section id="pause" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">OPERATOR PAUSED</p><h2>MISSION PAUSED</h2><button id="resume" class="primary">RESUME MISSION</button><button id="returnMenu" class="secondary">RETURN TO MENU</button></div></section><section id="gameOver" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">OPERATION FAILED</p><h2>OPERATOR DOWN</h2><p class="intro">You were eliminated. Return to the menu and deploy again.</p><button id="gameOverMenu" class="primary">RETURN TO MENU</button></div></section>
   <div id="crosshair" class="crosshair hidden">+</div>
-  <div id="mission" class="mission hidden"><b>TRAINING ZONE</b><span>WASD MOVE · MOUSE AIM · CLICK FIRE · SPACE JUMP</span><span id="cameraLabel">THIRD PERSON</span></div>
+  <div id="mission" class="mission hidden"><b>OUTPOST // HOSTILE CONTACT</b><span>WASD MOVE · MOUSE AIM · CLICK FIRE · SPACE JUMP · R RELOAD · 1–5 WEAPONS</span><span id="cameraLabel">THIRD PERSON</span><span id="statusText">ELIMINATE ALL HOSTILES</span></div>
   <button id="cameraToggle" class="camera-toggle hidden">SWITCH CAMERA</button>
-  <div id="mobilePad" class="mobile-pad hidden"><div id="movePad" aria-label="Movement joystick"><i></i></div><div id="lookPad" aria-label="Drag to aim"></div><button id="mobileFire">FIRE</button><button id="mobileJump">JUMP</button></div>
+  <div id="mobilePad" class="mobile-pad hidden"><div id="movePad" aria-label="Movement joystick"><i></i></div><div id="lookPad" aria-label="Drag to aim"></div><div class="mobile-actions"><button id="mobileFire">FIRE</button><button id="mobileJump">JUMP</button><button id="mobileReload">RELOAD</button><button id="mobileWeapon">WEAPON</button><button id="mobilePause" aria-label="Pause game">Ⅱ</button></div></div>
   <div id="hitMarker" class="hit-marker"></div>
   <div id="toast" role="status"></div>
 </div>
