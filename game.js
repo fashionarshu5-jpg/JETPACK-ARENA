@@ -754,7 +754,7 @@ document.getElementById('startMatchBtn').onclick = () => {
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
   state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
-  state.zombies = []; state.zombieWave = 1; state.zombieSpawnClock = 1.5;
+  state.zombies = []; state.zombieKills = 0; state.zombieWave = 1; state.zombieSpawnClock = 1.5;
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
@@ -809,6 +809,7 @@ function handleClientReceive(msg) {
     state.players = msg.players;
     state.zombies = msg.zombies || [];
     state.zombieWave = msg.zombieWave || 1;
+    state.zombieKills = msg.zombieKills || 0;
     state.bullets = msg.bullets;
     state.grenades = msg.grenades;
     state.clouds = msg.clouds;
@@ -1084,7 +1085,7 @@ function gameLoop(now) {
     if (state.isHost) {
       stepHostSimulation(dt, now);
       broadcastToClients({
-        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, bullets: state.bullets,
+        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0, bullets: state.bullets,
         grenades: state.grenades, clouds: state.clouds, fxList: state.fxList,
         killFeed: state.killFeed, matchTime: state.matchTime, mapId: state.mapId
       });
@@ -1149,7 +1150,8 @@ function stepHostSimulation(dt, now) {
   // Zombie Survival: host-authoritative enemy waves.
   if (state.selectedMode === 'zombie') {
     state.zombies = state.zombies || [];
-    state.zombieWave = state.zombieWave || 1;
+    state.zombieKills = state.zombieKills || 0;
+    state.zombieWave = Math.min(10, Math.floor(state.zombieKills / 8) + 1);
     state.zombieSpawnClock = (state.zombieSpawnClock || 0) - dt;
     const aliveSurvivors = Object.values(state.players).filter(p => p.hp > 0);
     if (aliveSurvivors.length === 0) {
@@ -1160,7 +1162,7 @@ function stepHostSimulation(dt, now) {
         state.zombies.push({ id: 'z_' + Math.random().toString(36).slice(2), x: edge, y: 900, hp: 55 + state.zombieWave * 8, maxHp: 55 + state.zombieWave * 8, speed: 68 + state.zombieWave * 5, attackClock: 0, wave: state.zombieWave });
         state.zombieSpawnClock = Math.max(.65, 2.8 - state.zombieWave * .16);
       }
-      if (state.zombies.length === 0 && state.zombieSpawnClock < 0) state.zombieWave = Math.min(10, state.zombieWave + 1);
+      
       for (let zi = state.zombies.length - 1; zi >= 0; zi--) {
         const z = state.zombies[zi];
         let target = null, nearest = Infinity;
@@ -1182,6 +1184,8 @@ function stepHostSimulation(dt, now) {
             if (z.hp <= 0) {
               const killer = state.players[bullet.ownerId];
               if (killer) killer.kills++;
+              state.zombieKills = (state.zombieKills || 0) + 1;
+              state.zombieWave = Math.min(10, Math.floor(state.zombieKills / 8) + 1);
               addFxSprite('explosion', z.x, z.y, 70, .3);
               state.zombies.splice(zi, 1);
             }
