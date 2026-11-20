@@ -414,7 +414,7 @@ CHARACTERS.forEach((ch) => {
     syncSoldierUI();
     if (state.players[state.myId]) {
       state.players[state.myId].charId = ch.id;
-      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     }
   };
   charGridEl.appendChild(card);
@@ -489,7 +489,7 @@ syncLobbyMapPreview();
 mapSelectEl.onchange = (e) => {
   state.mapId = parseInt(e.target.value, 10) || 0;
   syncLobbyMapPreview();
-  if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId });
+  if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
 };
 
 function formatClock(sec) {
@@ -763,6 +763,8 @@ function handleClientReceive(msg) {
   if (msg.type === 'lobby_sync') {
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
+    if (msg.selectedMode) state.selectedMode = msg.selectedMode;
+    renderModeSelection();
     mapSelectEl.value = String(state.mapId);
     syncLobbyMapPreview();
     document.getElementById('waitingRoom').classList.remove('hidden');
@@ -774,6 +776,8 @@ function handleClientReceive(msg) {
     state.roomCode = msg.roomCode;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
+    if (msg.selectedMode) state.selectedMode = msg.selectedMode;
+    renderModeSelection();
     document.getElementById('matchOverModal').classList.add('hidden');
     startMatch();
   } else if (msg.type === 'state') {
@@ -1024,6 +1028,7 @@ function updateKeyboardInput() {
 }
 
 function showMatchOverScreen() {
+  awardMatchProgress();
   state.mode = 'gameover';
   const rows = document.getElementById('finalLeaderboardRows');
   rows.innerHTML = '';
@@ -1488,7 +1493,7 @@ function updateHudUI() {
   document.getElementById('fuelBar').style.width = `${Math.max(0, me.jetFuel == null ? 100 : me.jetFuel)}%`;
   document.getElementById('fuelText').textContent = `JET FUEL ${Math.ceil(me.jetFuel == null ? 100 : me.jetFuel)}`;
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
-  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • KILLS: ${me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
+  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${state.selectedMode === 'tdm' ? 'TEAM ' + (me.team === 0 ? 'GREEN' : 'GOLD') : 'FREE FOR ALL'} • KILLS: ${me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
