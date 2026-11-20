@@ -622,6 +622,13 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
   };
 }
 
+function syncPlayerTeams() {
+  const players = Object.values(state.players);
+  players.forEach((player, index) => {
+    player.team = state.selectedMode === 'tdm' ? index % 2 : null;
+  });
+}
+
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let c = '';
@@ -726,10 +733,12 @@ document.getElementById('whatsappShareBtn').onclick = () => {
 document.getElementById('startMatchBtn').onclick = () => {
   if (document.getElementById('fillBotsCheck').checked) addBotsUpTo(MAX_PLAYERS);
   state.matchTime = state.selectedDuration;
+  syncPlayerTeams();
   Object.values(state.players).forEach((p, idx) => {
     const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
-    p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
+    p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
+  state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
 };
@@ -1614,7 +1623,14 @@ document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('
   state.playlist = b.dataset.playlist; localStorage.setItem('do_playlist', state.playlist); renderModeSelection();
 }));
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
-  state.selectedMode = b.dataset.mode; localStorage.setItem('do_mode', state.selectedMode);
+  state.selectedMode = b.dataset.mode;
+  localStorage.setItem('do_mode', state.selectedMode);
+  if (state.mode !== 'playing' && state.mode !== 'gameover') {
+    syncPlayerTeams();
+    if (state.isHost && state.roomCode && state.roomCode !== 'BOTS') {
+      broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+    }
+  }
   renderModeSelection();
 }));
 function awardMatchProgress() {
