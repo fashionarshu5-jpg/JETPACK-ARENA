@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-core-modes-fix-v14';
+const CACHE_NAME = 'doodle-outpost-zombie-survival-v15';
 const ASSETS = [
   './',
   './index.html',
