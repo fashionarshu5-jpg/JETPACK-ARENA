@@ -917,17 +917,20 @@ document.getElementById('closeSbBtn').onclick = toggleScoreboard;
 document.getElementById('leaveMatchBtn').onclick = () => location.reload();
 document.getElementById('matchOverLobbyBtn').onclick = () => location.reload();
 document.getElementById('rematchBtn').onclick = () => {
+  if (!state.isHost) return;
   document.getElementById('matchOverModal').classList.add('hidden');
-  if (state.isHost) {
-    state._progressAwarded = false;
-    state.matchTime = state.selectedDuration;
-    Object.values(state.players).forEach((p, idx) => {
-      const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
-      p.x = sp.x; p.y = sp.y; p.hp = 100; p.armor = 0; p.kills = 0; p.deaths = 0;
-    });
-    state.mode = 'playing';
-    broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
-  }
+  state._progressAwarded = false;
+  state.matchTime = state.selectedDuration;
+  Object.values(state.players).forEach((p, idx) => {
+    const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
+    p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0;
+    p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
+    p.deadTimer = 0; p.lastShot = 0; p.lastGrenade = 0;
+  });
+  state.bullets = []; state.grenades = []; state.clouds = []; state.killFeed = [];
+  syncPlayerTeams();
+  broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
+  startMatch();
 };
 
 function selectWeapon(idx) {
@@ -1013,6 +1016,7 @@ async function startMatch() {
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   lastFrameTime = performance.now();
+  matchStarting = false;
   requestAnimationFrame(gameLoop);
 }
 
