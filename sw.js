@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-modes-mobile-panel-v13';
+const CACHE_NAME = 'doodle-outpost-core-modes-fix-v14';
 const ASSETS = [
   './',
   './index.html',
