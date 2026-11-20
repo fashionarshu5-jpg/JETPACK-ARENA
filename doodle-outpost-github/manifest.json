@@ -1,0 +1,19 @@
+{
+  "name": "Doodle Outpost",
+  "short_name": "Doodle Outpost",
+  "description": "Jump, shoot and survive in a tactical 2D jetpack shooter.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#141a15",
+  "theme_color": "#1a241b",
+  "icons": [
+    {
+      "src": "./assets/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "scope": "./"
+}
