@@ -111,7 +111,7 @@ const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {}, zombi
 CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => {
   SPRITES.chars[idx] = c;
   const src = c && c.toDataURL ? c.toDataURL() : ch.file;
-  document.querySelectorAll('.char-card img[data-char-id="' + idx + '"]').forEach((img) => { img.src = src; });
+  document.querySelectorAll('img[data-char-id="' + idx + '"]').forEach((img) => { img.src = src; });
   if (state.myCharId === idx && typeof syncSoldierUI === 'function') syncSoldierUI();
 }));
 WEAPONS.forEach((wp, idx) => loadTransparentSprite(wp.file, (c) => { SPRITES.weapons[idx] = c; }));
@@ -426,6 +426,12 @@ const state = {
 const voiceChat = { enabled: false, stream: null, audioCtx: null, peerGains: {} };
 const MAX_VOICE_DISTANCE = 650;
 let peer = null, connections = {}, hostConn = null, lastFrameTime = 0;
+function setServerStatus(label) {
+  const badge = document.getElementById('serverStatus');
+  if (!badge) return;
+  badge.textContent = label;
+  badge.classList.toggle('online', label === 'ROOM READY' || label === 'CONNECTED');
+}
 let lastStateBroadcastAt = 0, lastInputSentAt = 0, lastInputSnapshot = '';
 let gameLoopRafId = null;
 let matchStartToken = 0;
@@ -715,6 +721,7 @@ let roomCreateSettled = false;
 
 function finishRoomCreateFailure(message) {
   if (roomCreateSettled) return;
+  setServerStatus('OFFLINE');
   roomCreateSettled = true;
   if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
   if (peer) {
@@ -743,6 +750,7 @@ createRoomBtn.onclick = () => {
     peer = new Peer('DOODLE_OUTPOST_' + state.roomCode);
     bindIncomingVoiceCalls();
     peer.on('open', () => {
+      setServerStatus('ROOM READY');
       if (roomCreateSettled) return;
       roomCreateSettled = true;
       if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
@@ -794,6 +802,7 @@ let joinAttemptTimer = null;
 let joinAttemptSettled = false;
 function finishJoinFailure(message) {
   if (joinAttemptSettled) return;
+  setServerStatus('OFFLINE');
   joinAttemptSettled = true;
   if (joinAttemptTimer) { clearTimeout(joinAttemptTimer); joinAttemptTimer = null; }
   if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
@@ -825,6 +834,7 @@ joinRoomBtn.onclick = () => {
     peer = new Peer();
     bindIncomingVoiceCalls();
     peer.on('open', () => {
+      setServerStatus('CONNECTING');
       if (joinAttemptSettled) return;
       try {
         hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: true });
@@ -835,6 +845,7 @@ joinRoomBtn.onclick = () => {
           joinRoomBtn.disabled = false;
           joinRoomBtn.textContent = 'JOIN';
           document.getElementById('connectionStatus').textContent = 'Joined! Waiting for Host to start...';
+          setServerStatus('CONNECTED');
           hostConn.send({ type: 'join', id: state.myId, name: state.myName, charId: state.myCharId });
           if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
         });
@@ -1048,7 +1059,7 @@ function handleHostReceive(conn, msg) {
     const count = Object.keys(state.players).length;
     if (count >= MAX_PLAYERS) {
       try { conn.send({ type: 'room_full' }); } catch (_) {}
-      try { conn.close(); } catch (_) {}
+      setTimeout(() => { try { conn.close(); } catch (_) {} }, 120);
       return;
     }
     conn.playerId = msg.id;
@@ -1270,10 +1281,6 @@ document.getElementById('btnSwap').onclick = cycleWeapon;
 document.getElementById('btnGrenade').onclick = triggerGrenade;
 document.getElementById('btnGrenadeType').onclick = cycleGrenadeType;
 document.getElementById('btnZoom').onclick = () => { state.sniperZoom = !state.sniperZoom; };
-document.getElementById('btnReload').innerHTML = '∞<small>UNLIMITED</small>';
-document.getElementById('btnReload').onclick = () => {
-  document.getElementById('connectionStatus').textContent = 'Ammo is unlimited in Doodle Outpost.';
-};
 document.getElementById('toggleScoreboardBtn').onclick = toggleScoreboard;
 document.getElementById('closeSbBtn').onclick = toggleScoreboard;
 document.getElementById('leaveMatchBtn').onclick = returnToLobby;
@@ -1429,6 +1436,7 @@ function returnToLobby() {
       p.x = spawn.x; p.y = spawn.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100;
       p.armor = 0; p.deadTimer = 0; p.remoteInput = null; p.carryingFlag = null;
     });
+    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
     updateLobbyPlayersUI();
   } else {
     Object.values(connections).forEach((connection) => { try { connection.close(); } catch (_) {} });
@@ -1462,6 +1470,7 @@ function returnToLobby() {
   document.getElementById('connectionStatus').textContent = keepHostRoom
     ? 'Room stays open. Players can ready up again.'
     : 'Up to 6 players • Room code required';
+  setServerStatus(keepHostRoom ? 'ROOM READY' : 'OFFLINE');
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
 }
 
@@ -1844,7 +1853,7 @@ function damagePlayer(target, amount, attackerId, weaponName) {
     state.fxList.push({ fxKey:'hitMarker', x:target.x, y:target.y-10, life:.2, maxLife:.2 });
   }
   if (target.hp <= 0) {
-    target.hp = 0; target.deaths += 1; target.deadTimer = 3.0;
+    target.hp = 0; target.deaths += 1; target.deadTimer = state.playlist === 'competitive' ? 5.0 : 3.0;
     addFxSprite('explosion', target.x, target.y, 110, 0.4);
     const attacker = state.players[attackerId];
     if (attacker && attacker.id !== target.id) {
@@ -2090,7 +2099,7 @@ function updateHudUI() {
     card.className = 'lobby-char-card' + (character.id === state.myCharId ? ' selected' : '');
     card.dataset.character = String(character.id);
     card.setAttribute('aria-pressed', String(character.id === state.myCharId));
-    card.innerHTML = '<img src="' + character.file + '" alt="" loading="lazy"><span><strong>' +
+    card.innerHTML = '<img data-char-id="' + character.id + '" src="' + (SPRITES.chars[character.id] && SPRITES.chars[character.id].toDataURL ? SPRITES.chars[character.id].toDataURL() : character.file) + '" alt="" loading="lazy"><span><strong>'
       character.name + '</strong><small>OPERATOR 0' + (character.id + 1) +
       '</small></span><b class="pick-check">✓</b>';
     card.addEventListener('click', () => {
@@ -2176,7 +2185,7 @@ function renderModeSelection() {
     const active = b.dataset.mode === state.selectedMode;
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
-  const playlistName = state.playlist === 'competitive' ? 'Competitive • no friendly fire' : 'Arcade';
+  const playlistName = state.playlist === 'competitive' ? 'Competitive • 5s respawn' : 'Arcade • 3s respawn';
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
   const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Room-code 3v3 team battle. Join the same room and fight as a squad. Results contribute to your local operator record.'};
