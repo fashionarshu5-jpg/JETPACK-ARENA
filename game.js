@@ -1310,10 +1310,10 @@ function renderScoreboard() {
 // ==========================================================================
 // 8. SIMULATION, UTILITY CRATES (MEDKIT/AMMO/ARMOR) & MATCH OVER
 // ==========================================================================
-function addFxSprite(fxKey, x, y, size, life) {
+function addFxSprite(fxKey, x, y, size, life, eventName = null) {
   if (state.fxList.length >= 180) state.fxList.shift();
   const fx={fxKey,x,y,size,life,maxLife:life}; state.fxList.push(fx);
-  if(state.isHost&&state.mode==='playing'&&peer&&state.roomCode&&state.roomCode!=='BOTS'&&['sparks','explosion','smokeGreen'].includes(fxKey))broadcastToClients({type:'fx',fx});
+  if(state.isHost&&state.mode==='playing'&&peer&&state.roomCode&&state.roomCode!=='BOTS'&&['sparks','explosion','smokeGreen'].includes(fxKey))broadcastToClients({type:'fx',event:eventName||(fxKey==='explosion'?'explode':'effect'),fx});
 }
 
 let matchStarting = false;
@@ -1761,11 +1761,13 @@ function damagePlayer(target, amount, attackerId, weaponName) {
   if (state.fxList.length < 180) {
     state.fxList.push({ fxKey:'damageText', x:target.x, y:target.y-48,
       text:`-${Math.max(1,Math.round(amount))}`, life:.72, maxLife:.72, size:15 });
-    state.fxList.push({ fxKey:'hitMarker', x:target.x, y:target.y-10, life:.2, maxLife:.2 });
+    const hitFx={fxKey:'hitMarker',x:target.x,y:target.y-10,life:.2,maxLife:.2};
+    state.fxList.push(hitFx);
+    if(state.isHost&&state.mode==='playing'&&peer&&state.roomCode&&state.roomCode!=='BOTS')broadcastToClients({type:'fx',event:'hit',fx:hitFx});
   }
   if (target.hp <= 0) {
     target.hp = 0; target.deaths += 1; target.deadTimer = 3.0;
-    addFxSprite('explosion', target.x, target.y, 110, 0.4);
+    addFxSprite('explosion', target.x, target.y, 110, 0.4, 'kill');
     const attacker = state.players[attackerId];
     if (attacker && attacker.id !== target.id) {
       attacker.kills += 1;
