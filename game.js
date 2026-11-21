@@ -781,6 +781,7 @@ createRoomBtn.onclick = () => {
       });
     });
     peer.on('error', (error) => {
+      setServerStatus('OFFLINE');
       const type = error && error.type;
       if (!roomCreateSettled) {
         finishRoomCreateFailure(type === 'unavailable-id'
@@ -791,6 +792,7 @@ createRoomBtn.onclick = () => {
       }
     });
     peer.on('disconnected', () => {
+      setServerStatus('OFFLINE');
       if (!roomCreateSettled) finishRoomCreateFailure('Lost connection while creating the room. Please try again.');
       else document.getElementById('connectionStatus').textContent = 'Room connection lost. Reconnect and try again.';
     });
@@ -868,12 +870,17 @@ joinRoomBtn.onclick = () => {
       }
     });
     peer.on('error', (error) => {
+      setServerStatus('OFFLINE');
       const unavailable = error && (error.type === 'peer-unavailable' || error.type === 'network' || error.type === 'server-error');
       finishJoinFailure(unavailable
         ? 'Room not found / could not join. Check the code and try again.'
         : 'Could not connect to that room. Please try again.');
     });
-    peer.on('disconnected', () => finishJoinFailure('Connection lost while joining. Please try again.'));
+    peer.on('disconnected', () => {
+      setServerStatus('OFFLINE');
+      if (!joinAttemptSettled) finishJoinFailure('Connection lost while joining. Please try again.');
+      else document.getElementById('connectionStatus').textContent = 'PeerJS signaling disconnected; the current room connection may continue.';
+    });
   } catch (_) {
     finishJoinFailure('Could not start the join request. Please try again.');
   }
@@ -1057,7 +1064,10 @@ document.getElementById('startMatchBtn').onclick = () => {
 
 function handleHostReceive(conn, msg) {
   if (msg.type === 'join') {
-    if (state.players[msg.id]) { try { conn.close(); } catch (_) {} return; }
+    if (state.players[msg.id]) {
+      if (connections[msg.id] !== conn) { try { conn.close(); } catch (_) {} }
+      return;
+    }
     const count = Object.keys(state.players).length;
     if (count >= MAX_PLAYERS) {
       try { conn.send({ type: 'room_full' }); } catch (_) {}
@@ -2195,6 +2205,7 @@ function renderModeSelection() {
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
   const lobbyMapName = document.getElementById('lobbyMapName');
   if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
+  syncLobbyMapPreview();
   document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
 }
 document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
