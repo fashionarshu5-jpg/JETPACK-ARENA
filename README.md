@@ -1,31 +1,32 @@
 # Doodle Outpost
 
-A browser-based 2D jetpack shooter. The game includes a solo practice mode, configurable matches, character and weapon assets, and peer-to-peer friend rooms powered by PeerJS.
+Doodle Outpost is a browser-based 2D jetpack shooter with seven playable modes, ten selectable maps plus the zombie-only Quarantine District, solo bot practice, and PeerJS room multiplayer. The 3D page is a separate single-player prototype; it is not connected to the 2D multiplayer rooms.
 
-## Play locally
+## Run locally
 
-Open `index.html` in a local static web server. For example, with Python installed:
+Serve the repository root with any static HTTP server. For example:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`.
+Open `http://localhost:8000`. Solo practice against bots does not require PeerJS or an internet connection once the local game assets are available.
 
 ## Publish with GitHub Pages
 
-1. Create a public GitHub repository named `doodle-outpost`.
-2. Upload the **contents** of this folder to the repository root (so `index.html` is at the top level).
-3. In the repository, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**.
-5. Select branch `main` and folder `/ (root)`, then save.
-6. Wait for the Pages deployment to finish. Your site URL will be `https://YOUR-USERNAME.github.io/doodle-outpost/`.
+1. Open the repository's **Settings → Pages**.
+2. Under **Build and deployment**, choose **Deploy from a branch**.
+3. Select `main` and the `/ (root)` folder, then save.
+4. Wait for the deployment to finish. GitHub Pages will show the published URL.
 
-## Important notes
+## Game modes and rooms
 
-- GitHub Pages hosts the static game files; it does not provide a multiplayer signaling server. Friend-room connectivity uses the PeerJS cloud service loaded from jsDelivr and can be affected by that service, browser networking, or firewall restrictions.
-- The game uses a service worker for offline asset caching. After updates, refresh the page once if an older cached version appears.
-- This repository contains a fan-made game project. Make sure you have the rights to publish all included artwork, audio, and other assets before making the repository public.
+The 2D game includes Free for All, Team Deathmatch, Zombie Survival, Capture the Flag, Boss Battle, Battle Royale, and Clan Wars. Boss Battle is an untimed raid on the map you selected in the lobby; it ends only when the Titan is defeated. Zombie Survival instead uses the locked Quarantine District arena. Clan Wars is a 3v3 team mode that supports bot practice or room-code matches (six players maximum). Competitive playlist locks live match-time adjustments during a match; Arcade allows the host to adjust the timer during a match. Ammo is unlimited in the 2D game.
 
-## Visual refresh
-The deployment lobby has been refreshed with an illustrated map preview, larger operator presentation, military-green arcade styling, responsive layout, and the Doodle Outpost logo. The original canvas game, controls, bot practice, and PeerJS room flow are retained. Select a map in Mission Setup to update its preview.
+Peer-to-peer rooms use PeerJS and the PeerJS cloud signaling service loaded from jsDelivr. Room connectivity therefore requires internet access and can be affected by the signaling service, browser networking, or firewalls. A room code is required to join; rooms are not restricted to a pre-approved friends list. The host can return to the room lobby without closing the room, or explicitly close it using **LEAVE / CLOSE ROOM**.
+
+## Offline and asset notes
+
+The service worker caches the local app shell and game assets for offline play after a successful first load. PeerJS room multiplayer is not available offline. The 3D prototype uses Three.js from jsDelivr and loads external GLB soldier models at runtime from Gobkit (gobkit.com), so those models require an internet connection; procedural fallback soldiers remain available if model downloads fail.
+
+After an update, refresh once if an older cached version appears. This repository contains a fan-made game project; confirm that you have the rights to publish all included artwork, audio, and other assets.

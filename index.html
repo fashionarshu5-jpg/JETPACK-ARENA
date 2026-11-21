@@ -14,7 +14,7 @@
   <title>Doodle Outpost — Tactical 2D Multiplayer</title>
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=22" />
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -36,14 +36,14 @@
           <div class="brand-icon"><img src="./assets/doodle-outpost-logo.png" alt="Doodle Outpost" /></div>
           <div>
             <h1>DOODLE OUTPOST</h1>
-            <p class="subtitle">SQUAD DEPLOYMENT • <span id="mapCountLabel">11 MAPS</span> • 9 SOLDIERS • 10 WEAPONS</p>
+            <p class="subtitle">SQUAD DEPLOYMENT • <span id="mapCountLabel">10 MAPS</span> • 9 SOLDIERS • 10 WEAPONS</p>
           </div>
         </div>
         <div class="topbar-actions">
           <span class="pill-badge">MAX 6 PLAYERS</span>
-          <span class="pill-badge online"><i class="dot"></i> SERVER ONLINE</span>
+          <span id="serverStatus" class="pill-badge">OFFLINE</span>
           <a class="pill-badge" href="./3d.html" style="color:#c4ef65;text-decoration:none;border-color:#71864e;" aria-label="Launch 3D tactical prototype">3D TACTICAL ↗</a>
-          <button id="lobbyGameModesBtn" class="icon-btn mode-launch-btn" type="button" title="Game modes" aria-label="Open game modes" aria-controls="modeHub" aria-expanded="false">🎮</button>
+          <button id="lobbyGameModesBtn" class="icon-btn mode-launch-btn mode-launch-text" type="button" title="Game modes" aria-label="Open game modes" aria-controls="modeHub" aria-expanded="false">🎮 MODES</button>
           <button id="lobbySettingsBtn" class="icon-btn" title="Settings & Soldiers">⚙️</button>
         </div>
       </header>
@@ -78,7 +78,7 @@
         <section class="tac-panel mission-panel">
           <div class="panel-heading">
             <div><span class="eyebrow">02 / BATTLEFIELD</span><div class="panel-label">SELECT YOUR MAP</div></div>
-            <span class="section-count" id="mapCardCount">11 MAPS</span>
+            <span class="section-count" id="mapCardCount">10 MAPS</span>
           </div>
           <div class="field-group map-field">
             <label for="mapSelect">ACTIVE THEATER</label>
@@ -104,7 +104,7 @@
             </div>
             <div class="join-divider"><span>OR JOIN YOUR FRIEND</span></div>
             <div class="join-row"><input type="text" id="roomCodeInput" maxlength="4" inputmode="text" autocomplete="off" aria-label="Four-character room code" placeholder="ROOM CODE (E.G. K9X2)" style="text-transform:uppercase;" /><button id="joinRoomBtn" class="btn btn-outline-lime">JOIN</button></div>
-            <div id="connectionStatus" class="status-text">Up to 6 players • Friends only in private rooms</div>
+            <div id="connectionStatus" class="status-text">Up to 6 players • Room code required</div>
           </div>
         </section>
       </main>
@@ -124,7 +124,7 @@
           <button type="button" class="mode-card" data-mode="ctf" aria-pressed="false"><span class="mode-icon">🚩</span><strong>CAPTURE THE FLAG</strong><small>Steal the enemy standard and return it to base.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="boss" aria-pressed="false"><span class="mode-icon">👹</span><strong>BOSS BATTLE</strong><small>Co-op raid against the Outpost Titan.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="br" aria-pressed="false"><span class="mode-icon">☢️</span><strong>BATTLE ROYALE</strong><small>Last soldier alive inside the shrinking zone.</small><b>PLAYABLE NOW</b></button>
-          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>Private 3v3 team battles with operator progression.</small><b>PRIVATE MATCH</b></button>
+          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>3v3 team battles with bots or room-code matches.</small><b>ROOM / PRACTICE</b></button>
         </div>
         <p id="modeGuide" class="mode-guide" aria-live="polite">Eliminate everyone. The soldier with the most kills when the timer ends wins.</p>
         <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
@@ -310,7 +310,7 @@
         <button id="btnGrenadeType" class="action-circle btn-gtype" title="Switch Grenade">FRAG<small>TYPE</small></button>
         <button id="btnGrenade" class="action-circle btn-gas" title="Throw Grenade">💣<small>∞</small></button>
         <button id="btnZoom" class="action-circle btn-zoom" title="Sniper Zoom">🔍</button>
-        <button id="btnReload" class="action-circle btn-reload" title="Ammo is unlimited">↻<small>AMMO</small></button>
+        
         <button id="btnSwap" class="action-circle btn-swap" title="Next Weapon">🔄</button>
       </div>
 
@@ -321,6 +321,6 @@
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <script src="game.js?v=22"></script>
 </body>
 </html>

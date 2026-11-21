@@ -3,15 +3,21 @@
    ========================================================================== */
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js?v=22').catch(() => {});
 }
 
 // ==========================================================================
 // 1. TRANSPARENT SPRITE LOADER
 // ==========================================================================
-const ASSET_TOTAL = 50;
 let assetLoaded = 0, assetFailed = 0, assetGateResolve;
 const assetsReady = new Promise((resolve) => { assetGateResolve = resolve; });
+let assetTimeout = setTimeout(() => {
+  const loader = document.getElementById('assetLoader');
+  const detail = document.getElementById('assetProgressDetail');
+  if (detail) detail.textContent = 'Some assets are taking too long; continuing with available fallbacks.';
+  if (loader) loader.classList.add('done');
+  assetGateResolve();
+}, 15000);
 function reportAsset(src, ok) {
   assetLoaded++;
   if (!ok) assetFailed++;
@@ -23,6 +29,7 @@ function reportAsset(src, ok) {
   if (label) label.textContent = pct + '%';
   if (detail) detail.textContent = `${assetLoaded}/${ASSET_TOTAL} assets ready${assetFailed ? ` • ${assetFailed} unavailable (safe fallback)` : ''}`;
   if (assetLoaded >= ASSET_TOTAL) {
+    clearTimeout(assetTimeout);
     assetGateResolve();
     const loader = document.getElementById('assetLoader');
     if (loader) setTimeout(() => loader.classList.add('done'), 180);
@@ -101,14 +108,19 @@ const PROP_FILES = {
 const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {}, zombies: [], boss: null };
 ['./assets/zombie-grunt.svg','./assets/zombie-armored.svg'].forEach((src,idx) => { const img=new Image(); img.onload=()=>{ SPRITES.zombies[idx]=img; }; img.src=src; });
 { const img=new Image(); img.onload=()=>{ SPRITES.boss=img; }; img.src='./assets/outpost-titan.svg'; }
-CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => { SPRITES.chars[idx] = c; }));
+CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => {
+  SPRITES.chars[idx] = c;
+  const src = c && c.toDataURL ? c.toDataURL() : ch.file;
+  document.querySelectorAll('img[data-char-id="' + idx + '"]').forEach((img) => { img.src = src; });
+  if (state.myCharId === idx && typeof syncSoldierUI === 'function') syncSoldierUI();
+}));
 WEAPONS.forEach((wp, idx) => loadTransparentSprite(wp.file, (c) => { SPRITES.weapons[idx] = c; }));
 GRENADE_TYPES.forEach((gr, idx) => loadTransparentSprite(gr.file, (c) => { SPRITES.grenades[idx] = c; }));
 Object.entries(FX_FILES).forEach(([k, src]) => loadTransparentSprite(src, (c) => { SPRITES.fx[k] = c; }));
 Object.entries(PROP_FILES).forEach(([k, src]) => loadTransparentSprite(src, (c) => { SPRITES.props[k] = c; }));
 
 // ==========================================================================
-// 3. 10 ANALYZED MAPS
+// 3. 11 TOTAL MAPS (10 SELECTABLE + ZOMBIE-ONLY QUARANTINE)
 // ==========================================================================
 const WORLD = { width: 2400, height: 1200 };
 const BORDER_PLATFORMS = [
@@ -273,6 +285,13 @@ const MAPS = [
   }
 ];
 
+const PICKER_MAPS = MAPS.filter((map) => map.id !== 10);
+
+const ASSET_TOTAL = CHARACTERS.length + WEAPONS.length + GRENADE_TYPES.length +
+  Object.keys(FX_FILES).length + Object.keys(PROP_FILES).length + MAPS.length + 1;
+
+function getActiveMapId() { return state.selectedMode === 'zombie' ? 10 : state.mapId; }
+
 const MAP_IMAGES = MAPS.map((m) => {
   if (!m.file) { reportAsset('procedural map fallback', true); return null; }
   const img = new Image(); img.decoding = 'async';
@@ -286,8 +305,7 @@ lobbyArtwork.onerror = () => reportAsset('./assets/lobby_bg.png', false);
 lobbyArtwork.src = './assets/lobby_bg.png';
 
 function getActivePlatforms() {
-  const mapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
-  return BORDER_PLATFORMS.concat((MAPS[mapId] || MAPS[0]).platforms);
+  return BORDER_PLATFORMS.concat((MAPS[getActiveMapId()] || MAPS[0]).platforms);
 }
 
 // ==========================================================================
@@ -399,6 +417,7 @@ const state = {
   grenades: [],
   clouds: [],
   fxList: [],
+  fxEvents: [],
   killFeed: [],
   selectedDuration: 300,
   matchTime: 300,
@@ -409,6 +428,13 @@ const state = {
 const voiceChat = { enabled: false, stream: null, audioCtx: null, peerGains: {} };
 const MAX_VOICE_DISTANCE = 650;
 let peer = null, connections = {}, hostConn = null, lastFrameTime = 0;
+function setServerStatus(label) {
+  const badge = document.getElementById('serverStatus');
+  if (!badge) return;
+  badge.textContent = label;
+  badge.classList.toggle('online', label === 'ROOM READY' || label === 'CONNECTED');
+}
+let lastStateBroadcastAt = 0, lastInputSentAt = 0, lastInputSnapshot = '';
 let gameLoopRafId = null;
 let matchStartToken = 0;
 
@@ -416,12 +442,13 @@ let matchStartToken = 0;
 const charGridEl = document.getElementById('characterGrid');
 function syncSoldierUI() {
   const ch = CHARACTERS[state.myCharId] || CHARACTERS[0];
-  document.getElementById('lobbyCharPreviewImg').src = ch.file;
+  const portrait = SPRITES.chars[ch.id] && SPRITES.chars[ch.id].toDataURL ? SPRITES.chars[ch.id].toDataURL() : ch.file;
+  document.getElementById('lobbyCharPreviewImg').src = portrait;
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
-  document.getElementById('drawerCharIcon').src = ch.file;
+  document.getElementById('drawerCharIcon').src = portrait;
   document.getElementById('drawerCharName').textContent = ch.name;
-  document.getElementById('hudAvatarImg').src = ch.file;
+  document.getElementById('hudAvatarImg').src = portrait;
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
 }
@@ -429,7 +456,8 @@ function syncSoldierUI() {
 CHARACTERS.forEach((ch) => {
   const card = document.createElement('div');
   card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
-  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img src="${ch.file}" alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+  const portrait = SPRITES.chars[ch.id] && SPRITES.chars[ch.id].toDataURL ? SPRITES.chars[ch.id].toDataURL() : ch.file;
+  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img data-char-id="${ch.id}" src="${portrait}" alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
   card.onclick = () => {
     state.myCharId = ch.id;
     localStorage.setItem('do_char', String(ch.id));
@@ -498,24 +526,27 @@ document.getElementById('drawerExitMatchBtn').onclick = returnToLobby;
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
-mapSelectEl.innerHTML = MAPS.map((map) =>
+mapSelectEl.innerHTML = PICKER_MAPS.map((map) =>
   `<option value="${map.id}">${String(map.id + 1).padStart(2, '0')} - ${map.name}</option>`
 ).join('');
 function syncMapCountLabels() {
-  const countLabel = MAPS.length + ' MAPS';
+  const countLabel = PICKER_MAPS.length + ' MAPS';
   const topCount = document.getElementById('mapCountLabel');
   const cardCount = document.getElementById('mapCardCount');
   if (topCount) topCount.textContent = countLabel;
   if (cardCount) cardCount.textContent = countLabel;
 }
 function syncLobbyMapPreview() {
-  const map = MAPS[state.mapId] || MAPS[0];
+  const map = MAPS[getActiveMapId()] || MAPS[0];
   const preview = document.getElementById('lobbyMapPreview');
   const name = document.getElementById('lobbyMapName');
   const index = document.getElementById('lobbyMapIndex');
   if (preview) { preview.src = map.file || './assets/map_outpost.png'; preview.alt = `${map.name} map preview`; }
-  if (name) name.textContent = map.name.toUpperCase();
-  if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / ${MAPS.length}`;
+  if (name) name.textContent = map.name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
+  const pickerPosition = PICKER_MAPS.findIndex((item) => item.id === map.id) + 1;
+  const mapPosition = state.selectedMode === 'zombie' ? map.id + 1 : pickerPosition;
+  const mapTotal = state.selectedMode === 'zombie' ? MAPS.length : PICKER_MAPS.length;
+  if (index) index.textContent = `${String(mapPosition).padStart(2, '0')} / ${String(mapTotal).padStart(2, '0')}`;
 }
 syncMapCountLabels();
 syncLobbyMapPreview();
@@ -542,6 +573,7 @@ document.querySelectorAll('.preset-btn').forEach((btn) => {
 });
 
 function adjustLiveTimer(deltaSeconds) {
+  if (state.playlist === 'competitive' || state.selectedMode === 'boss') return;
   if (state.isHost) state.matchTime = Math.max(10, Math.min(3600, state.matchTime + deltaSeconds));
   else if (hostConn && hostConn.open) hostConn.send({ type: 'adjust_time', delta: deltaSeconds });
 }
@@ -551,7 +583,7 @@ document.getElementById('timeMinusBtn').onclick = () => adjustLiveTimer(-30);
 const nameInput = document.getElementById('playerNameInput');
 nameInput.value = state.myName;
 nameInput.addEventListener('input', () => {
-  state.myName = nameInput.value.trim() || 'Soldier';
+  state.myName = nameInput.value.trim() || 'Harsh';
   localStorage.setItem('do_name', state.myName);
 });
 
@@ -643,7 +675,7 @@ document.getElementById('drawerMicBtn').onclick = toggleProximityMic;
 // 6. ROOM CREATION, JOINING & EXACT PLAYER COUNT
 // ==========================================================================
 function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
     id, name, charId, isBot, kind: 'survivor',
@@ -668,7 +700,7 @@ function resetModeObjectives() {
     {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
     {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
   ] : null;
-  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:1800,maxHp:1800,attackClock:1.2,phase:1} : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:18000,maxHp:18000,attackClock:1.2,phase:1,elapsed:0} : null;
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
@@ -695,6 +727,7 @@ let roomCreateSettled = false;
 
 function finishRoomCreateFailure(message) {
   if (roomCreateSettled) return;
+  setServerStatus('OFFLINE');
   roomCreateSettled = true;
   if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
   if (peer) {
@@ -724,6 +757,7 @@ createRoomBtn.onclick = () => {
     bindIncomingVoiceCalls();
     peer.on('open', () => {
       if (roomCreateSettled) return;
+      setServerStatus('ROOM READY');
       roomCreateSettled = true;
       if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
       createRoomBtn.textContent = 'ROOM READY';
@@ -751,6 +785,7 @@ createRoomBtn.onclick = () => {
       });
     });
     peer.on('error', (error) => {
+      setServerStatus('OFFLINE');
       const type = error && error.type;
       if (!roomCreateSettled) {
         finishRoomCreateFailure(type === 'unavailable-id'
@@ -761,6 +796,7 @@ createRoomBtn.onclick = () => {
       }
     });
     peer.on('disconnected', () => {
+      setServerStatus('OFFLINE');
       if (!roomCreateSettled) finishRoomCreateFailure('Lost connection while creating the room. Please try again.');
       else document.getElementById('connectionStatus').textContent = 'Room connection lost. Reconnect and try again.';
     });
@@ -774,6 +810,7 @@ let joinAttemptTimer = null;
 let joinAttemptSettled = false;
 function finishJoinFailure(message) {
   if (joinAttemptSettled) return;
+  setServerStatus('OFFLINE');
   joinAttemptSettled = true;
   if (joinAttemptTimer) { clearTimeout(joinAttemptTimer); joinAttemptTimer = null; }
   if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
@@ -806,8 +843,9 @@ joinRoomBtn.onclick = () => {
     bindIncomingVoiceCalls();
     peer.on('open', () => {
       if (joinAttemptSettled) return;
+      setServerStatus('CONNECTING');
       try {
-        hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: false });
+        hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: true });
         hostConn.on('open', () => {
           if (joinAttemptSettled) return;
           joinAttemptSettled = true;
@@ -815,25 +853,38 @@ joinRoomBtn.onclick = () => {
           joinRoomBtn.disabled = false;
           joinRoomBtn.textContent = 'JOIN';
           document.getElementById('connectionStatus').textContent = 'Joined! Waiting for Host to start...';
+          setServerStatus('CONNECTED');
           hostConn.send({ type: 'join', id: state.myId, name: state.myName, charId: state.myCharId });
           if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
         });
-        hostConn.on('data', (msg) => handleClientReceive(msg));
-        hostConn.on('error', () => finishJoinFailure('Room not found / could not join. Check the code and try again.'));
-        hostConn.on('close', () => {
+        const joinedConn = hostConn;
+        joinedConn.on('data', (msg) => handleClientReceive(msg));
+        joinedConn.on('error', () => {
+          if (hostConn !== joinedConn) return;
           if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
+          else { document.getElementById('connectionStatus').textContent = 'Host disconnected.'; returnToLobby(); document.getElementById('connectionStatus').textContent = 'Host disconnected.'; }
+        });
+        joinedConn.on('close', () => {
+          if (hostConn !== joinedConn) return;
+          if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
+          else { returnToLobby(); document.getElementById('connectionStatus').textContent = 'Host disconnected.'; }
         });
       } catch (_) {
         finishJoinFailure('Could not connect to that room. Check the code and try again.');
       }
     });
     peer.on('error', (error) => {
+      setServerStatus('OFFLINE');
       const unavailable = error && (error.type === 'peer-unavailable' || error.type === 'network' || error.type === 'server-error');
       finishJoinFailure(unavailable
         ? 'Room not found / could not join. Check the code and try again.'
         : 'Could not connect to that room. Please try again.');
     });
-    peer.on('disconnected', () => finishJoinFailure('Connection lost while joining. Please try again.'));
+    peer.on('disconnected', () => {
+      setServerStatus('OFFLINE');
+      if (!joinAttemptSettled) finishJoinFailure('Connection lost while joining. Please try again.');
+      else document.getElementById('connectionStatus').textContent = 'PeerJS signaling disconnected; the current room connection may continue.';
+    });
   } catch (_) {
     finishJoinFailure('Could not start the join request. Please try again.');
   }
@@ -1006,10 +1057,10 @@ document.getElementById('startMatchBtn').onclick = () => {
   state.matchTime = state.selectedDuration;
   syncPlayerTeams();
   Object.values(state.players).forEach((p, idx) => {
-    const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
+    const sp = (MAPS[getActiveMapId()] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
   resetModeObjectives();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
@@ -1017,8 +1068,16 @@ document.getElementById('startMatchBtn').onclick = () => {
 
 function handleHostReceive(conn, msg) {
   if (msg.type === 'join') {
+    if (state.players[msg.id]) {
+      if (connections[msg.id] !== conn) { try { conn.close(); } catch (_) {} }
+      return;
+    }
     const count = Object.keys(state.players).length;
-    if (count >= MAX_PLAYERS) return;
+    if (count >= MAX_PLAYERS) {
+      try { conn.send({ type: 'room_full' }); } catch (_) {}
+      setTimeout(() => { try { conn.close(); } catch (_) {} }, 120);
+      return;
+    }
     conn.playerId = msg.id;
     connections[msg.id] = conn;
     state.players[msg.id] = createPlayer(msg.id, msg.name, msg.charId, false, count);
@@ -1035,13 +1094,38 @@ function handleHostReceive(conn, msg) {
       if (typeof msg.weaponIdx === 'number') p.weaponIdx = msg.weaponIdx;
       if (msg.throwGrenade) spawnGrenade(p, msg.grenadeType ?? 0);
     }
+  } else if (msg.type === 'use') {
+    const p = state.players[msg.id];
+    if (p && Number.isInteger(msg.weaponIdx) && WEAPONS[msg.weaponIdx] && ['heal','ammo_boost','armor_boost'].includes(WEAPONS[msg.weaponIdx].type)) {
+      p.weaponIdx = msg.weaponIdx;
+      fireWeapon(p, performance.now());
+    }
   } else if (msg.type === 'adjust_time') {
-    state.matchTime = Math.max(10, Math.min(3600, state.matchTime + msg.delta));
+    if (state.playlist !== 'competitive' && state.selectedMode !== 'boss') state.matchTime = Math.max(10, Math.min(3600, state.matchTime + msg.delta));
   }
 }
 
 function handleClientReceive(msg) {
-  if (msg.type === 'lobby_sync') {
+  if (msg.type === 'room_full') {
+    setServerStatus('OFFLINE');
+    document.getElementById('connectionStatus').textContent = 'This room is full (6/6).';
+    joinRoomBtn.disabled = false; joinRoomBtn.textContent = 'JOIN';
+    if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
+    if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
+    state.roomCode = ''; state.isHost = true;
+  } else if (msg.type === 'return_lobby') {
+    ++matchStartToken; matchStarting = false;
+    if (gameLoopRafId !== null) cancelAnimationFrame(gameLoopRafId);
+    gameLoopRafId = null; window.removeEventListener('resize', resizeCanvas);
+    state.mode = 'menu'; state.players = msg.players || state.players;
+    state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
+    document.getElementById('gameContainer').classList.add('hidden');
+    document.getElementById('lobbyScreen').classList.remove('hidden');
+    document.getElementById('waitingRoom').classList.remove('hidden');
+    document.getElementById('startMatchBtn').classList.add('hidden');
+    document.getElementById('connectionStatus').textContent = 'Host returned to the room lobby.';
+    updateLobbyPlayersUI();
+  } else if (msg.type === 'lobby_sync') {
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
     if (msg.selectedMode) state.selectedMode = msg.selectedMode;
@@ -1070,7 +1154,7 @@ function handleClientReceive(msg) {
     state.bullets = msg.bullets;
     state.grenades = msg.grenades;
     state.clouds = msg.clouds;
-    state.fxList = msg.fxList;
+    if (Array.isArray(msg.fxEvents)) msg.fxEvents.forEach((fx) => addFxSprite(fx.key, fx.x, fx.y, fx.size, fx.life));
     state.killFeed = msg.killFeed;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
@@ -1092,6 +1176,15 @@ function broadcastToClients(payload) {
   Object.values(connections).forEach((c) => { if (c.open) c.send(payload); });
 }
 
+function serializePlayersForClients() {
+  const snapshot = {};
+  Object.values(state.players).forEach((p) => {
+    snapshot[p.id] = { id:p.id, x:p.x, y:p.y, hp:p.hp, armor:p.armor, weaponIdx:p.weaponIdx,
+      aimAngle:p.aimAngle, name:p.name, charId:p.charId, kills:p.kills, deaths:p.deaths, team:p.team };
+  });
+  return snapshot;
+}
+
 // ==========================================================================
 // 7. INPUTS (PC KEYBOARD/MOUSE + MOBILE DUAL JOYSTICKS)
 // ==========================================================================
@@ -1100,6 +1193,13 @@ if (window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints >
 }
 const input = { moveX: 0, moveY: 0, aimX: 1, aimY: 0, shooting: false };
 const keys = {};
+
+function clearHeldInput() {
+  Object.keys(keys).forEach((key) => { keys[key] = false; });
+  input.moveX = 0; input.moveY = 0; input.shooting = false;
+}
+window.addEventListener('blur', clearHeldInput);
+document.addEventListener('visibilitychange', () => { if (document.hidden) clearHeldInput(); });
 
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
@@ -1198,10 +1298,6 @@ document.getElementById('btnSwap').onclick = cycleWeapon;
 document.getElementById('btnGrenade').onclick = triggerGrenade;
 document.getElementById('btnGrenadeType').onclick = cycleGrenadeType;
 document.getElementById('btnZoom').onclick = () => { state.sniperZoom = !state.sniperZoom; };
-document.getElementById('btnReload').onclick = () => {
-  const b=document.getElementById('btnReload'); b.innerHTML='∞<small>UNLIMITED</small>';
-  setTimeout(()=>{ if(b.isConnected) b.innerHTML='↻<small>AMMO</small>'; },900);
-};
 document.getElementById('toggleScoreboardBtn').onclick = toggleScoreboard;
 document.getElementById('closeSbBtn').onclick = toggleScoreboard;
 document.getElementById('leaveMatchBtn').onclick = returnToLobby;
@@ -1212,12 +1308,12 @@ document.getElementById('rematchBtn').onclick = () => {
   state._progressAwarded = false;
   state.matchTime = state.selectedDuration;
   Object.values(state.players).forEach((p, idx) => {
-    const sp = (MAPS[state.mapId] || MAPS[0]).spawns[idx % 6];
+    const sp = (MAPS[getActiveMapId()] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0;
     p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
     p.deadTimer = 0; p.lastShot = 0; p.lastGrenade = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
   resetModeObjectives(); syncPlayerTeams();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
@@ -1232,10 +1328,10 @@ function selectWeapon(idx) {
 
   // Instant self-use if player taps Medkit, Ammo Crate, or Gear Crate slot directly
   const w = WEAPONS[idx];
-  if (state.isHost && (w.type === 'heal' || w.type === 'ammo_boost' || w.type === 'armor_boost')) {
-    fireWeapon(me, performance.now());
-  }
-  if (!state.isHost && hostConn && hostConn.open) {
+  if (['heal', 'ammo_boost', 'armor_boost'].includes(w.type)) {
+    if (state.isHost) fireWeapon(me, performance.now());
+    else if (hostConn && hostConn.open) hostConn.send({ type: 'use', id: state.myId, weaponIdx: idx });
+  } else if (!state.isHost && hostConn && hostConn.open) {
     hostConn.send({ type: 'input', id: state.myId, input, weaponIdx: idx });
   }
 }
@@ -1287,6 +1383,7 @@ function renderScoreboard() {
 // 8. SIMULATION, UTILITY CRATES (MEDKIT/AMMO/ARMOR) & MATCH OVER
 // ==========================================================================
 function addFxSprite(fxKey, x, y, size, life) {
+  if (state.isHost && state.mode === 'playing' && state.fxEvents.length < 180) state.fxEvents.push({ key: fxKey, x, y, size, life });
   if (state.fxList.length >= 180) state.fxList.shift();
   state.fxList.push({ fxKey, x, y, size, life, maxLife: life });
 }
@@ -1337,69 +1434,61 @@ async function startMatch() {
   }
 }
 
-// Return to the lobby without a page reload. This stops the render loop,
-// clears match-only state, and tears down any room connection cleanly.
+// Return to the lobby without a page reload. Host rooms stay connected so
+// players can regroup and start another match; only clients leave their room.
 function returnToLobby() {
   ++matchStartToken;
   matchStarting = false;
-
-  if (gameLoopRafId !== null) {
-    cancelAnimationFrame(gameLoopRafId);
-    gameLoopRafId = null;
-  }
+  if (gameLoopRafId !== null) cancelAnimationFrame(gameLoopRafId);
+  gameLoopRafId = null;
   window.removeEventListener('resize', resizeCanvas);
 
-  // Let room members know before the host tears down the PeerJS session.
   const wasHost = Boolean(state.isHost);
   const wasRoom = Boolean(state.roomCode && state.roomCode !== 'BOTS');
-  if (wasHost && wasRoom) {
-    try { broadcastToClients({ type: 'room_closed' }); } catch (error) { console.warn(error); }
-  }
-
-  Object.values(connections).forEach((connection) => {
-    try { connection.close(); } catch (error) { console.warn(error); }
-  });
-  connections = {};
-
-  if (hostConn) {
-    try { hostConn.close(); } catch (error) { console.warn(error); }
-    hostConn = null;
-  }
-
-  if (peer) {
-    try { peer.destroy(); } catch (error) { console.warn(error); }
-    peer = null;
+  const keepHostRoom = wasHost && wasRoom;
+  if (keepHostRoom) {
+    try { broadcastToClients({ type: 'return_lobby', players: state.players }); } catch (error) { console.warn(error); }
+    Object.values(state.players).forEach((p, index) => {
+      const spawn = (MAPS[getActiveMapId()] || MAPS[0]).spawns[index % 6];
+      p.x = spawn.x; p.y = spawn.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100;
+      p.armor = 0; p.deadTimer = 0; p.remoteInput = null; p.carryingFlag = null;
+    });
+    broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+    updateLobbyPlayersUI();
+  } else {
+    Object.values(connections).forEach((connection) => { try { connection.close(); } catch (_) {} });
+    connections = {};
+    if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
+    if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
+    state.roomCode = '';
+    state.players = {};
   }
 
   state.mode = 'menu';
   state.isHost = true;
-  state.roomCode = '';
-  state.players = {};
+  if (!wasHost) { joinRoomBtn.disabled = false; joinRoomBtn.textContent = 'JOIN'; }
   state.matchTime = state.selectedDuration;
-  state.bullets = [];
-  state.grenades = [];
-  state.clouds = [];
-  state.fxList = [];
-  state.killFeed = [];
-  state.zombies = [];
-  state.zombieKills = 0;
-  state.zombieWave = 1;
-  state.ctfFlags = null;
-  state.ctfScore = [0, 0];
-  state.boss = null;
+  state.bullets = []; state.grenades = []; state.clouds = [];
+  state.fxList = []; state.fxEvents = []; state.killFeed = [];
+  state.zombies = []; state.zombieKills = 0; state.zombieWave = 1;
+  state.ctfFlags = null; state.ctfScore = [0, 0]; state.boss = null;
   state._progressAwarded = false;
+  clearHeldInput();
 
   document.getElementById('gameContainer').classList.add('hidden');
   document.getElementById('lobbyScreen').classList.remove('hidden');
-  document.getElementById('waitingRoom').classList.add('hidden');
+  document.getElementById('waitingRoom').classList.toggle('hidden', !keepHostRoom);
+  document.getElementById('startMatchBtn').classList.toggle('hidden', !keepHostRoom);
   document.getElementById('scoreboardModal').classList.add('hidden');
   document.getElementById('matchOverModal').classList.add('hidden');
   document.getElementById('settingsDrawer').classList.add('hidden');
   const modeHub = document.getElementById('modeHub');
-  if (modeHub) modeHub.classList.add('hidden');
-
-  document.getElementById('displayRoomCode').textContent = '----';
-  document.getElementById('connectionStatus').textContent = 'Up to 6 players • Friends only in private rooms';
+  if (modeHub) modeHub.classList.remove('mode-hub-open');
+  document.getElementById('displayRoomCode').textContent = keepHostRoom ? state.roomCode : '----';
+  document.getElementById('connectionStatus').textContent = keepHostRoom
+    ? 'Room stays open. Players can ready up again.'
+    : 'Up to 6 players • Room code required';
+  setServerStatus(keepHostRoom ? 'ROOM READY' : 'OFFLINE');
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
 }
 
@@ -1449,13 +1538,22 @@ function gameLoop(now) {
   if (state.mode === 'playing') {
     if (state.isHost) {
       stepHostSimulation(dt, now);
-      broadcastToClients({
-        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0, ctfFlags:state.ctfFlags,ctfScore:state.ctfScore,boss:state.boss,battleZone:state.battleZone,bullets: state.bullets,
-        grenades: state.grenades, clouds: state.clouds, fxList: state.fxList,
-        killFeed: state.killFeed, matchTime: state.matchTime, mapId: state.mapId
-      });
+      if (now - lastStateBroadcastAt >= 50) {
+        lastStateBroadcastAt = now;
+        broadcastToClients({
+          type: 'state', players: serializePlayersForClients(), zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0,
+          ctfFlags:state.ctfFlags, ctfScore:state.ctfScore, boss:state.boss, battleZone:state.battleZone,
+          bullets: state.bullets, grenades: state.grenades, clouds: state.clouds,
+          fxEvents: state.fxEvents.splice(0, 60), killFeed: state.killFeed.slice(-8),
+          matchTime: state.matchTime, mapId: state.mapId
+        });
+      }
     } else if (hostConn && hostConn.open) {
-      hostConn.send({ type: 'input', id: state.myId, input });
+      const snapshot = JSON.stringify(input);
+      if (now - lastInputSentAt >= 33 && (snapshot !== lastInputSnapshot || now - lastInputSentAt >= 100)) {
+        lastInputSentAt = now; lastInputSnapshot = snapshot;
+        hostConn.send({ type: 'input', id: state.myId, input });
+      }
     }
 
     checkObjectiveEnd();
@@ -1472,9 +1570,10 @@ function gameLoop(now) {
 }
 
 function stepHostSimulation(dt, now) {
-  state.matchTime = Math.max(0, state.matchTime - dt);
+  if (state.selectedMode === 'boss') state.boss.elapsed = (state.boss.elapsed || 0) + dt;
+  else state.matchTime = Math.max(0, state.matchTime - dt);
   const platforms = getActivePlatforms();
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
 
   Object.values(state.players).forEach((p, idx) => {
     if (p.boostTimer > 0) p.boostTimer = Math.max(0, p.boostTimer - dt);
@@ -1589,7 +1688,7 @@ function stepHostSimulation(dt, now) {
     b.x += b.vx; b.y += b.vy; b.life -= dt;
 
     const hitWall = platforms.some((pl) => b.x > pl.x && b.x < pl.x + pl.w && b.y > pl.y && b.y < pl.y + pl.h);
-    if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0&&Math.hypot(b.x-state.boss.x,b.y-state.boss.y)<76){state.boss.hp=Math.max(0,state.boss.hp-(b.damage||12));addFxSprite('sparks',b.x,b.y,44,.2);state.bullets.splice(i,1);continue;}
+    if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0&&Math.hypot(b.x-state.boss.x,b.y-state.boss.y)<76){const bossDamage=b.weaponName==='SNIPER RIFLE'?1:.22;state.boss.hp=Math.max(0,state.boss.hp-(b.damage||12)*bossDamage);addFxSprite('sparks',b.x,b.y,44,.2);state.bullets.splice(i,1);continue;}
     let hitPlayer = null;
 
     for (const p of Object.values(state.players)) {
@@ -1845,7 +1944,7 @@ function renderGame() {
   ctx.scale(state.camera.zoom, state.camera.zoom);
   ctx.translate(-state.camera.x, -state.camera.y);
 
-  const activeMapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
+  const activeMapId = getActiveMapId();
   const activeMap = MAPS[activeMapId] || MAPS[0];
   const mapImg = MAP_IMAGES[activeMapId];
   if (mapImg && mapImg.complete && mapImg.naturalWidth > 0) {
@@ -1982,7 +2081,7 @@ function drawCharacterAndWeapon(p) {
 function updateHudUI() {
   const me = state.players[state.myId];
   if (!me) return;
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
   document.getElementById('healthBar').style.width = `${Math.max(0, me.hp)}%`;
   document.getElementById('hpText').textContent = `HP ${Math.ceil(me.hp)}`;
   document.getElementById('armorBar').style.width = `${Math.min(100, me.armor || 0)}%`;
@@ -1992,7 +2091,7 @@ function updateHudUI() {
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
   document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${modeTeamMode()?'TEAM '+(me.team===0?'GREEN':'GOLD'):getModeLabel().toUpperCase()} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
-  document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
+  document.getElementById('matchTimer').textContent = state.selectedMode === 'boss' && state.boss ? formatClock(state.boss.elapsed || 0) : formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
 
@@ -2019,7 +2118,7 @@ function updateHudUI() {
     card.className = 'lobby-char-card' + (character.id === state.myCharId ? ' selected' : '');
     card.dataset.character = String(character.id);
     card.setAttribute('aria-pressed', String(character.id === state.myCharId));
-    card.innerHTML = '<img src="' + character.file + '" alt="" loading="lazy"><span><strong>' +
+    card.innerHTML = '<img data-char-id="' + character.id + '" src="' + (SPRITES.chars[character.id] && SPRITES.chars[character.id].toDataURL ? SPRITES.chars[character.id].toDataURL() : character.file) + '" alt="" loading="lazy"><span><strong>'
       character.name + '</strong><small>OPERATOR 0' + (character.id + 1) +
       '</small></span><b class="pick-check">✓</b>';
     card.addEventListener('click', () => {
@@ -2043,7 +2142,7 @@ function updateHudUI() {
     });
   }
 
-  MAPS.forEach((map) => {
+  PICKER_MAPS.forEach((map) => {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
@@ -2105,11 +2204,20 @@ function renderModeSelection() {
     const active = b.dataset.mode === state.selectedMode;
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
-  const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
+  const playlistName = state.playlist === 'competitive' ? 'Competitive • timer locked' : 'Arcade • timer adjustable';
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Private 3v3 team battle. Invite clanmates to a room and fight as a squad. Results contribute to your local operator record.'};
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it to complete the raid. There is no countdown.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Practice with bots or join a room-code match with friends. Results contribute to your local operator record.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
+  const timerLocked = state.playlist === 'competitive' || state.selectedMode === 'boss';
+  ['timePlusBtn', 'timeMinusBtn'].forEach((id) => { const button = document.getElementById(id); if (button) button.disabled = timerLocked; });
+  document.querySelectorAll('.preset-btn').forEach((button) => { button.disabled = state.selectedMode === 'boss'; });
+  const lobbyTimer = document.getElementById('lobbyTimerDisplay');
+  if (lobbyTimer && state.selectedMode === 'boss') lobbyTimer.textContent = 'NO TIME LIMIT';
+  else if (lobbyTimer) lobbyTimer.textContent = formatClock(state.selectedDuration);
+  const lobbyMapName = document.getElementById('lobbyMapName');
+  if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
+  syncLobbyMapPreview();
   document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
 }
 document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
@@ -2117,8 +2225,6 @@ document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('
 }));
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
   state.selectedMode = b.dataset.mode;
-  if(state.selectedMode==='zombie')state.mapId=10;
-  if(state.selectedMode==='boss')state.mapId=6;
   localStorage.setItem('do_mode', state.selectedMode);
   if (state.mode !== 'playing' && state.mode !== 'gameover') {
     syncPlayerTeams();
