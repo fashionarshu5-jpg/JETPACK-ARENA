@@ -397,3 +397,27 @@ html, body, #gameRoot {
   .menu-card .back { min-height: 28px; margin-top: 5px; font-size: 9px; }
   .mobile-pad { overflow: hidden; }
 }
+
+/* Compact all 3D overlays for the short landscape phone viewport. */
+@media (max-width:1000px) and (max-height:600px) and (orientation:landscape) {
+  .top-hud { padding:calc(3px + var(--safe-t)) calc(6px + var(--safe-r)) 3px calc(6px + var(--safe-l)); }
+  .brand { font-size:13px; } .brand small { font-size:6px; }
+  .hud-stats { gap:3px 6px;font-size:7px; } .health-track { width:38px; } .ammo-stat { max-width:76px; }
+  .quick-tabs { top:calc(43px + var(--safe-t));right:calc(5px + var(--safe-r));gap:3px;padding:3px; }
+  .quick-tabs button { min-width:40px;min-height:40px;padding:3px; } .quick-tabs button small { font-size:6px; }
+  .quick-panel { top:calc(88px + var(--safe-t));right:calc(5px + var(--safe-r));width:min(230px,38vw);max-height:calc(100dvh - 96px - var(--safe-t) - var(--safe-b));overflow:hidden!important; }
+  .quick-panel .quick-panel-body { padding:7px; } .quick-panel .weapon-grid { gap:4px; } .quick-panel .weapon-grid button { min-height:36px;padding:4px; }
+  .menu-card { width:min(370px,48vw);max-height:calc(100dvh - var(--safe-t) - var(--safe-b) - 8px);padding:8px 12px; }
+  .menu-card h1 { font-size:clamp(23px,3.4vw,34px);line-height:1;margin:4px 0; } .menu-card h2 { font-size:23px;margin:4px 0; }
+  .menu-card .intro { font-size:8px;line-height:1.2;margin:4px 0 6px; } .menu-card label { margin:4px 0;font-size:8px; }
+  .menu-card select { min-height:28px;padding:4px 6px;font-size:9px; }
+  .menu-card .primary,.menu-card .secondary { min-height:34px;padding:6px;margin-top:4px;font-size:10px; }
+  .menu-card .back { min-height:24px;margin-top:3px;font-size:8px; }
+  .mobile-pad #movePad { width:82px;height:82px;min-width:82px;min-height:82px;left:calc(7px + var(--safe-l));bottom:calc(6px + var(--safe-b)); }
+  .mobile-pad #lookPad { height:52vh;bottom:0; }
+  .mobile-actions { width:min(40vw,190px);max-width:calc(100vw - 100px - var(--safe-l) - var(--safe-r));gap:3px;right:calc(6px + var(--safe-r));bottom:calc(6px + var(--safe-b)); }
+  .mobile-actions button { min-width:40px;min-height:40px;height:40px;font-size:7px; }
+  .mobile-actions #mobileFire { min-width:44px;min-height:44px;width:44px;height:44px; }
+  .mobile-actions #mobileJump { min-width:42px;min-height:42px;width:42px;height:42px; }
+  .mission,.camera-toggle { display:none; }
+}

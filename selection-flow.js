@@ -23,6 +23,7 @@
     const isSoldier = kind === 'soldier';
     const grid = isSoldier ? soldierGrid : mapGrid;
     activeGrid = grid;
+    modal.dataset.pickerKind = isSoldier ? 'soldier' : 'map';
     host.replaceChildren(grid);
     title.textContent = isSoldier ? 'SELECT OPERATOR' : 'SELECT BATTLEFIELD';
     subtitle.textContent = isSoldier
@@ -41,6 +42,7 @@
       if (spot && spot.parent) spot.parent.insertBefore(activeGrid, spot.next && spot.next.parentNode === spot.parent ? spot.next : null);
     }
     activeGrid = null;
+    delete modal.dataset.pickerKind;
     modal.classList.add('hidden');
     document.body.classList.remove('picker-open');
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
