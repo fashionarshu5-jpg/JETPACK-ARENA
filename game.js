@@ -432,6 +432,7 @@ function syncSoldierUI() {
   setTransparentPortrait(document.getElementById('hudAvatarImg'), ch.file);
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
+  if (typeof renderPlayerShowcase === 'function') renderPlayerShowcase();
 }
 
 CHARACTERS.forEach((ch) => {
@@ -2118,6 +2119,7 @@ function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
 function saveOperatorProfile() {
   localStorage.setItem(progressionKey, JSON.stringify(operatorProfile));
   renderOperatorProfile();
+  if (typeof renderPlayerShowcase === 'function') renderPlayerShowcase();
 }
 function renderOperatorProfile() {
   const level = operatorLevel(), intoLevel = operatorProfile.xp % 250;
@@ -2176,8 +2178,29 @@ function awardMatchProgress() {
   const reward = document.getElementById('profileRewardLine');
   if (reward) reward.textContent = '+' + xpGain + ' XP earned' + (won ? ' • VICTORY BONUS +100 XP' : '');
 }
+function renderPlayerShowcase() {
+  const weapon = WEAPONS[state.players[state.myId]?.weaponIdx ?? 1] || WEAPONS[1];
+  const grenade = GRENADE_TYPES[state.myGrenadeType] || GRENADE_TYPES[0];
+  const level = operatorLevel(), xpIntoLevel = operatorProfile.xp % 250;
+  const fill = document.getElementById('showcaseXpFill');
+  document.getElementById('showcaseLevel').textContent = 'LEVEL ' + level;
+  document.getElementById('showcaseLevelBadge').textContent = 'LVL ' + String(level).padStart(2,'0');
+  document.getElementById('showcaseXpText').textContent = xpIntoLevel + ' / 250 XP';
+  if (fill) fill.style.width = (xpIntoLevel / 250 * 100) + '%';
+  const weaponImage = document.getElementById('showcasePrimaryWeapon');
+  weaponImage.src = weapon.file; weaponImage.alt = weapon.name;
+  document.getElementById('showcasePrimaryName').textContent = weapon.name;
+  const grenadeImage = document.getElementById('showcaseGrenade');
+  grenadeImage.src = grenade.file; grenadeImage.alt = grenade.name;
+  document.getElementById('showcaseGrenadeName').textContent = grenade.name;
+  document.getElementById('showcaseStats').hidden = !(operatorProfile.matches || operatorProfile.kills || operatorProfile.wins);
+  document.getElementById('showcaseWins').textContent = operatorProfile.wins;
+  document.getElementById('showcaseMatches').textContent = operatorProfile.matches;
+  document.getElementById('showcaseKills').textContent = operatorProfile.kills;
+}
 renderModeSelection();
 renderOperatorProfile();
+renderPlayerShowcase();
 
 // Quick-access game mode panel. Selection still uses the existing live mode state.
 (function wireGameModePanel() {
