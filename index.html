@@ -52,29 +52,37 @@
 
       <!-- FULL-SCREEN ARCADE LOBBY -->
       <main class="lobby-grid redesign-grid" data-screen="lobby" aria-label="Lobby home">
-        <section class="tac-panel operator-panel" data-screen="operator-select" aria-label="Operator selection">
-          <div class="panel-heading">
-            <div><span class="eyebrow">01 / OPERATOR SELECT</span><div class="panel-label">CHOOSE YOUR SOLDIER</div></div>
-            <span class="section-count">09 OPERATORS</span>
+        <section class="tac-panel operator-panel" data-screen="operator-select" aria-label="Player profile and soldier showcase">
+          <div class="profile-panel-head">
+            <div><span class="eyebrow">PLAYER DOSSIER</span><div class="panel-label">YOUR OPERATOR</div></div>
+            <span class="section-count">09 SOLDIERS</span>
           </div>
-          <div class="field-group callsign-field">
-            <label for="playerNameInput">SOLDIER CALLSIGN</label>
-            <input type="text" id="playerNameInput" maxlength="14" placeholder="Soldier" value="Soldier" />
-          </div>
-          <div id="openSoldierFromCard" class="operator-preview hero-operator" title="Open soldier settings">
-            <div class="hero-glow"></div>
-            <img id="lobbyCharPreviewImg" src="./assets/char1.png" alt="Selected Soldier" />
-            <div class="op-meta">
-              <span class="op-index" id="lobbyCharIndex">SOLDIER 01 / 09</span>
-              <h2 id="lobbyCharName">DESERT MEDIC</h2>
-              <small>JETPACK ASSAULT SPECIALIST</small>
+          <div class="profile-identity">
+            <div class="profile-avatar"><img id="showcasePlayerAvatar" src="./assets/char1.png" alt="Player soldier avatar" /></div>
+            <div class="profile-identity-copy">
+              <label for="playerNameInput">PLAYER CALLSIGN</label>
+              <input type="text" id="playerNameInput" maxlength="14" placeholder="Soldier" value="Soldier" />
+              <div class="profile-level-row"><strong id="showcaseLevel">LEVEL 1</strong><span id="showcaseXpText">0 / 250 XP</span></div>
+              <div class="profile-xp-track"><span id="showcaseXpFill"></span></div>
             </div>
-            <span class="hero-level">LVL 01</span>
           </div>
-          <div class="operator-stats"><span><b>09</b> OPERATORS</span><span><b>JET</b> MOBILITY</span><span><b>HD</b> COMBAT</span></div>
-          <div class="subsection-title"><span>SELECT OPERATOR</span><span>01 — 09</span></div>
+          <div id="openSoldierFromCard" class="operator-preview hero-operator" title="Tap to change soldier" role="button" tabindex="0" aria-label="Change selected soldier">
+            <div class="hero-glow"></div>
+            <img id="lobbyCharPreviewImg" src="./assets/char1.png" alt="Selected soldier portrait" />
+            <div class="op-meta"><span class="op-index" id="lobbyCharIndex">SOLDIER 01 / 09</span><h2 id="lobbyCharName">DESERT MEDIC</h2><small>JETPACK ASSAULT SPECIALIST</small></div>
+            <span class="hero-level" id="showcaseLevelBadge">LVL 01</span>
+          </div>
+          <button type="button" class="btn btn-outline-lime profile-change-btn" onclick="document.getElementById('openSoldierFromCard').click()">CHANGE SOLDIER</button>
+          <div class="showcase-loadout">
+            <div class="showcase-loadout-title"><span>FIELD LOADOUT</span><small>AVAILABLE EQUIPMENT</small></div>
+            <div class="showcase-equipment-row">
+              <div class="showcase-equipment-card"><img id="showcasePrimaryWeapon" src="./assets/weap2.png" alt="Primary weapon" /><div><small>STARTING WEAPON</small><strong id="showcasePrimaryName">DUAL UZIS</strong></div></div>
+              <div class="showcase-equipment-card"><img id="showcaseGrenade" src="./assets/grenade_frag.png" alt="Selected grenade" /><div><small>TACTICAL GEAR</small><strong id="showcaseGrenadeName">FRAG GRENADE</strong></div></div>
+            </div>
+            <div class="showcase-capabilities"><span>JETPACK</span><span>10 WEAPONS</span><span>3 GRENADES</span></div>
+          </div>
+          <div id="showcaseStats" class="showcase-stats" hidden><div><strong id="showcaseWins">0</strong><span>WINS</span></div><div><strong id="showcaseMatches">0</strong><span>MATCHES</span></div><div><strong id="showcaseKills">0</strong><span>KILLS</span></div></div>
           <div id="lobbyCharacterGrid" class="lobby-character-grid" aria-label="Select soldier"></div>
-          <div class="cap-tags"><span>∞ AMMO</span><span>JETPACK</span><span>FRAG</span><span>GAS</span><span>SMOKE</span></div>
         </section>
 
         <section class="tac-panel mission-panel" data-screen="map-select" aria-label="Battlefield selection">
