@@ -425,6 +425,7 @@ const charGridEl = document.getElementById('characterGrid');
 function syncSoldierUI() {
   const ch = CHARACTERS[state.myCharId] || CHARACTERS[0];
   setTransparentPortrait(document.getElementById('lobbyCharPreviewImg'), ch.file);
+  setTransparentPortrait(document.getElementById('showcasePlayerAvatar'), ch.file);
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
   setTransparentPortrait(document.getElementById('drawerCharIcon'), ch.file);
