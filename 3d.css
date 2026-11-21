@@ -39,3 +39,306 @@
 
 /* Crouch control stays compact in portrait and landscape layouts. */
 .mobile-actions #mobileCrouch{border-color:#9fb4a0;color:#d7e2d4;background:#202c23}
+
+
+/* ==========================================================================
+   3D TACTICAL — MOBILE-FIRST HUD, MENU AND TOUCH CONTROL LAYOUT
+   ========================================================================== */
+:root {
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+}
+html, body, #gameRoot {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  height:100%;
+  height:100dvh;
+  overflow:hidden;
+  overflow-x:clip;
+  overscroll-behavior:none;
+}
+#gameRoot { position:fixed; inset:0; }
+#battlefield { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.top-hud {
+  top:0; left:0; right:0;
+  min-width:0;
+  padding:calc(10px + var(--safe-t)) calc(12px + var(--safe-r)) 10px calc(12px + var(--safe-l));
+  gap:12px;
+  align-items:flex-start;
+}
+.brand { min-width:0; flex:0 1 auto; font-size:clamp(16px,2.4vw,22px); line-height:1; }
+.brand small { font-size:clamp(8px,1vw,10px); letter-spacing:1.6px; }
+.hud-stats {
+  min-width:0; max-width:min(68vw,760px);
+  display:flex; align-items:center; justify-content:flex-end;
+  flex-wrap:wrap; gap:8px 14px;
+  font-size:clamp(8px,1.1vw,11px);
+}
+.health-stat { min-width:0; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.health-track { width:clamp(42px,7vw,72px); flex:0 0 auto; }
+.ammo-stat { min-width:0; max-width:150px; }
+.ammo-stat b, .ammo-stat span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.screen {
+  box-sizing:border-box;
+  padding:calc(12px + var(--safe-t)) calc(12px + var(--safe-r))
+          calc(12px + var(--safe-b)) calc(12px + var(--safe-l));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
+  background:linear-gradient(90deg,rgba(5,10,7,.92),rgba(5,10,7,.5));
+}
+.menu-card {
+  box-sizing:border-box;
+  width:min(440px,100%);
+  max-width:100%;
+  max-height:calc(100dvh - var(--safe-t) - var(--safe-b) - 24px);
+  margin:auto;
+  padding:clamp(14px,3.5vw,28px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
+}
+.menu-card.compact { margin:auto; }
+.menu-card h1 { font-size:clamp(34px,8vw,62px); line-height:.92; }
+.menu-card h2 { font-size:clamp(30px,7vw,42px); }
+.menu-card .intro { font-size:clamp(12px,2.4vw,13px); line-height:1.55; }
+.menu-card select, .menu-card button, .menu-card a { min-height:44px; }
+.primary, .secondary { min-height:48px; padding:12px; }
+.back { min-height:44px; display:flex; align-items:center; justify-content:center; }
+.mission {
+  left:calc(12px + var(--safe-l));
+  bottom:calc(14px + var(--safe-b));
+  max-width:min(36vw,330px);
+  padding:10px 12px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.camera-toggle {
+  right:calc(12px + var(--safe-r));
+  bottom:calc(14px + var(--safe-b));
+  min-width:44px; min-height:44px;
+}
+.quick-tabs {
+  top:calc(76px + var(--safe-t));
+  right:calc(12px + var(--safe-r));
+  gap:6px; padding:5px;
+}
+.quick-tabs button { min-width:48px; min-height:48px; }
+.quick-panel {
+  top:calc(134px + var(--safe-t));
+  right:calc(12px + var(--safe-r));
+  width:min(300px,calc(100vw - 24px - var(--safe-l) - var(--safe-r)));
+  max-height:calc(100dvh - 150px - var(--safe-t) - var(--safe-b));
+  overflow-x:hidden; overflow-y:auto; touch-action:pan-y;
+}
+.quick-panel>header button { min-width:44px; min-height:44px; }
+.mobile-pad {
+  position:fixed;
+  inset:0;
+  z-index:4;
+  display:block;
+  padding:0;
+  pointer-events:none;
+}
+.mobile-pad > * { pointer-events:auto; }
+#movePad {
+  position:absolute;
+  left:calc(14px + var(--safe-l));
+  bottom:calc(18px + var(--safe-b));
+  width:clamp(92px,18vw,124px);
+  height:clamp(92px,18vw,124px);
+  min-width:88px; min-height:88px;
+  touch-action:none;
+}
+#movePad i { width:40px; height:40px; }
+#lookPad {
+  position:absolute;
+  right:calc(8px + var(--safe-r));
+  bottom:calc(10px + var(--safe-b));
+  width:44vw;
+  height:42vh;
+  z-index:0;
+  border:1px solid #dce9ce18;
+  border-radius:18px;
+  touch-action:none;
+}
+.mobile-actions {
+  position:absolute;
+  right:calc(14px + var(--safe-r));
+  bottom:calc(18px + var(--safe-b));
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(44px,1fr));
+  gap:8px;
+  width:min(46vw,240px);
+  max-width:calc(100vw - 120px - var(--safe-l) - var(--safe-r));
+  align-items:end;
+  pointer-events:auto;
+}
+.mobile-actions button,
+.mobile-actions #mobileFire,
+.mobile-actions #mobileJump,
+.mobile-actions #mobilePause {
+  box-sizing:border-box;
+  min-width:44px; min-height:44px;
+  width:100%; height:44px;
+  padding:4px;
+  border-radius:10px;
+  font-size:clamp(8px,1.7vw,10px);
+  white-space:nowrap;
+  touch-action:manipulation;
+}
+.mobile-actions #mobileFire {
+  width:58px; height:58px; min-width:58px; min-height:58px;
+  justify-self:end; grid-column:3; grid-row:1 / span 2;
+  border-radius:50%;
+}
+.mobile-actions #mobileJump {
+  width:50px; height:50px; min-width:50px; min-height:50px;
+  justify-self:end; grid-column:2; grid-row:1 / span 2;
+  border-radius:50%;
+}
+.mobile-actions #mobilePause { grid-column:1; grid-row:1; }
+.mobile-actions #mobileRun { grid-column:1; grid-row:2; }
+.mobile-actions #mobileCrouch { grid-column:1; grid-row:3; }
+.mobile-actions #mobileBag { grid-column:2; grid-row:3; }
+.mobile-actions #mobileMedkit { grid-column:3; grid-row:3; }
+.mobile-actions #mobileReload { grid-column:1; grid-row:4; }
+.mobile-actions #mobileWeapon { grid-column:2; grid-row:4; }
+#toast {
+  top:calc(88px + var(--safe-t));
+  left:50%;
+  max-width:calc(100vw - 24px);
+  text-align:center;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+#crosshair { pointer-events:none; }
+#gameRoot button, #gameRoot select { touch-action:manipulation; }
+
+/* Portrait phones: keep every action inside the screen and reserve HUD rows. */
+@media (max-width:650px) and (orientation:portrait) {
+  .top-hud {
+    display:flex; flex-direction:column; align-items:stretch; gap:6px;
+    padding:calc(7px + var(--safe-t)) calc(9px + var(--safe-r)) 6px calc(9px + var(--safe-l));
+    background:linear-gradient(180deg,rgba(0,0,0,.84),rgba(0,0,0,.12));
+  }
+  .brand { font-size:17px; }
+  .brand small { display:none; }
+  .hud-stats {
+    width:100%; max-width:100%;
+    justify-content:space-between; gap:5px 8px;
+    font-size:9px;
+  }
+  .health-track { width:48px; }
+  .ammo-stat { max-width:104px; }
+  .ammo-stat span { font-size:11px; }
+  .quick-tabs {
+    top:calc(94px + var(--safe-t));
+    left:calc(8px + var(--safe-l)); right:calc(8px + var(--safe-r));
+    justify-content:space-between;
+  }
+  .quick-tabs button { flex:1 1 0; min-width:44px; min-height:46px; }
+  .quick-panel {
+    top:calc(148px + var(--safe-t));
+    left:calc(8px + var(--safe-l)); right:calc(8px + var(--safe-r));
+    width:auto; max-width:none;
+    max-height:42dvh;
+  }
+  .mission {
+    left:calc(8px + var(--safe-l));
+    bottom:calc(142px + var(--safe-b));
+    max-width:calc(100vw - 16px - var(--safe-l) - var(--safe-r));
+    padding:7px 9px;
+    font-size:8px;
+  }
+  .mission span:nth-of-type(1) { display:none; }
+  .camera-toggle {
+    top:calc(146px + var(--safe-t));
+    right:calc(8px + var(--safe-r));
+    bottom:auto;
+  }
+  #movePad { left:calc(10px + var(--safe-l)); bottom:calc(14px + var(--safe-b)); }
+  #lookPad { width:48vw; height:34vh; right:calc(4px + var(--safe-r)); }
+  .mobile-actions {
+    right:calc(8px + var(--safe-r));
+    bottom:calc(12px + var(--safe-b));
+    width:min(52vw,224px);
+    max-width:calc(100vw - 112px - var(--safe-l) - var(--safe-r));
+    grid-template-columns:repeat(3,minmax(44px,1fr));
+    gap:6px;
+  }
+  .mobile-actions button { height:44px; min-height:44px; }
+  .mobile-actions #mobileFire { width:54px; height:54px; min-width:54px; min-height:54px; }
+  .mobile-actions #mobileJump { width:48px; height:48px; min-width:48px; min-height:48px; }
+}
+
+/* Landscape phones: low-profile HUD and thumb controls clear of the center. */
+@media (max-width:900px) and (orientation:landscape) {
+  .top-hud {
+    padding:calc(5px + var(--safe-t)) calc(8px + var(--safe-r)) 5px calc(8px + var(--safe-l));
+    align-items:flex-start;
+  }
+  .brand { font-size:16px; }
+  .brand small { font-size:7px; letter-spacing:1px; }
+  .hud-stats { max-width:72vw; gap:4px 9px; font-size:8px; }
+  .health-track { width:44px; }
+  .ammo-stat { max-width:90px; }
+  .ammo-stat span { font-size:10px; }
+  .quick-tabs { top:calc(54px + var(--safe-t)); right:calc(8px + var(--safe-r)); }
+  .quick-tabs button { min-width:44px; min-height:44px; }
+  .quick-panel {
+    top:calc(104px + var(--safe-t));
+    right:calc(8px + var(--safe-r));
+    width:min(260px,42vw);
+    max-height:calc(100dvh - 112px - var(--safe-t) - var(--safe-b));
+  }
+  .mission {
+    left:calc(8px + var(--safe-l));
+    bottom:calc(8px + var(--safe-b));
+    max-width:30vw; padding:6px 8px; font-size:8px;
+  }
+  .mission span:nth-of-type(1) { display:none; }
+  .camera-toggle { right:calc(8px + var(--safe-r)); bottom:calc(8px + var(--safe-b)); }
+  #movePad {
+    left:calc(10px + var(--safe-l));
+    bottom:calc(10px + var(--safe-b));
+    width:92px; height:92px;
+  }
+  #lookPad { right:calc(5px + var(--safe-r)); bottom:calc(5px + var(--safe-b)); width:38vw; height:48vh; }
+  .mobile-actions {
+    right:calc(8px + var(--safe-r));
+    bottom:calc(8px + var(--safe-b));
+    width:min(44vw,220px);
+    max-width:calc(100vw - 110px - var(--safe-l) - var(--safe-r));
+    gap:5px;
+  }
+  .mobile-actions button { height:44px; min-height:44px; }
+  .mobile-actions #mobileFire { width:48px; height:48px; min-width:48px; min-height:48px; }
+  .mobile-actions #mobileJump { width:46px; height:46px; min-width:46px; min-height:46px; }
+  .mission { display:none; }
+}
+@media (max-width:380px) and (orientation:portrait) {
+  .quick-tabs button small { font-size:6px; letter-spacing:0; }
+  .quick-tabs button span { font-size:15px; }
+  .mobile-actions { gap:5px; }
+  .mobile-actions button { font-size:8px; }
+  .mission { display:none; }
+}
+@media (max-height:390px) and (orientation:landscape) {
+  .hud-stats { max-width:74vw; }
+  .quick-tabs { top:calc(48px + var(--safe-t)); }
+  .quick-panel { top:calc(96px + var(--safe-t)); }
+  .mobile-actions { grid-template-columns:repeat(3,minmax(44px,1fr)); gap:4px; }
+  .mobile-actions button { height:44px; min-height:44px; }
+  .mobile-actions #mobileFire { width:46px; height:46px; min-width:46px; min-height:46px; }
+  .mobile-actions #mobileJump { width:44px; height:44px; min-width:44px; min-height:44px; }
+}
+@media (min-width:651px) and (pointer:fine) {
+  .mobile-pad { display:none!important; }
+}
