@@ -1,127 +1,111 @@
-/* Phone-first, no-page-scroll lobby skin */
-@media (max-width: 600px) and (orientation: portrait) {
-  html, body { width:100%; height:100%; height:100dvh; overflow:hidden!important; }
-  #lobbyScreen.overlay { position:fixed; inset:0; height:100dvh; min-height:0; padding: max(5px,env(safe-area-inset-top)) 7px max(5px,env(safe-area-inset-bottom)); overflow:hidden!important; align-items:stretch; }
-  #lobbyScreen .lobby-shell { width:100%; height:100%; min-height:0; max-height:100%; padding:7px; gap:6px; overflow:hidden; border-radius:14px; }
-  #lobbyScreen .lobby-topbar { flex:0 0 auto; padding:4px 2px 7px; gap:5px; min-height:48px; }
-  #lobbyScreen .brand-icon { width:34px; height:34px; }
-  #lobbyScreen .lobby-topbar h1 { font-size:clamp(14px,4vw,18px); line-height:1.05; }
-  #lobbyScreen .subtitle { display:none; }
-  #lobbyScreen .topbar-actions { display:flex; flex-wrap:nowrap; gap:4px; }
-  #lobbyScreen .topbar-actions .pill-badge { display:none!important; }
-  #lobbyScreen .topbar-actions button { min-width:42px; min-height:42px; padding:4px; }
-  #lobbyScreen .lobby-grid.redesign-grid { display:grid; flex:1 1 auto; min-height:0; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:6px; padding:0; overflow:hidden!important; }
-  #lobbyScreen .tac-panel { padding:8px; gap:5px; border-radius:10px; min-height:0; }
-  #lobbyScreen .operator-panel { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; }
-  #lobbyScreen .operator-panel .panel-heading { margin:0; }
-  #lobbyScreen .operator-panel .callsign-field,
-  #lobbyScreen .operator-panel .operator-stats,
-  #lobbyScreen .operator-panel .subsection-title,
-  #lobbyScreen .operator-panel .lobby-character-grid,
-  #lobbyScreen .operator-panel .cap-tags { display:none!important; }
-  #lobbyScreen .hero-operator { display:flex; align-items:center; min-height:0; padding:4px 8px; gap:9px; }
-  #lobbyScreen .hero-operator > img { width:52px; height:52px; object-fit:contain; }
-  #lobbyScreen .hero-operator .op-meta h2 { font-size:14px; margin:1px 0; }
-  #lobbyScreen .hero-operator .op-meta small,
-  #lobbyScreen .hero-operator .op-index,
-  #lobbyScreen .hero-level { display:none; }
-  #lobbyScreen .mission-panel { display:flex; flex-direction:column; min-height:0; gap:6px; }
-  #lobbyScreen .mission-panel .panel-heading { flex:0 0 auto; }
-  #lobbyScreen .map-field { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); min-height:0; gap:5px; }
-  #lobbyScreen .map-field > label { display:block; font-size:10px; }
-  #lobbyScreen .visually-hidden-select { position:static!important; width:100%!important; height:40px!important; clip:auto!important; clip-path:none!important; overflow:visible!important; white-space:normal!important; border:1px solid #52684b!important; border-radius:8px; padding:0 10px!important; background:#172219!important; color:#efffe4!important; font:700 12px system-ui; }
-  #lobbyScreen .legacy-map-preview { display:block!important; order:2; width:100%; height:auto; min-height:90px; max-height:clamp(96px,18vh,145px); aspect-ratio:16/5; overflow:hidden; }
-  #lobbyScreen .legacy-map-preview img { width:100%; height:100%; object-fit:cover; }
-  #lobbyScreen .lobby-map-grid { display:none!important; }
-  #lobbyScreen .mission-controls { flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:6px; margin:0; padding-top:7px; border-top:1px solid #3b5035; }
-  #lobbyScreen .mission-controls > .field-group:first-child label { display:flex; justify-content:space-between; font-size:10px; }
-  #lobbyScreen .preset-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
-  #lobbyScreen .preset-btn { height:46px!important; min-height:46px!important; max-height:46px!important; padding:4px; font-size:12px; }
-  #lobbyScreen .action-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-  #lobbyScreen .action-stack .btn { min-height:46px; height:46px; padding:4px; font-size:clamp(9px,2.7vw,11px); white-space:normal; line-height:1.05; }
-  #lobbyScreen .join-divider, #lobbyScreen .status-text, #lobbyScreen .lobby-footer { display:none!important; }
-  #lobbyScreen .join-row { display:flex; gap:6px; }
-  #lobbyScreen .join-row input { flex:1 1 0; width:1%; min-width:0; min-height:44px; font-size:12px; }
-  #lobbyScreen .join-row button { flex:0 0 68px; min-width:68px; min-height:44px; }
-  #lobbyScreen:has(#waitingRoom:not(.hidden)) .lobby-grid { display:none; }
-  #lobbyScreen:has(#waitingRoom:not(.hidden)) .waiting-box { display:block; flex:1; min-height:0; overflow-y:auto; }
-  #lobbyScreen .waiting-box { margin:0; padding:8px; }
-  #lobbyScreen .players-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  #lobbyScreen .waiting-box .row { display:grid; grid-template-columns:1fr; }
-  #lobbyScreen #startMatchBtn { position:static; width:100%; }
-  #modeHub { max-height:calc(100dvh - 16px); }
-  #settingsDrawer { top:auto; bottom:max(6px,env(safe-area-inset-bottom)); left:6px; right:6px; width:auto; max-height:calc(100dvh - 12px); }
+/* DOODLE OUTPOST — responsive lobby profile and control layout */
+:root { --profile-lime:#a3e635; }
+#lobbyScreen { overflow-x:hidden; }
+#lobbyScreen .lobby-shell { width:min(100%,1600px); }
+#lobbyScreen .lobby-grid.redesign-grid { display:grid;grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr);grid-template-rows:minmax(0,1fr);align-items:stretch;gap:12px;min-width:0;min-height:0;overflow:visible; }
+#lobbyScreen .tac-panel { min-width:0;min-height:0; }
+#lobbyScreen .operator-panel { display:flex!important;flex-direction:column;justify-content:flex-start;gap:12px;padding:clamp(12px,1.5vw,22px);background:linear-gradient(155deg,rgba(20,34,23,.98),rgba(8,15,10,.98)); }
+#lobbyScreen .profile-panel-head { display:flex;justify-content:space-between;align-items:center;gap:8px; }
+#lobbyScreen .profile-identity { display:flex;align-items:center;gap:12px;min-width:0; }
+#lobbyScreen .profile-avatar { width:56px;height:56px;flex:0 0 56px;border:1px solid #78934d;border-radius:14px;display:grid;place-items:center;background:#1c2c20;overflow:hidden; }
+#lobbyScreen .profile-avatar img { width:100%;height:100%;object-fit:contain;padding:5px; }
+#lobbyScreen .profile-identity-copy { flex:1;min-width:0;display:grid;gap:5px; }
+#lobbyScreen .profile-identity-copy label { color:#a3e635;font-size:10px;font-weight:900;letter-spacing:.1em; }
+#lobbyScreen #playerNameInput { width:100%;min-width:0;min-height:34px;padding:5px 9px;border:1px solid #40553b;border-radius:7px;background:#0d160f;color:#f4ffe9;font-weight:800; }
+#lobbyScreen .profile-level-row { display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#d7e8cb; }
+#lobbyScreen .profile-level-row strong { color:#b8f45a; }
+#lobbyScreen .profile-xp-track { height:7px;border-radius:99px;background:#27372a;overflow:hidden; }
+#lobbyScreen .profile-xp-track span { display:block;width:0;height:100%;background:linear-gradient(90deg,#79c91e,#c5ff65);border-radius:inherit; }
+#lobbyScreen .hero-operator { display:flex!important;position:relative;align-items:center;gap:14px;min-height:clamp(130px,22vh,230px);padding:14px;border:1px solid rgba(163,230,53,.42);border-radius:13px;background:radial-gradient(ellipse at 20% 40%,#344b2d,#142017 68%,#0a100b);cursor:pointer;touch-action:manipulation; }
+#lobbyScreen .hero-operator > img { width:clamp(100px,13vw,178px);height:clamp(100px,20vh,190px);object-fit:contain;flex:0 0 auto; }
+#lobbyScreen .hero-operator .op-meta { min-width:0; }
+#lobbyScreen .hero-operator .op-meta h2 { color:#f3ffe8;font-size:clamp(17px,2vw,27px);margin:4px 0;overflow-wrap:anywhere; }
+#lobbyScreen .hero-operator .op-meta small { color:#b4c7a8;font-size:10px; }
+#lobbyScreen .hero-level { margin-left:auto;align-self:flex-start;color:#baff67;font-size:11px;font-weight:900; }
+#lobbyScreen .profile-change-btn { min-height:40px;width:100%; }
+#lobbyScreen .showcase-loadout { display:grid;gap:8px; }
+#lobbyScreen .showcase-loadout-title { display:flex;justify-content:space-between;align-items:center;color:#c7f68d;font-size:11px;font-weight:900;letter-spacing:.08em; }
+#lobbyScreen .showcase-loadout-title small { color:#82947b;font-size:9px; }
+#lobbyScreen .showcase-equipment-row { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+#lobbyScreen .showcase-equipment-card { display:flex;align-items:center;gap:9px;min-width:0;min-height:62px;padding:8px;border:1px solid #354a36;border-radius:9px;background:#111c14; }
+#lobbyScreen .showcase-equipment-card img { width:46px;height:42px;object-fit:contain;flex:0 0 46px; }
+#lobbyScreen .showcase-equipment-card div { display:grid;gap:4px;min-width:0; }
+#lobbyScreen .showcase-equipment-card small { color:#93a48a;font-size:8px;font-weight:800; }
+#lobbyScreen .showcase-equipment-card strong { color:#efffe4;font-size:10px;overflow-wrap:anywhere; }
+#lobbyScreen .showcase-capabilities { display:flex;flex-wrap:wrap;gap:6px; }
+#lobbyScreen .showcase-capabilities span { padding:5px 8px;border:1px solid #3a5035;border-radius:99px;color:#c5e7ad;font-size:9px;font-weight:800; }
+#lobbyScreen .showcase-stats { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px; }
+#lobbyScreen .showcase-stats:not([hidden]) { display:grid; }
+#lobbyScreen .showcase-stats>div { display:grid;gap:3px;text-align:center;padding:8px 4px;border:1px solid #354a36;border-radius:8px;background:#111b13; }
+#lobbyScreen .showcase-stats strong { color:#b8f45a;font-size:18px; }
+#lobbyScreen .showcase-stats span { color:#9aac91;font-size:9px;font-weight:900; }
+#lobbyScreen #lobbyCharacterGrid { display:none!important; }
+#lobbyScreen .mission-panel { display:flex!important;flex-direction:column;gap:10px;min-width:0; }
+#lobbyScreen .mission-panel .panel-heading { display:flex!important; }
+#lobbyScreen .mission-panel .map-field { display:flex;flex:1 1 auto;flex-direction:column;min-height:0;gap:8px; }
+#lobbyScreen .mission-panel .map-field>label { display:block!important;color:#b8ed80;font-size:10px;font-weight:900; }
+#lobbyScreen #mapSelect,#lobbyScreen .mission-panel #lobbyMapGrid { display:none!important; }
+#lobbyScreen .mission-panel .legacy-map-preview { display:block!important;position:relative;flex:1 1 auto;width:100%;min-height:170px;max-height:360px;border:1px solid #526b43;border-radius:13px;overflow:hidden;cursor:pointer;touch-action:manipulation; }
+#lobbyScreen .legacy-map-preview>* { pointer-events:none; }
+#lobbyScreen .legacy-map-preview img { display:block;width:100%;height:100%;min-height:170px;object-fit:cover; }
+#lobbyScreen .mission-panel .legacy-map-preview:after { content:"TAP TO CHANGE MAP  →";position:absolute;right:12px;bottom:12px;z-index:3;padding:8px 11px;border-radius:7px;background:#07100ddd;color:#c1ff75;font-size:10px;font-weight:900; }
+#lobbyScreen .mission-controls { display:flex;flex-direction:column;gap:9px;flex:0 0 auto;margin:0;padding-top:10px;border-top:1px solid #344934; }
+#lobbyScreen .preset-row { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; }
+#lobbyScreen .preset-btn { box-sizing:border-box;width:100%;height:56px;min-height:56px;max-height:56px; }
+#lobbyScreen .action-stack { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+#lobbyScreen .action-stack .btn { width:100%;min-width:0;min-height:52px;white-space:normal;line-height:1.15; }
+#lobbyScreen .join-row { display:flex;gap:8px;min-width:0; }
+#lobbyScreen .join-row input { flex:1 1 0;width:1%;min-width:0; }
+#lobbyScreen .join-row button { flex:0 0 76px; }
+#lobbyScreen .topbar-actions { display:flex;align-items:center;gap:8px; }
+#lobbyScreen .topbar-actions .icon-btn { width:54px;height:54px;min-width:54px;display:grid;place-items:center; }
+#lobbyScreen .brand-wrap { min-width:0; }
+#lobbyScreen .brand-wrap h1 { overflow-wrap:anywhere; }
+@media(max-width:900px) {
+ #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr);gap:8px; }
+ #lobbyScreen .operator-panel { gap:8px;padding:10px; }
+ #lobbyScreen .hero-operator { min-height:125px;padding:8px; }
+ #lobbyScreen .hero-operator>img { width:95px;height:115px; }
+ #lobbyScreen .showcase-equipment-card { padding:6px; }
 }
-@media (max-width: 380px) and (orientation:portrait) {
-  #lobbyScreen .hero-operator > img { width:44px; height:44px; }
-  #lobbyScreen .legacy-map-preview { min-height:82px; }
-  #lobbyScreen .preset-btn { font-size:11px; }
+@media(max-width:650px) and (orientation:portrait) {
+ html,body { width:100%;min-height:100%;height:auto;overflow-x:hidden!important;overflow-y:auto!important; }
+ #lobbyScreen.overlay { position:relative;inset:auto;min-height:100dvh;height:auto;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));overflow:visible!important;align-items:stretch; }
+ #lobbyScreen .lobby-shell { width:100%;height:auto;min-height:100dvh;max-height:none;overflow:visible;padding:9px;gap:9px; }
+ #lobbyScreen .lobby-topbar { flex-wrap:wrap;gap:8px;padding:5px 2px 9px; }
+ #lobbyScreen .brand-icon { width:38px;height:38px; }
+ #lobbyScreen .lobby-topbar h1 { font-size:clamp(14px,4.2vw,19px); }
+ #lobbyScreen .topbar-actions { margin-left:auto;gap:5px; }
+ #lobbyScreen .topbar-actions .pill-badge { display:none!important; }
+ #lobbyScreen .topbar-actions .icon-btn { width:42px;height:42px;min-width:42px; }
+ #lobbyScreen .lobby-grid.redesign-grid { display:flex;flex-direction:column;gap:9px;overflow:visible!important; }
+ #lobbyScreen .operator-panel,#lobbyScreen .mission-panel { width:100%;min-height:0; }
+ #lobbyScreen .operator-panel { order:0; }
+ #lobbyScreen .mission-panel { order:1; }
+ #lobbyScreen .hero-operator { min-height:112px; }
+ #lobbyScreen .hero-operator>img { width:94px;height:108px; }
+ #lobbyScreen .mission-panel .legacy-map-preview { flex:none;height:clamp(150px,42vw,230px);min-height:150px;max-height:none; }
+ #lobbyScreen .mission-panel .legacy-map-preview img { min-height:150px; }
+ #lobbyScreen .mission-controls { display:flex;position:static;width:auto;padding:10px 0 0;border-radius:0;background:transparent;box-shadow:none; }
+ #lobbyScreen .preset-btn { height:52px;min-height:52px;max-height:52px; }
+ #lobbyScreen .action-stack .btn { min-height:50px;font-size:clamp(10px,2.8vw,13px); }
+ #lobbyScreen .join-row input,#lobbyScreen .join-row button { min-height:46px; }
+ #lobbyScreen .join-row button { flex-basis:72px; }
+ #lobbyScreen .lobby-footer { display:flex; }
+ #lobbyScreen .waiting-box { overflow:visible; }
 }
-@media (orientation:landscape) and (max-height:520px) {
-  #lobbyScreen.overlay { padding:4px; }
-  #lobbyScreen .lobby-shell { height:100%; padding:5px; gap:4px; }
-  #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows:minmax(0,1fr); gap:5px; overflow:hidden!important; }
-  #lobbyScreen .operator-panel .callsign-field, #lobbyScreen .operator-panel .operator-stats, #lobbyScreen .operator-panel .cap-tags { display:none; }
-  #lobbyScreen .operator-panel .lobby-character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); overflow:hidden; }
-  #lobbyScreen .lobby-map-grid { max-height:none; overflow:hidden; grid-template-columns:repeat(4,minmax(0,1fr)); }
-  #lobbyScreen .legacy-map-preview { max-height:76px; }
-  #lobbyScreen .mission-controls { gap:4px; padding-top:4px; }
-  #lobbyScreen .preset-btn { height:42px!important; min-height:42px!important; max-height:42px!important; }
-  #lobbyScreen .action-stack .btn { min-height:42px; height:42px; }
-  #lobbyScreen .join-row button, #lobbyScreen .join-row input { min-height:40px; }
+@media(max-width:380px) and (orientation:portrait) {
+ #lobbyScreen .showcase-equipment-row { grid-template-columns:1fr; }
+ #lobbyScreen .showcase-equipment-card { min-height:52px; }
+ #lobbyScreen .topbar-actions .icon-btn { width:38px;height:38px;min-width:38px; }
+ #lobbyScreen .brand-wrap h1 { font-size:13px; }
 }
-
-/* SEPARATE CHARACTER + MAP PICKER FLOW — home stays clean */
-#lobbyScreen .operator-panel .panel-heading,
-#lobbyScreen .operator-panel .callsign-field,
-#lobbyScreen .operator-panel .operator-stats,
-#lobbyScreen .operator-panel .subsection-title,
-#lobbyScreen .operator-panel #lobbyCharacterGrid,
-#lobbyScreen .operator-panel .cap-tags,
-#lobbyScreen .mission-panel .panel-heading,
-#lobbyScreen .mission-panel .map-field > label,
-#lobbyScreen .mission-panel #lobbyMapGrid { display:none!important; }
-#lobbyScreen .operator-panel { display:flex; flex-direction:column; justify-content:center; }
-#lobbyScreen .hero-operator { cursor:pointer; border:1px solid rgba(163,230,53,.42); border-radius:14px; padding:clamp(12px,2vw,24px); min-height:clamp(130px,22vh,240px); display:flex; align-items:center; gap:16px; background:linear-gradient(135deg,rgba(32,57,30,.9),rgba(8,17,11,.96)); }
-#lobbyScreen .hero-operator:focus-visible,#lobbyScreen .legacy-map-preview:focus-visible { outline:3px solid #a3e635; outline-offset:3px; }
-#lobbyScreen .hero-operator > img { width:clamp(82px,12vw,150px); height:clamp(82px,12vw,150px); object-fit:contain; }
-#lobbyScreen .hero-operator .op-meta h2 { font-size:clamp(16px,2vw,25px); }
-#lobbyScreen .hero-operator .op-meta:after { content:"TAP TO CHANGE OPERATOR  →"; display:block; color:#a3e635; font-size:10px; font-weight:900; margin-top:10px; letter-spacing:.06em; }
-#lobbyScreen .mission-panel .map-field { display:flex; flex:1; min-height:0; }
-#lobbyScreen .mission-panel .legacy-map-preview { display:block!important; position:relative; cursor:pointer; width:100%; min-height:clamp(135px,24vh,260px); flex:1; border:1px solid rgba(163,230,53,.4); border-radius:14px; overflow:hidden; }
-#lobbyScreen .mission-panel .legacy-map-preview img { width:100%; height:100%; object-fit:cover; }
-#lobbyScreen .mission-panel .legacy-map-preview:after { content:"TAP TO CHANGE MAP  →"; position:absolute; right:12px; bottom:12px; z-index:2; color:#b9ff62; background:#07100ddd; padding:8px 10px; border-radius:7px; font-size:10px; font-weight:900; }
-#lobbyScreen #mapSelect { display:none!important; }
-.selection-hub { position:fixed; inset:0; z-index:1000; display:flex; align-items:stretch; justify-content:center; padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); background:rgba(3,8,5,.97); }
-.selection-hub.hidden { display:none!important; }
-.selection-shell { width:min(100%,1200px); min-height:0; display:flex; flex-direction:column; gap:14px; padding:clamp(10px,2vw,24px); border:1px solid #526c42; border-radius:18px; background:linear-gradient(145deg,#17251a,#080e0a); box-shadow:0 18px 70px #000b; }
-.selection-header { display:flex; align-items:center; gap:14px; flex:0 0 auto; }
-.selection-back { width:48px; height:48px; border:1px solid #8edc35; border-radius:12px; background:#21351d; color:#b8ff62; font-size:28px; cursor:pointer; }
-.selection-header h2 { margin:2px 0; color:#b5ff39; font-size:clamp(20px,3vw,30px); }
-.selection-header p { margin:0; color:#aab9a2; font-size:12px; }
-.selection-count { margin-left:auto; color:#c5f78c; font-weight:900; font-size:12px; }
-.selection-grid-host { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:4px; }
-.selection-grid-host .lobby-character-grid,.selection-grid-host .lobby-map-grid { display:grid!important; grid-template-columns:repeat(auto-fill,minmax(min(100%,145px),1fr)); gap:12px; max-height:none!important; overflow:visible!important; }
-.selection-grid-host .lobby-char-card,.selection-grid-host .lobby-map-card { min-width:0; min-height:150px; }
-.selection-grid-host .lobby-char-card img,.selection-grid-host .lobby-map-card img { width:100%; height:clamp(100px,19vh,190px); object-fit:contain; }
-.selection-grid-host .lobby-map-card img { object-fit:cover; }
-.selection-grid-host .lobby-char-card strong,.selection-grid-host .lobby-map-card strong { white-space:normal; overflow-wrap:anywhere; }
-@media(max-width:600px) {
- .selection-hub { padding:max(5px,env(safe-area-inset-top)) 6px max(6px,env(safe-area-inset-bottom)); }
- .selection-shell { border-radius:12px; padding:9px; gap:8px; }
- .selection-header { gap:9px; }
- .selection-back { width:42px; height:42px; flex:0 0 42px; }
- .selection-header p { font-size:10px; }
- .selection-count { font-size:10px; }
- .selection-grid-host .lobby-character-grid,.selection-grid-host .lobby-map-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
- .selection-grid-host .lobby-char-card,.selection-grid-host .lobby-map-card { min-height:125px; }
- .selection-grid-host .lobby-char-card img,.selection-grid-host .lobby-map-card img { height:clamp(92px,16vh,145px); }
+@media(orientation:landscape) and (max-height:520px) {
+ #lobbyScreen.overlay { min-height:100dvh;height:auto;overflow:auto!important;padding:5px; }
+ #lobbyScreen .lobby-shell { min-height:100dvh;height:auto;overflow:visible; }
+ #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:minmax(230px,.85fr) minmax(0,1.15fr);grid-template-rows:auto; }
+ #lobbyScreen .hero-operator { min-height:100px; }
+ #lobbyScreen .hero-operator>img { width:80px;height:95px; }
+ #lobbyScreen .mission-panel .legacy-map-preview { min-height:125px; }
 }
-
-/* Mobile tap reliability: the full preview tile, not just the image, is the target */
-#lobbyScreen .legacy-map-preview { cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
-#lobbyScreen .legacy-map-preview > * { pointer-events:none; }
-#lobbyScreen .hero-operator { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
-.selection-hub { z-index:10000; }
-.selection-grid-host { -webkit-overflow-scrolling:touch; touch-action:pan-y; }
-.selection-grid-host .lobby-char-card,.selection-grid-host .lobby-map-card { touch-action:manipulation; cursor:pointer; }
+@media(prefers-reduced-motion:reduce) { #lobbyScreen *, .selection-hub * { scroll-behavior:auto!important;transition:none!important;animation:none!important; } }
