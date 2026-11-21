@@ -1,8 +1,9 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v24-tactical-mobile';
+const CACHE_NAME = 'doodle-outpost-all-modes-v25-landscape-lock';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
+  './mobile-ui.css',
   './game.js',
   './3d.html', './3d.css', './3d.js',
   './manifest.json',
