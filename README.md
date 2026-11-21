@@ -1,6 +1,6 @@
 # Doodle Outpost
 
-Doodle Outpost is a browser-based 2D jetpack shooter with seven playable modes, eleven selectable maps, solo bot practice, and PeerJS room multiplayer. The 3D page is a separate single-player prototype; it is not connected to the 2D multiplayer rooms.
+Doodle Outpost is a browser-based 2D jetpack shooter with seven playable modes, ten selectable maps plus the zombie-only Quarantine District, solo bot practice, and PeerJS room multiplayer. The 3D page is a separate single-player prototype; it is not connected to the 2D multiplayer rooms.
 
 ## Run locally
 
@@ -21,7 +21,7 @@ Open `http://localhost:8000`. Solo practice against bots does not require PeerJS
 
 ## Game modes and rooms
 
-The 2D game includes Free for All, Team Deathmatch, Zombie Survival, Capture the Flag, Boss Battle, Battle Royale, and Clan Wars. Clan Wars is a room-code 3v3 mode (six players maximum). Competitive playlist disables friendly fire for teammates; Arcade keeps the standard mode rules. Ammo is unlimited in the 2D game.
+The 2D game includes Free for All, Team Deathmatch, Zombie Survival, Capture the Flag, Boss Battle, Battle Royale, and Clan Wars. Clan Wars is a room-code 3v3 mode (six players maximum). Competitive playlist uses five-second respawns; Arcade uses three-second respawns. Ammo is unlimited in the 2D game.
 
 Peer-to-peer rooms use PeerJS and the PeerJS cloud signaling service loaded from jsDelivr. Room connectivity therefore requires internet access and can be affected by the signaling service, browser networking, or firewalls. A room code is required to join; rooms are not restricted to a pre-approved friends list. The host can return to the room lobby without closing the room, or explicitly close it using **LEAVE / CLOSE ROOM**.
 
