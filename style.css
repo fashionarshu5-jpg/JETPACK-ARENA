@@ -2535,7 +2535,7 @@ body { position:relative; }
   #lobbyScreen .brand-wrap { gap:6px; min-width:0; }
   #lobbyScreen .lobby-topbar h1 { font-size:clamp(15px,4.3vw,20px); letter-spacing:.8px; }
   #lobbyScreen .topbar-actions { gap:5px; }
-  #lobbyScreen .topbar-actions .pill-badge:not(:has(a[href="./3d.html"])) { display:none; }
+  #lobbyScreen .topbar-actions > span.pill-badge { display:none; }
   #lobbyScreen .topbar-actions a[href="./3d.html"] { padding:5px 7px; font-size:9px; min-height:44px; display:flex; align-items:center; }
   #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:minmax(0,1fr); gap:8px; padding-bottom:210px; }
   #lobbyScreen .tac-panel { padding:9px; gap:8px; }
