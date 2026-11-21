@@ -109,3 +109,219 @@
  #lobbyScreen .mission-panel .legacy-map-preview { min-height:125px; }
 }
 @media(prefers-reduced-motion:reduce) { #lobbyScreen *, .selection-hub * { scroll-behavior:auto!important;transition:none!important;animation:none!important; } }
+
+
+/* PHONE FIT — tuned for 1080 × 2408 class phones (roughly 393 × 875 CSS px).
+   The lobby and gameplay occupy the device viewport; only picker content may scroll. */
+@media (max-width: 650px) and (orientation: portrait) {
+  html, body {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+  body { position: fixed; inset: 0; }
+  #lobbyScreen.overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0 !important;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    padding: max(5px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
+    overflow: hidden !important;
+  }
+  #lobbyScreen .lobby-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: none;
+    box-sizing: border-box;
+    padding: 7px;
+    gap: 6px;
+    overflow: hidden !important;
+  }
+  #lobbyScreen .lobby-topbar {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    min-height: 42px;
+    padding: 0 1px 5px;
+    gap: 5px;
+  }
+  #lobbyScreen .brand-wrap { display:flex;align-items:center;gap:6px; }
+  #lobbyScreen .brand-icon { width:34px;height:34px;flex:0 0 34px; }
+  #lobbyScreen .brand-wrap h1 { font-size:clamp(12px,3.4vw,15px);line-height:1.05;white-space:nowrap; }
+  #lobbyScreen .brand-wrap .subtitle { font-size:7px;line-height:1.1;margin-top:2px; }
+  #lobbyScreen .topbar-actions { flex:0 0 auto;margin-left:auto;gap:3px; }
+  #lobbyScreen .topbar-actions .pill-badge { display:none !important; }
+  #lobbyScreen .topbar-actions .icon-btn { width:33px;height:33px;min-width:33px;font-size:12px;padding:0; }
+  #lobbyScreen .lobby-grid.redesign-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr);
+    grid-template-rows: auto minmax(0,1fr);
+    gap: 6px;
+    overflow: hidden !important;
+  }
+  #lobbyScreen .operator-panel {
+    order: 0;
+    width: 100%;
+    min-height: 0;
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr);
+    gap: 4px;
+    padding: 6px;
+    overflow: hidden;
+  }
+  #lobbyScreen .profile-panel-head { display:none !important; }
+  #lobbyScreen .profile-identity { gap:7px;min-height:42px; }
+  #lobbyScreen .profile-avatar { width:38px;height:38px;flex-basis:38px;border-radius:8px; }
+  #lobbyScreen .profile-avatar img { padding:2px; }
+  #lobbyScreen .profile-identity-copy { gap:2px; }
+  #lobbyScreen .profile-identity-copy label { font-size:8px; }
+  #lobbyScreen #playerNameInput { min-height:25px;height:25px;padding:2px 7px;font-size:11px; }
+  #lobbyScreen .profile-level-row { font-size:8px; }
+  #lobbyScreen .profile-xp-track { height:4px; }
+  #lobbyScreen .hero-operator {
+    min-height:0;
+    height:66px;
+    padding:3px 8px;
+    gap:8px;
+    border-radius:8px;
+  }
+  #lobbyScreen .hero-operator > img { width:58px;height:62px; }
+  #lobbyScreen .hero-operator .op-meta h2 { font-size:13px;margin:2px 0; }
+  #lobbyScreen .hero-operator .op-meta small { font-size:8px; }
+  #lobbyScreen .hero-operator .op-index { font-size:8px; }
+  #lobbyScreen .hero-level { font-size:8px; }
+  #lobbyScreen .profile-change-btn { min-height:27px;height:27px;padding:3px 8px;font-size:9px; }
+  #lobbyScreen .showcase-loadout { gap:3px; }
+  #lobbyScreen .showcase-loadout-title { font-size:8px; }
+  #lobbyScreen .showcase-loadout-title small { font-size:7px; }
+  #lobbyScreen .showcase-equipment-row { grid-template-columns:repeat(2,minmax(0,1fr));gap:4px; }
+  #lobbyScreen .showcase-equipment-card { min-height:39px;height:39px;padding:3px 5px;gap:4px;border-radius:6px; }
+  #lobbyScreen .showcase-equipment-card img { width:30px;height:30px;flex-basis:30px; }
+  #lobbyScreen .showcase-equipment-card div { gap:1px; }
+  #lobbyScreen .showcase-equipment-card small { font-size:6px; }
+  #lobbyScreen .showcase-equipment-card strong { font-size:8px;line-height:1.05; }
+  #lobbyScreen .showcase-capabilities,
+  #lobbyScreen .showcase-stats,
+  #lobbyScreen .lobby-footer { display:none !important; }
+  #lobbyScreen .mission-panel {
+    order: 1;
+    width: 100%;
+    min-height: 0;
+    gap: 5px;
+    padding: 7px;
+    overflow: hidden;
+  }
+  #lobbyScreen .mission-panel .panel-heading { flex:0 0 auto; }
+  #lobbyScreen .mission-panel .eyebrow { font-size:8px; }
+  #lobbyScreen .mission-panel .panel-label { font-size:12px; }
+  #lobbyScreen .mission-panel .section-count { font-size:8px; }
+  #lobbyScreen .mission-panel .map-field { flex:0 0 auto;gap:3px; }
+  #lobbyScreen .mission-panel .map-field > label { font-size:8px; }
+  #lobbyScreen .mission-panel .legacy-map-preview {
+    flex:none;
+    height:clamp(82px,12dvh,112px);
+    min-height:82px;
+    max-height:112px;
+    border-radius:8px;
+  }
+  #lobbyScreen .mission-panel .legacy-map-preview img { height:100%;min-height:0; }
+  #lobbyScreen .mission-panel .legacy-map-preview:after { right:6px;bottom:6px;padding:5px 7px;font-size:7px; }
+  #lobbyScreen .map-preview-caption { left:8px;bottom:7px; }
+  #lobbyScreen .map-preview-caption span { font-size:7px; }
+  #lobbyScreen .map-preview-caption strong { font-size:11px; }
+  #lobbyScreen .map-preview-index { top:6px;right:7px;font-size:8px; }
+  #lobbyScreen .mission-controls { flex:0 0 auto;gap:5px;padding-top:5px; }
+  #lobbyScreen .mission-controls .field-group > label { font-size:8px; }
+  #lobbyScreen .preset-row { gap:5px; }
+  #lobbyScreen .preset-btn { height:37px;min-height:37px;max-height:37px;font-size:10px;padding:2px; }
+  #lobbyScreen .action-stack { gap:5px; }
+  #lobbyScreen .action-stack .btn { min-height:39px;height:39px;padding:4px;font-size:9px;line-height:1.05; }
+  #lobbyScreen .join-divider { margin:0;padding:2px 0;font-size:7px; }
+  #lobbyScreen .join-row { gap:5px; }
+  #lobbyScreen .join-row input,
+  #lobbyScreen .join-row button { min-height:35px;height:35px;font-size:10px; }
+  #lobbyScreen .join-row button { flex-basis:58px; }
+  #lobbyScreen #connectionStatus { font-size:8px;line-height:1.1;margin:0; }
+  #lobbyScreen .waiting-box { max-height:100%;overflow:auto;overscroll-behavior:contain; }
+  #selectionHub.selection-hub {
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    box-sizing:border-box;
+    padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom);
+    overflow:hidden;
+  }
+  #selectionHub .selection-shell { width:100%;height:100%;max-height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden; }
+  #selectionHub .selection-header { flex:0 0 auto;gap:7px;padding:8px 4px; }
+  #selectionHub .selection-grid-host { flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain; }
+  #gameContainer {
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    height:100dvh !important;
+    max-height:100dvh;
+    overflow:hidden !important;
+    touch-action:none;
+    overscroll-behavior:none;
+  }
+  #gameCanvas { display:block;width:100%;height:100%;touch-action:none; }
+  #mobileControls { position:fixed;inset:0;overflow:hidden;touch-action:none; }
+}
+
+/* Landscape phones: fill the short viewport; never create page-level scroll. */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 520px) {
+  html, body { width:100%;height:100%;min-height:0;overflow:hidden !important;overscroll-behavior:none; }
+  body { position:fixed;inset:0; }
+  #lobbyScreen.overlay { position:fixed !important;inset:0 !important;width:100%;height:100dvh;min-height:0 !important;padding:4px;overflow:hidden !important; }
+  #lobbyScreen .lobby-shell { width:100%;height:100%;min-height:0 !important;padding:5px;gap:4px;overflow:hidden !important; }
+  #lobbyScreen .lobby-topbar { flex:0 0 34px;min-height:34px;flex-wrap:nowrap;padding:0 2px 3px; }
+  #lobbyScreen .brand-icon { width:29px;height:29px; }
+  #lobbyScreen .lobby-topbar h1 { font-size:12px; }
+  #lobbyScreen .lobby-topbar .subtitle { font-size:7px; }
+  #lobbyScreen .topbar-actions { gap:3px; }
+  #lobbyScreen .topbar-actions .icon-btn { width:29px;height:29px;min-width:29px; }
+  #lobbyScreen .lobby-grid.redesign-grid { flex:1;min-height:0;display:grid !important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr);gap:5px;overflow:hidden !important; }
+  #lobbyScreen .operator-panel { gap:3px;padding:5px;overflow:hidden; }
+  #lobbyScreen .profile-panel-head,#lobbyScreen .showcase-capabilities,#lobbyScreen .showcase-stats,#lobbyScreen .lobby-footer { display:none !important; }
+  #lobbyScreen .profile-identity { gap:5px; }
+  #lobbyScreen .profile-avatar { width:30px;height:30px;flex-basis:30px; }
+  #lobbyScreen #playerNameInput { min-height:22px;height:22px;font-size:9px; }
+  #lobbyScreen .profile-level-row,#lobbyScreen .profile-identity-copy label { font-size:7px; }
+  #lobbyScreen .hero-operator { height:55px;min-height:0;padding:2px 5px;gap:5px; }
+  #lobbyScreen .hero-operator > img { width:48px;height:51px; }
+  #lobbyScreen .hero-operator .op-meta h2 { font-size:11px; }
+  #lobbyScreen .hero-operator .op-meta small { font-size:7px; }
+  #lobbyScreen .profile-change-btn { height:23px;min-height:23px;font-size:8px; }
+  #lobbyScreen .showcase-loadout { gap:2px; }
+  #lobbyScreen .showcase-loadout-title { font-size:7px; }
+  #lobbyScreen .showcase-equipment-card { min-height:30px;height:30px;padding:2px;gap:3px; }
+  #lobbyScreen .showcase-equipment-card img { width:24px;height:24px;flex-basis:24px; }
+  #lobbyScreen .showcase-equipment-card small { font-size:5px; }
+  #lobbyScreen .showcase-equipment-card strong { font-size:7px; }
+  #lobbyScreen .mission-panel { min-height:0;gap:3px;padding:5px;overflow:hidden; }
+  #lobbyScreen .mission-panel .panel-heading { flex:0 0 auto; }
+  #lobbyScreen .mission-panel .map-field { flex:1 1 auto;min-height:0;gap:2px; }
+  #lobbyScreen .mission-panel .legacy-map-preview { flex:1 1 auto;height:auto;min-height:55px;max-height:none; }
+  #lobbyScreen .mission-panel .legacy-map-preview img { min-height:0;height:100%; }
+  #lobbyScreen .mission-controls { gap:3px;padding-top:3px; }
+  #lobbyScreen .preset-btn { height:29px;min-height:29px;max-height:29px;font-size:8px; }
+  #lobbyScreen .action-stack .btn { height:32px;min-height:32px;font-size:8px;padding:2px; }
+  #lobbyScreen .join-divider { margin:0;padding:1px;font-size:6px; }
+  #lobbyScreen .join-row input,#lobbyScreen .join-row button { height:28px;min-height:28px;font-size:8px; }
+  #lobbyScreen .join-row button { flex-basis:48px; }
+  #lobbyScreen #connectionStatus { font-size:7px;margin:0; }
+  #gameContainer { position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;overflow:hidden !important;touch-action:none; }
+  #gameCanvas { display:block;width:100%;height:100%;touch-action:none; }
+  #mobileControls { position:fixed;inset:0;overflow:hidden;touch-action:none; }
+}
