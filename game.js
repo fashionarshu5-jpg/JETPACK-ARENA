@@ -570,7 +570,7 @@ document.querySelectorAll('.preset-btn').forEach((btn) => {
 });
 
 function adjustLiveTimer(deltaSeconds) {
-  if (state.playlist === 'competitive') return;
+  if (state.playlist === 'competitive' || state.selectedMode === 'boss') return;
   if (state.isHost) state.matchTime = Math.max(10, Math.min(3600, state.matchTime + deltaSeconds));
   else if (hostConn && hostConn.open) hostConn.send({ type: 'adjust_time', delta: deltaSeconds });
 }
@@ -697,7 +697,7 @@ function resetModeObjectives() {
     {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
     {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
   ] : null;
-  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:100000,maxHp:100000,attackClock:1.2,phase:1} : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:100000,maxHp:100000,attackClock:1.2,phase:1,elapsed:0} : null;
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
@@ -1098,7 +1098,7 @@ function handleHostReceive(conn, msg) {
       fireWeapon(p, performance.now());
     }
   } else if (msg.type === 'adjust_time') {
-    if (state.playlist !== 'competitive') state.matchTime = Math.max(10, Math.min(3600, state.matchTime + msg.delta));
+    if (state.playlist !== 'competitive' && state.selectedMode !== 'boss') state.matchTime = Math.max(10, Math.min(3600, state.matchTime + msg.delta));
   }
 }
 
@@ -1566,7 +1566,8 @@ function gameLoop(now) {
 }
 
 function stepHostSimulation(dt, now) {
-  state.matchTime = Math.max(0, state.matchTime - dt);
+  if (state.selectedMode === 'boss') state.boss.elapsed = (state.boss.elapsed || 0) + dt;
+  else state.matchTime = Math.max(0, state.matchTime - dt);
   const platforms = getActivePlatforms();
   const activeMap = MAPS[getActiveMapId()] || MAPS[0];
 
@@ -2086,7 +2087,7 @@ function updateHudUI() {
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
   document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${modeTeamMode()?'TEAM '+(me.team===0?'GREEN':'GOLD'):getModeLabel().toUpperCase()} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
-  document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
+  document.getElementById('matchTimer').textContent = state.selectedMode === 'boss' && state.boss ? formatClock(state.boss.elapsed || 0) : formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
 
@@ -2202,9 +2203,14 @@ function renderModeSelection() {
   const playlistName = state.playlist === 'competitive' ? 'Competitive • timer locked' : 'Arcade • timer adjustable';
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Room-code 3v3 team battle. Join the same room and fight as a squad. Results contribute to your local operator record.'};
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it to complete the raid. There is no countdown.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Room-code 3v3 team battle. Join the same room and fight as a squad. Results contribute to your local operator record.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
-  ['timePlusBtn', 'timeMinusBtn'].forEach((id) => { const button = document.getElementById(id); if (button) button.disabled = state.playlist === 'competitive'; });
+  const timerLocked = state.playlist === 'competitive' || state.selectedMode === 'boss';
+  ['timePlusBtn', 'timeMinusBtn'].forEach((id) => { const button = document.getElementById(id); if (button) button.disabled = timerLocked; });
+  document.querySelectorAll('.preset-btn').forEach((button) => { button.disabled = state.selectedMode === 'boss'; });
+  const lobbyTimer = document.getElementById('lobbyTimerDisplay');
+  if (lobbyTimer && state.selectedMode === 'boss') lobbyTimer.textContent = 'NO TIME LIMIT';
+  else if (lobbyTimer) lobbyTimer.textContent = formatClock(state.selectedDuration);
   const lobbyMapName = document.getElementById('lobbyMapName');
   if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
   syncLobbyMapPreview();
