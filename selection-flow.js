@@ -20,7 +20,72 @@
   });
   let activeGrid = null;
 
+
+  // Recover the picker if the legacy lobby-card builder did not populate its grids.
+  // The project data is authoritative: use the existing CHARACTERS and MAPS arrays.
+  function ensurePickerCards() {
+    if (!soldierGrid.querySelector('.lobby-char-card') && typeof CHARACTERS !== 'undefined') {
+      CHARACTERS.forEach((character) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'lobby-char-card';
+        card.dataset.character = String(character.id);
+        card.setAttribute('aria-pressed', String(character.id === state.myCharId));
+        card.innerHTML = '<img src="' + character.file + '" alt="" loading="lazy"><span><strong>' +
+          character.name + '</strong><small>OPERATOR 0' + (character.id + 1) +
+          '</small></span><b class="pick-check">✓</b>';
+        card.addEventListener('click', () => {
+          state.myCharId = character.id;
+          localStorage.setItem('do_char', String(character.id));
+          if (typeof syncSoldierUI === 'function') syncSoldierUI();
+          soldierGrid.querySelectorAll('.lobby-char-card').forEach((item) => {
+            const selected = Number(item.dataset.character) === state.myCharId;
+            item.classList.toggle('selected', selected);
+            item.setAttribute('aria-pressed', String(selected));
+          });
+          if (state.players[state.myId]) {
+            state.players[state.myId].charId = character.id;
+            if (state.isHost && typeof broadcastToClients === 'function') {
+              broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+            }
+          }
+        });
+        soldierGrid.appendChild(card);
+      });
+    }
+
+    if (!mapGrid.querySelector('.lobby-map-card') && typeof MAPS !== 'undefined') {
+      MAPS.forEach((map) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'lobby-map-card';
+        card.dataset.map = String(map.id);
+        card.dataset.zombieOnly = String(map.id === 10);
+        card.setAttribute('aria-pressed', String(map.id === state.mapId));
+        card.innerHTML = '<img src="' + (map.file || './assets/map_outpost.png') +
+          '" alt="" loading="lazy"><span class="map-number">' +
+          String(map.id + 1).padStart(2, '0') + '</span><strong>' +
+          map.name + '</strong><b class="map-check">✓</b>';
+        card.addEventListener('click', () => {
+          state.mapId = map.id;
+          if (typeof mapSelectEl !== 'undefined' && mapSelectEl) mapSelectEl.value = String(map.id);
+          if (typeof syncLobbyMapPreview === 'function') syncLobbyMapPreview();
+          mapGrid.querySelectorAll('.lobby-map-card').forEach((item) => {
+            const selected = Number(item.dataset.map) === state.mapId;
+            item.classList.toggle('selected', selected);
+            item.setAttribute('aria-pressed', String(selected));
+          });
+          if (state.isHost && typeof broadcastToClients === 'function') {
+            broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+          }
+        });
+        mapGrid.appendChild(card);
+      });
+    }
+  }
+
   function openPicker(kind) {
+    ensurePickerCards();
     const isSoldier = kind === 'soldier';
     const grid = isSoldier ? soldierGrid : mapGrid;
     activeGrid = grid;
@@ -31,7 +96,7 @@
       ? 'Tap a soldier to equip them and return home.'
       : 'Choose your arena. You will return to the home screen.';
     if (!isSoldier) grid.querySelectorAll('.lobby-map-card').forEach((card) => { card.hidden = false; });
-    count.textContent = isSoldier ? '09 OPERATORS' : (grid.querySelectorAll('.lobby-map-card').length + ' MAPS');
+    count.textContent = isSoldier ? (grid.querySelectorAll('.lobby-char-card').length + ' OPERATORS') : (grid.querySelectorAll('.lobby-map-card').length + ' MAPS');
     modal.classList.remove('hidden');
     document.body.classList.add('picker-open');
     back.focus();
