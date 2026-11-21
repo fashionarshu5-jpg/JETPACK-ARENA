@@ -120,7 +120,7 @@ Object.entries(FX_FILES).forEach(([k, src]) => loadTransparentSprite(src, (c) =>
 Object.entries(PROP_FILES).forEach(([k, src]) => loadTransparentSprite(src, (c) => { SPRITES.props[k] = c; }));
 
 // ==========================================================================
-// 3. 10 ANALYZED MAPS
+// 3. 11 TOTAL MAPS (10 SELECTABLE + ZOMBIE-ONLY QUARANTINE)
 // ==========================================================================
 const WORLD = { width: 2400, height: 1200 };
 const BORDER_PLATFORMS = [
@@ -284,6 +284,8 @@ const MAPS = [
     spawns: [{ x: 390, y: 500 }, { x: 920, y: 380 }, { x: 1530, y: 500 }, { x: 1950, y: 370 }, { x: 1050, y: 730 }, { x: 1350, y: 730 }]
   }
 ];
+
+const PICKER_MAPS = MAPS.filter((map) => map.id !== 10);
 
 const ASSET_TOTAL = CHARACTERS.length + WEAPONS.length + GRENADE_TYPES.length +
   Object.keys(FX_FILES).length + Object.keys(PROP_FILES).length + MAPS.length + 1;
@@ -524,18 +526,18 @@ document.getElementById('drawerExitMatchBtn').onclick = returnToLobby;
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
-mapSelectEl.innerHTML = MAPS.map((map) =>
+mapSelectEl.innerHTML = PICKER_MAPS.map((map) =>
   `<option value="${map.id}">${String(map.id + 1).padStart(2, '0')} - ${map.name}</option>`
 ).join('');
 function syncMapCountLabels() {
-  const countLabel = MAPS.length + ' MAPS';
+  const countLabel = PICKER_MAPS.length + ' MAPS';
   const topCount = document.getElementById('mapCountLabel');
   const cardCount = document.getElementById('mapCardCount');
   if (topCount) topCount.textContent = countLabel;
   if (cardCount) cardCount.textContent = countLabel;
 }
 function syncLobbyMapPreview() {
-  const map = MAPS[state.mapId] || MAPS[0];
+  const map = MAPS[getActiveMapId()] || MAPS[0];
   const preview = document.getElementById('lobbyMapPreview');
   const name = document.getElementById('lobbyMapName');
   const index = document.getElementById('lobbyMapIndex');
@@ -750,8 +752,8 @@ createRoomBtn.onclick = () => {
     peer = new Peer('DOODLE_OUTPOST_' + state.roomCode);
     bindIncomingVoiceCalls();
     peer.on('open', () => {
-      setServerStatus('ROOM READY');
       if (roomCreateSettled) return;
+      setServerStatus('ROOM READY');
       roomCreateSettled = true;
       if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
       createRoomBtn.textContent = 'ROOM READY';
@@ -834,8 +836,8 @@ joinRoomBtn.onclick = () => {
     peer = new Peer();
     bindIncomingVoiceCalls();
     peer.on('open', () => {
-      setServerStatus('CONNECTING');
       if (joinAttemptSettled) return;
+      setServerStatus('CONNECTING');
       try {
         hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: true });
         hostConn.on('open', () => {
@@ -1367,7 +1369,7 @@ function renderScoreboard() {
 // 8. SIMULATION, UTILITY CRATES (MEDKIT/AMMO/ARMOR) & MATCH OVER
 // ==========================================================================
 function addFxSprite(fxKey, x, y, size, life) {
-  if (state.isHost && state.mode === 'playing') state.fxEvents.push({ key: fxKey, x, y, size, life });
+  if (state.isHost && state.mode === 'playing' && state.fxEvents.length < 180) state.fxEvents.push({ key: fxKey, x, y, size, life });
   if (state.fxList.length >= 180) state.fxList.shift();
   state.fxList.push({ fxKey, x, y, size, life, maxLife: life });
 }
@@ -1418,8 +1420,8 @@ async function startMatch() {
   }
 }
 
-// Return to the lobby without a page reload. This stops the render loop,
-// clears match-only state, and tears down any room connection cleanly.
+// Return to the lobby without a page reload. Host rooms stay connected so
+// players can regroup and start another match; only clients leave their room.
 function returnToLobby() {
   ++matchStartToken;
   matchStarting = false;
@@ -2124,7 +2126,7 @@ function updateHudUI() {
     });
   }
 
-  MAPS.forEach((map) => {
+  PICKER_MAPS.forEach((map) => {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
