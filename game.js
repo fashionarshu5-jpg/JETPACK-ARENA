@@ -1194,48 +1194,75 @@ window.addEventListener('wheel', () => { if (state.mode === 'playing') cycleWeap
 function bindVirtualStick(zoneId, knobId, onMove, onRelease) {
   const zone = document.getElementById(zoneId);
   const knob = document.getElementById(knobId);
-  let activeId = null;
+  if (!zone || !knob) return;
+  let activePointer = null;
+  let activeTouch = null;
 
-  zone.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const t = e.changedTouches[0];
-    activeId = t.identifier;
-    handleTouch(t);
-  }, { passive: false });
-
-  zone.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      if (e.changedTouches[i].identifier === activeId) handleTouch(e.changedTouches[i]);
-    }
-  }, { passive: false });
-
-  const endTouch = (e) => {
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      if (e.changedTouches[i].identifier === activeId) {
-        activeId = null;
-        knob.style.transform = 'translate(0px, 0px)';
-        onRelease();
-      }
-    }
-  };
-  zone.addEventListener('touchend', endTouch);
-  zone.addEventListener('touchcancel', endTouch);
-
-  function handleTouch(t) {
+  function applyPoint(clientX, clientY) {
     const rect = zone.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const maxR = 36;
-    let dx = t.clientX - cx;
-    let dy = t.clientY - cy;
+    const maxR = Math.min(36, rect.width * 0.34, rect.height * 0.34);
+    let dx = clientX - cx;
+    let dy = clientY - cy;
     const dist = Math.hypot(dx, dy);
     if (dist > maxR) { dx = (dx / dist) * maxR; dy = (dy / dist) * maxR; }
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
     onMove(dx / maxR, dy / maxR);
   }
-}
+  function release() {
+    activePointer = null;
+    activeTouch = null;
+    knob.style.transform = 'translate(0px, 0px)';
+    onRelease();
+  }
 
+  // Pointer Events cover Android Chrome, iOS Safari and installed PWAs.
+  zone.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    activePointer = event.pointerId;
+    try { zone.setPointerCapture(event.pointerId); } catch (_) {}
+    applyPoint(event.clientX, event.clientY);
+  });
+  zone.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== activePointer) return;
+    event.preventDefault();
+    applyPoint(event.clientX, event.clientY);
+  });
+  const endPointer = (event) => {
+    if (event.pointerId !== activePointer) return;
+    event.preventDefault();
+    release();
+  };
+  zone.addEventListener('pointerup', endPointer);
+  zone.addEventListener('pointercancel', endPointer);
+  zone.addEventListener('lostpointercapture', endPointer);
+
+  // Older WebViews without Pointer Events retain the touch fallback.
+  if (!window.PointerEvent) {
+    zone.addEventListener('touchstart', (event) => {
+      event.preventDefault();
+      const touch = event.changedTouches[0];
+      activeTouch = touch.identifier;
+      applyPoint(touch.clientX, touch.clientY);
+    }, { passive: false });
+    zone.addEventListener('touchmove', (event) => {
+      if (activeTouch === null) return;
+      event.preventDefault();
+      for (const touch of event.changedTouches) {
+        if (touch.identifier === activeTouch) applyPoint(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+    const endTouch = (event) => {
+      for (const touch of event.changedTouches) {
+        if (touch.identifier === activeTouch) release();
+      }
+    };
+    zone.addEventListener('touchend', endTouch);
+    zone.addEventListener('touchcancel', endTouch);
+  }
+}
 bindVirtualStick('leftStickZone', 'leftKnob', (nx, ny) => { input.moveX = nx; input.moveY = ny; }, () => { input.moveX = 0; input.moveY = 0; });
 bindVirtualStick('rightStickZone', 'rightKnob', (nx, ny) => {
   const len = Math.hypot(nx, ny);
