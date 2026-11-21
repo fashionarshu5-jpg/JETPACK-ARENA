@@ -108,7 +108,12 @@ const PROP_FILES = {
 const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {}, zombies: [], boss: null };
 ['./assets/zombie-grunt.svg','./assets/zombie-armored.svg'].forEach((src,idx) => { const img=new Image(); img.onload=()=>{ SPRITES.zombies[idx]=img; }; img.src=src; });
 { const img=new Image(); img.onload=()=>{ SPRITES.boss=img; }; img.src='./assets/outpost-titan.svg'; }
-CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => { SPRITES.chars[idx] = c; }));
+CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => {
+  SPRITES.chars[idx] = c;
+  const src = c && c.toDataURL ? c.toDataURL() : ch.file;
+  document.querySelectorAll('.char-card img[data-char-id="' + idx + '"]').forEach((img) => { img.src = src; });
+  if (state.myCharId === idx && typeof syncSoldierUI === 'function') syncSoldierUI();
+}));
 WEAPONS.forEach((wp, idx) => loadTransparentSprite(wp.file, (c) => { SPRITES.weapons[idx] = c; }));
 GRENADE_TYPES.forEach((gr, idx) => loadTransparentSprite(gr.file, (c) => { SPRITES.grenades[idx] = c; }));
 Object.entries(FX_FILES).forEach(([k, src]) => loadTransparentSprite(src, (c) => { SPRITES.fx[k] = c; }));
@@ -283,7 +288,7 @@ const MAPS = [
 const ASSET_TOTAL = CHARACTERS.length + WEAPONS.length + GRENADE_TYPES.length +
   Object.keys(FX_FILES).length + Object.keys(PROP_FILES).length + MAPS.length + 1;
 
-function getActiveMapId() { return getActiveMapId(); }
+function getActiveMapId() { return state.selectedMode === 'zombie' ? 10 : state.mapId; }
 
 const MAP_IMAGES = MAPS.map((m) => {
   if (!m.file) { reportAsset('procedural map fallback', true); return null; }
@@ -429,12 +434,13 @@ let matchStartToken = 0;
 const charGridEl = document.getElementById('characterGrid');
 function syncSoldierUI() {
   const ch = CHARACTERS[state.myCharId] || CHARACTERS[0];
-  document.getElementById('lobbyCharPreviewImg').src = ch.file;
+  const portrait = SPRITES.chars[ch.id] && SPRITES.chars[ch.id].toDataURL ? SPRITES.chars[ch.id].toDataURL() : ch.file;
+  document.getElementById('lobbyCharPreviewImg').src = portrait;
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
-  document.getElementById('drawerCharIcon').src = ch.file;
+  document.getElementById('drawerCharIcon').src = portrait;
   document.getElementById('drawerCharName').textContent = ch.name;
-  document.getElementById('hudAvatarImg').src = ch.file;
+  document.getElementById('hudAvatarImg').src = portrait;
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
 }
@@ -442,7 +448,8 @@ function syncSoldierUI() {
 CHARACTERS.forEach((ch) => {
   const card = document.createElement('div');
   card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
-  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img src="${ch.file}" alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+  const portrait = SPRITES.chars[ch.id] && SPRITES.chars[ch.id].toDataURL ? SPRITES.chars[ch.id].toDataURL() : ch.file;
+  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img data-char-id="${ch.id}" src="${portrait}" alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
   card.onclick = () => {
     state.myCharId = ch.id;
     localStorage.setItem('do_char', String(ch.id));
@@ -831,12 +838,15 @@ joinRoomBtn.onclick = () => {
           hostConn.send({ type: 'join', id: state.myId, name: state.myName, charId: state.myCharId });
           if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
         });
-        hostConn.on('data', (msg) => handleClientReceive(msg));
-        hostConn.on('error', () => {
+        const joinedConn = hostConn;
+        joinedConn.on('data', (msg) => handleClientReceive(msg));
+        joinedConn.on('error', () => {
+          if (hostConn !== joinedConn) return;
           if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
           else { document.getElementById('connectionStatus').textContent = 'Host disconnected.'; returnToLobby(); document.getElementById('connectionStatus').textContent = 'Host disconnected.'; }
         });
-        hostConn.on('close', () => {
+        joinedConn.on('close', () => {
+          if (hostConn !== joinedConn) return;
           if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
           else { returnToLobby(); document.getElementById('connectionStatus').textContent = 'Host disconnected.'; }
         });
@@ -2166,11 +2176,13 @@ function renderModeSelection() {
     const active = b.dataset.mode === state.selectedMode;
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
-  const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
+  const playlistName = state.playlist === 'competitive' ? 'Competitive • no friendly fire' : 'Arcade';
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
   const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Room-code 3v3 team battle. Join the same room and fight as a squad. Results contribute to your local operator record.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
+  const lobbyMapName = document.getElementById('lobbyMapName');
+  if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
   const lobbyMapName = document.getElementById('lobbyMapName');
   if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
   document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
