@@ -1,9 +1,10 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v27-picker-data-recovery';
+const CACHE_NAME = 'doodle-outpost-all-modes-v28-uploaded-picker-fix';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './mobile-ui.css',
+  './picker-fix.css',
   './game.js', './selection-flow.js',
   './3d.html', './3d.css', './3d.js',
   './manifest.json',
