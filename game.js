@@ -9,9 +9,10 @@ if ('serviceWorker' in navigator) {
 // ==========================================================================
 // 1. TRANSPARENT SPRITE LOADER
 // ==========================================================================
-const ASSET_TOTAL = 50;
+let ASSET_TOTAL = 0;
 let assetLoaded = 0, assetFailed = 0, assetGateResolve;
 const assetsReady = new Promise((resolve) => { assetGateResolve = resolve; });
+let assetFallbackTimer = setTimeout(() => { console.warn('Asset loading timed out; continuing with available assets.'); assetGateResolve(); const loader=document.getElementById('assetLoader'); if(loader){const detail=document.getElementById('assetProgressDetail');if(detail)detail.textContent='Some assets unavailable — continuing with fallbacks';loader.classList.add('done');}},15000);
 function reportAsset(src, ok) {
   assetLoaded++;
   if (!ok) assetFailed++;
@@ -23,11 +24,14 @@ function reportAsset(src, ok) {
   if (label) label.textContent = pct + '%';
   if (detail) detail.textContent = `${assetLoaded}/${ASSET_TOTAL} assets ready${assetFailed ? ` • ${assetFailed} unavailable (safe fallback)` : ''}`;
   if (assetLoaded >= ASSET_TOTAL) {
+    clearTimeout(assetFallbackTimer);
     assetGateResolve();
     const loader = document.getElementById('assetLoader');
     if (loader) setTimeout(() => loader.classList.add('done'), 180);
   }
 }
+const portraitDataCache = new Map();
+function setTransparentPortrait(el, src) { if(!el)return; if(portraitDataCache.has(src)){el.src=portraitDataCache.get(src);return;} const img=new Image(); img.onload=()=>{try{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0);const d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4)if(p[i]>238&&p[i+1]>238&&p[i+2]>238)p[i+3]=0;x.putImageData(d,0,0);const url=c.toDataURL('image/png');portraitDataCache.set(src,url);el.src=url;}catch(_){el.src=src;}};img.onerror=()=>{el.src=src;};img.src=src;}
 function loadTransparentSprite(src, onReady) {
   const img = new Image();
   img.decoding = 'async';
@@ -273,6 +277,7 @@ const MAPS = [
   }
 ];
 
+ASSET_TOTAL = CHARACTERS.length + WEAPONS.length + GRENADE_TYPES.length + Object.keys(FX_FILES).length + Object.keys(PROP_FILES).length + MAPS.length + 1;
 const MAP_IMAGES = MAPS.map((m) => {
   if (!m.file) { reportAsset('procedural map fallback', true); return null; }
   const img = new Image(); img.decoding = 'async';
@@ -285,8 +290,9 @@ lobbyArtwork.onload = () => reportAsset('./assets/lobby_bg.png', true);
 lobbyArtwork.onerror = () => reportAsset('./assets/lobby_bg.png', false);
 lobbyArtwork.src = './assets/lobby_bg.png';
 
+function getActiveMapId() { return state.selectedMode === 'zombie' ? 10 : state.mapId; }
 function getActivePlatforms() {
-  const mapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
+  const mapId = getActiveMapId();
   return BORDER_PLATFORMS.concat((MAPS[mapId] || MAPS[0]).platforms);
 }
 
@@ -391,7 +397,7 @@ const state = {
   roomCode: '',
   mapId: 0,
   myId: 'p_' + Math.random().toString(36).substring(2, 7),
-  myName: localStorage.getItem('do_name') || 'Harsh',
+  myName: localStorage.getItem('do_name') || 'Soldier',
   myCharId: Math.max(0, Math.min(CHARACTERS.length - 1, Number.parseInt(localStorage.getItem('do_char') || '0', 10) || 0)),
   myGrenadeType: 0,
   players: {},
@@ -416,12 +422,12 @@ let matchStartToken = 0;
 const charGridEl = document.getElementById('characterGrid');
 function syncSoldierUI() {
   const ch = CHARACTERS[state.myCharId] || CHARACTERS[0];
-  document.getElementById('lobbyCharPreviewImg').src = ch.file;
+  setTransparentPortrait(document.getElementById('lobbyCharPreviewImg'), ch.file);
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
-  document.getElementById('drawerCharIcon').src = ch.file;
+  setTransparentPortrait(document.getElementById('drawerCharIcon'), ch.file);
   document.getElementById('drawerCharName').textContent = ch.name;
-  document.getElementById('hudAvatarImg').src = ch.file;
+  setTransparentPortrait(document.getElementById('hudAvatarImg'), ch.file);
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
 }
@@ -429,7 +435,8 @@ function syncSoldierUI() {
 CHARACTERS.forEach((ch) => {
   const card = document.createElement('div');
   card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
-  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img src="${ch.file}" alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+  setTransparentPortrait(card.querySelector('img'), ch.file);
   card.onclick = () => {
     state.myCharId = ch.id;
     localStorage.setItem('do_char', String(ch.id));
@@ -509,7 +516,7 @@ function syncMapCountLabels() {
   if (cardCount) cardCount.textContent = countLabel;
 }
 function syncLobbyMapPreview() {
-  const map = MAPS[state.mapId] || MAPS[0];
+  const map = MAPS[getActiveMapId()] || MAPS[0];
   const preview = document.getElementById('lobbyMapPreview');
   const name = document.getElementById('lobbyMapName');
   const index = document.getElementById('lobbyMapIndex');
@@ -643,7 +650,7 @@ document.getElementById('drawerMicBtn').onclick = toggleProximityMic;
 // 6. ROOM CREATION, JOINING & EXACT PLAYER COUNT
 // ==========================================================================
 function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
     id, name, charId, isBot, kind: 'survivor',
@@ -668,7 +675,7 @@ function resetModeObjectives() {
     {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
     {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
   ] : null;
-  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:1800,maxHp:1800,attackClock:1.2,phase:1} : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:30000,maxHp:30000,attackClock:1.2,phase:1} : null;
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
@@ -689,6 +696,7 @@ function generateRoomCode() {
   return c;
 }
 
+function setServerStatus(label,online=false){const badge=document.getElementById('serverStatusBadge');if(badge){badge.textContent=label;badge.classList.toggle('online',online);}}
 const createRoomBtn = document.getElementById('createRoomBtn');
 let roomCreateTimer = null;
 let roomCreateSettled = false;
@@ -731,6 +739,7 @@ createRoomBtn.onclick = () => {
       state.players[state.myId] = createPlayer(state.myId, state.myName, state.myCharId, false, 0);
       document.getElementById('waitingRoom').classList.remove('hidden');
       document.getElementById('displayRoomCode').textContent = state.roomCode;
+      setServerStatus('ROOM READY',true);
       document.getElementById('connectionStatus').textContent = 'Room Ready! Share code with up to 5 friends.';
       updateLobbyPlayersUI();
       requestAnimationFrame(() => {
@@ -751,6 +760,7 @@ createRoomBtn.onclick = () => {
       });
     });
     peer.on('error', (error) => {
+      setServerStatus('OFFLINE',false);
       const type = error && error.type;
       if (!roomCreateSettled) {
         finishRoomCreateFailure(type === 'unavailable-id'
@@ -781,6 +791,7 @@ function finishJoinFailure(message) {
   joinRoomBtn.disabled = false;
   joinRoomBtn.textContent = 'JOIN';
   document.getElementById('connectionStatus').textContent = message;
+  setServerStatus('OFFLINE',false);
 }
 joinRoomBtn.onclick = () => {
   const codeInput = document.getElementById('roomCodeInput');
@@ -807,7 +818,7 @@ joinRoomBtn.onclick = () => {
     peer.on('open', () => {
       if (joinAttemptSettled) return;
       try {
-        hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: false });
+        hostConn = peer.connect('DOODLE_OUTPOST_' + code, { reliable: true });
         hostConn.on('open', () => {
           if (joinAttemptSettled) return;
           joinAttemptSettled = true;
@@ -819,9 +830,10 @@ joinRoomBtn.onclick = () => {
           if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
         });
         hostConn.on('data', (msg) => handleClientReceive(msg));
-        hostConn.on('error', () => finishJoinFailure('Room not found / could not join. Check the code and try again.'));
+        hostConn.on('error', () => { if(!joinAttemptSettled)finishJoinFailure('Room not found / could not join. Check the code and try again.'); else {state.roomCode='';returnToLobby();document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.';} });
         hostConn.on('close', () => {
           if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
+          else { state.roomCode=''; returnToLobby(); document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.'; }
         });
       } catch (_) {
         finishJoinFailure('Could not connect to that room. Check the code and try again.');
@@ -1017,8 +1029,9 @@ document.getElementById('startMatchBtn').onclick = () => {
 
 function handleHostReceive(conn, msg) {
   if (msg.type === 'join') {
+    if (state.players[msg.id]) { conn.send({ type:'lobby_sync', players:state.players, mapId:state.mapId, selectedMode:state.selectedMode }); return; }
     const count = Object.keys(state.players).length;
-    if (count >= MAX_PLAYERS) return;
+    if (count >= MAX_PLAYERS) { try { conn.send({type:'room_full'}); } catch (_) {} setTimeout(()=>{try{conn.close();}catch(_){}},120); return; }
     conn.playerId = msg.id;
     connections[msg.id] = conn;
     state.players[msg.id] = createPlayer(msg.id, msg.name, msg.charId, false, count);
@@ -1033,6 +1046,7 @@ function handleHostReceive(conn, msg) {
     if (p) {
       p.remoteInput = msg.input;
       if (typeof msg.weaponIdx === 'number') p.weaponIdx = msg.weaponIdx;
+      if(msg.use&&typeof msg.weaponIdx==='number'&&['heal','ammo_boost','armor_boost'].includes(WEAPONS[msg.weaponIdx]?.type)){p.weaponIdx=msg.weaponIdx;fireWeapon(p,performance.now());}
       if (msg.throwGrenade) spawnGrenade(p, msg.grenadeType ?? 0);
     }
   } else if (msg.type === 'adjust_time') {
@@ -1041,7 +1055,9 @@ function handleHostReceive(conn, msg) {
 }
 
 function handleClientReceive(msg) {
-  if (msg.type === 'lobby_sync') {
+  if (msg.type === 'room_full') { finishJoinFailure('This room is full (6/6).'); return; }
+  if (msg.type === 'fx') { if(msg.fx && state.fxList.length<180)state.fxList.push(msg.fx); }
+  else if (msg.type === 'lobby_sync') {
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
     if (msg.selectedMode) state.selectedMode = msg.selectedMode;
@@ -1063,6 +1079,7 @@ function handleClientReceive(msg) {
     startMatch();
   } else if (msg.type === 'state') {
     state.players = msg.players;
+    Object.values(state.players).forEach(p=>{p.facing=Math.cos(p.aimAngle||0)>=0?1:-1;p.jetFuel=100;});
     state.ctfFlags=msg.ctfFlags||state.ctfFlags;state.ctfScore=msg.ctfScore||state.ctfScore;state.boss=msg.boss||state.boss;state.battleZone=msg.battleZone||state.battleZone;
     state.zombies = msg.zombies || [];
     state.zombieWave = msg.zombieWave || 1;
@@ -1070,7 +1087,6 @@ function handleClientReceive(msg) {
     state.bullets = msg.bullets;
     state.grenades = msg.grenades;
     state.clouds = msg.clouds;
-    state.fxList = msg.fxList;
     state.killFeed = msg.killFeed;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
@@ -1120,7 +1136,10 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') state.sniperZoom = !state.sniperZoom;
   if (e.code === 'Tab') { e.preventDefault(); toggleScoreboard(); }
 });
-window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+window.addEventListener('keyup',(e)=>{keys[e.code]=false;});
+function clearHeldInput(){Object.keys(keys).forEach(k=>keys[k]=false);input.moveX=0;input.moveY=0;input.shooting=false;}
+window.addEventListener('blur',clearHeldInput);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldInput();});
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -1198,10 +1217,6 @@ document.getElementById('btnSwap').onclick = cycleWeapon;
 document.getElementById('btnGrenade').onclick = triggerGrenade;
 document.getElementById('btnGrenadeType').onclick = cycleGrenadeType;
 document.getElementById('btnZoom').onclick = () => { state.sniperZoom = !state.sniperZoom; };
-document.getElementById('btnReload').onclick = () => {
-  const b=document.getElementById('btnReload'); b.innerHTML='∞<small>UNLIMITED</small>';
-  setTimeout(()=>{ if(b.isConnected) b.innerHTML='↻<small>AMMO</small>'; },900);
-};
 document.getElementById('toggleScoreboardBtn').onclick = toggleScoreboard;
 document.getElementById('closeSbBtn').onclick = toggleScoreboard;
 document.getElementById('leaveMatchBtn').onclick = returnToLobby;
@@ -1235,9 +1250,7 @@ function selectWeapon(idx) {
   if (state.isHost && (w.type === 'heal' || w.type === 'ammo_boost' || w.type === 'armor_boost')) {
     fireWeapon(me, performance.now());
   }
-  if (!state.isHost && hostConn && hostConn.open) {
-    hostConn.send({ type: 'input', id: state.myId, input, weaponIdx: idx });
-  }
+  if(!state.isHost&&hostConn&&hostConn.open){const use=['heal','ammo_boost','armor_boost'].includes(w.type);hostConn.send({type:'input',id:state.myId,input,weaponIdx:idx,use});}
 }
 
 function cycleWeapon() {
@@ -1288,7 +1301,8 @@ function renderScoreboard() {
 // ==========================================================================
 function addFxSprite(fxKey, x, y, size, life) {
   if (state.fxList.length >= 180) state.fxList.shift();
-  state.fxList.push({ fxKey, x, y, size, life, maxLife: life });
+  const fx={fxKey,x,y,size,life,maxLife:life}; state.fxList.push(fx);
+  if(state.isHost&&state.mode==='playing'&&peer&&state.roomCode&&state.roomCode!=='BOTS'&&['sparks','explosion','smokeGreen'].includes(fxKey))broadcastToClients({type:'fx',fx});
 }
 
 let matchStarting = false;
@@ -1340,67 +1354,27 @@ async function startMatch() {
 // Return to the lobby without a page reload. This stops the render loop,
 // clears match-only state, and tears down any room connection cleanly.
 function returnToLobby() {
-  ++matchStartToken;
-  matchStarting = false;
-
-  if (gameLoopRafId !== null) {
-    cancelAnimationFrame(gameLoopRafId);
-    gameLoopRafId = null;
-  }
-  window.removeEventListener('resize', resizeCanvas);
-
-  // Let room members know before the host tears down the PeerJS session.
-  const wasHost = Boolean(state.isHost);
-  const wasRoom = Boolean(state.roomCode && state.roomCode !== 'BOTS');
-  if (wasHost && wasRoom) {
-    try { broadcastToClients({ type: 'room_closed' }); } catch (error) { console.warn(error); }
-  }
-
-  Object.values(connections).forEach((connection) => {
-    try { connection.close(); } catch (error) { console.warn(error); }
-  });
-  connections = {};
-
-  if (hostConn) {
-    try { hostConn.close(); } catch (error) { console.warn(error); }
-    hostConn = null;
-  }
-
-  if (peer) {
-    try { peer.destroy(); } catch (error) { console.warn(error); }
-    peer = null;
-  }
-
-  state.mode = 'menu';
-  state.isHost = true;
-  state.roomCode = '';
-  state.players = {};
-  state.matchTime = state.selectedDuration;
-  state.bullets = [];
-  state.grenades = [];
-  state.clouds = [];
-  state.fxList = [];
-  state.killFeed = [];
-  state.zombies = [];
-  state.zombieKills = 0;
-  state.zombieWave = 1;
-  state.ctfFlags = null;
-  state.ctfScore = [0, 0];
-  state.boss = null;
-  state._progressAwarded = false;
-
-  document.getElementById('gameContainer').classList.add('hidden');
-  document.getElementById('lobbyScreen').classList.remove('hidden');
-  document.getElementById('waitingRoom').classList.add('hidden');
-  document.getElementById('scoreboardModal').classList.add('hidden');
-  document.getElementById('matchOverModal').classList.add('hidden');
-  document.getElementById('settingsDrawer').classList.add('hidden');
-  const modeHub = document.getElementById('modeHub');
-  if (modeHub) modeHub.classList.add('hidden');
-
-  document.getElementById('displayRoomCode').textContent = '----';
-  document.getElementById('connectionStatus').textContent = 'Up to 6 players • Friends only in private rooms';
-  document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
+  ++matchStartToken; matchStarting=false;
+  if(gameLoopRafId!==null){cancelAnimationFrame(gameLoopRafId);gameLoopRafId=null;}
+  window.removeEventListener('resize',resizeCanvas);
+  const wasRoom=Boolean(state.roomCode&&state.roomCode!=='BOTS'), wasHost=Boolean(state.isHost);
+  if(!wasRoom){
+    Object.values(connections).forEach(c=>{try{c.close();}catch(_){}}); connections={};
+    if(hostConn){try{hostConn.close();}catch(_){}hostConn=null;}
+    if(peer){try{peer.destroy();}catch(_){}peer=null;}
+    state.players={};state.roomCode='';state.isHost=true;
+  } else if(wasHost) broadcastToClients({type:'lobby_sync',players:state.players,mapId:state.mapId,selectedMode:state.selectedMode});
+  state.mode='menu';state.matchTime=state.selectedDuration;
+  state.bullets=[];state.grenades=[];state.clouds=[];state.fxList=[];state.killFeed=[];
+  state.zombies=[];state.zombieKills=0;state.zombieWave=1;state.ctfFlags=null;state.ctfScore=[0,0];state.boss=null;state._progressAwarded=false;
+  document.getElementById('gameContainer').classList.add('hidden');document.getElementById('lobbyScreen').classList.remove('hidden');
+  document.getElementById('waitingRoom').classList.toggle('hidden',!wasRoom);
+  document.getElementById('scoreboardModal').classList.add('hidden');document.getElementById('matchOverModal').classList.add('hidden');document.getElementById('settingsDrawer').classList.add('hidden');
+  const hub=document.getElementById('modeHub');if(hub)hub.classList.add('hidden');
+  document.getElementById('displayRoomCode').textContent=wasRoom?state.roomCode:'----';
+  document.getElementById('connectionStatus').textContent=wasRoom?(wasHost?'Room stays open. Invite players or start another match.':'Back in the room lobby. Waiting for the host.'):'Practice ended. Ready for another deployment.';
+  document.getElementById('matchTimer').textContent=formatClock(state.matchTime);
+  if(wasRoom){updateLobbyPlayersUI();document.getElementById('startMatchBtn').classList.toggle('hidden',!wasHost);}
 }
 
 let viewWidth = 0, viewHeight = 0, renderDpr = 1;
@@ -1441,6 +1415,7 @@ function showMatchOverScreen() {
   document.getElementById('matchOverModal').classList.remove('hidden');
 }
 
+let lastStateBroadcastAt=0,lastInputSentAt=0,lastInputSignature='';
 function gameLoop(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
   lastFrameTime = now;
@@ -1449,13 +1424,14 @@ function gameLoop(now) {
   if (state.mode === 'playing') {
     if (state.isHost) {
       stepHostSimulation(dt, now);
-      broadcastToClients({
-        type: 'state', players: state.players, zombies: state.zombies || [], zombieWave: state.zombieWave || 1, zombieKills: state.zombieKills || 0, ctfFlags:state.ctfFlags,ctfScore:state.ctfScore,boss:state.boss,battleZone:state.battleZone,bullets: state.bullets,
-        grenades: state.grenades, clouds: state.clouds, fxList: state.fxList,
-        killFeed: state.killFeed, matchTime: state.matchTime, mapId: state.mapId
-      });
-    } else if (hostConn && hostConn.open) {
-      hostConn.send({ type: 'input', id: state.myId, input });
+      if(now-lastStateBroadcastAt>=50){
+        lastStateBroadcastAt=now;
+        const players=Object.fromEntries(Object.entries(state.players).map(([id,p])=>[id,{id,x:p.x,y:p.y,hp:p.hp,armor:p.armor,weaponIdx:p.weaponIdx,aimAngle:p.aimAngle,name:p.name,charId:p.charId,kills:p.kills,deaths:p.deaths,team:p.team}]));
+        broadcastToClients({type:'state',players,zombies:state.zombies||[],zombieWave:state.zombieWave||1,zombieKills:state.zombieKills||0,ctfFlags:state.ctfFlags,ctfScore:state.ctfScore,boss:state.boss,battleZone:state.battleZone,bullets:state.bullets,grenades:state.grenades,clouds:state.clouds,killFeed:state.killFeed,matchTime:state.matchTime,mapId:state.mapId});
+      }
+    } else if(hostConn&&hostConn.open){
+      const signature=JSON.stringify(input);
+      if(now-lastInputSentAt>=33&&(signature!==lastInputSignature||now-lastInputSentAt>=100)){hostConn.send({type:'input',id:state.myId,input,weaponIdx:state.players[state.myId]?.weaponIdx});lastInputSentAt=now;lastInputSignature=signature;}
     }
 
     checkObjectiveEnd();
@@ -1474,7 +1450,7 @@ function gameLoop(now) {
 function stepHostSimulation(dt, now) {
   state.matchTime = Math.max(0, state.matchTime - dt);
   const platforms = getActivePlatforms();
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
 
   Object.values(state.players).forEach((p, idx) => {
     if (p.boostTimer > 0) p.boostTimer = Math.max(0, p.boostTimer - dt);
@@ -1845,7 +1821,7 @@ function renderGame() {
   ctx.scale(state.camera.zoom, state.camera.zoom);
   ctx.translate(-state.camera.x, -state.camera.y);
 
-  const activeMapId = state.selectedMode === 'zombie' ? 10 : state.mapId;
+  const activeMapId = getActiveMapId();
   const activeMap = MAPS[activeMapId] || MAPS[0];
   const mapImg = MAP_IMAGES[activeMapId];
   if (mapImg && mapImg.complete && mapImg.naturalWidth > 0) {
@@ -1982,7 +1958,7 @@ function drawCharacterAndWeapon(p) {
 function updateHudUI() {
   const me = state.players[state.myId];
   if (!me) return;
-  const activeMap = MAPS[state.selectedMode === 'zombie' ? 10 : state.mapId] || MAPS[0];
+  const activeMap = MAPS[getActiveMapId()] || MAPS[0];
   document.getElementById('healthBar').style.width = `${Math.max(0, me.hp)}%`;
   document.getElementById('hpText').textContent = `HP ${Math.ceil(me.hp)}`;
   document.getElementById('armorBar').style.width = `${Math.min(100, me.armor || 0)}%`;
@@ -2080,7 +2056,6 @@ function loadOperatorProfile() {
   } catch (_) { return { xp: 0, wins: 0, matches: 0, kills: 0, missionKills: 0 }; }
 }
 const operatorProfile = loadOperatorProfile();
-state.playlist = localStorage.getItem('do_playlist') === 'competitive' ? 'competitive' : 'arcade';
 const savedMode=localStorage.getItem('do_mode');
 state.selectedMode=['ffa','tdm','zombie','ctf','boss','br','clan'].includes(savedMode)?savedMode:'ffa';
 function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
@@ -2097,28 +2072,18 @@ function renderOperatorProfile() {
   document.getElementById('missionText').textContent = operatorProfile.missionKills >= 5 ? 'Mission complete — good work!' : 'Get 5 eliminations';
 }
 function renderModeSelection() {
-  document.querySelectorAll('[data-playlist]').forEach((b) => {
-    const active = b.dataset.playlist === state.playlist;
-    b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
-  });
   document.querySelectorAll('button[data-mode]').forEach((b) => {
     const active = b.dataset.mode === state.selectedMode;
     b.classList.toggle('selected', active); b.setAttribute('aria-pressed', String(active));
   });
-  const playlistName = state.playlist === 'competitive' ? 'Competitive' : 'Arcade';
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'Private 3v3 team battle. Invite clanmates to a room and fight as a squad. Results contribute to your local operator record.'};
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'6-player 3v3 team battle. Room code required; up to three players per side.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
-  document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
+  document.getElementById('modeNotice').textContent=modeName+' selected';
 }
-document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
-  state.playlist = b.dataset.playlist; localStorage.setItem('do_playlist', state.playlist); renderModeSelection();
-}));
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
   state.selectedMode = b.dataset.mode;
-  if(state.selectedMode==='zombie')state.mapId=10;
-  if(state.selectedMode==='boss')state.mapId=6;
   localStorage.setItem('do_mode', state.selectedMode);
   if (state.mode !== 'playing' && state.mode !== 'gameover') {
     syncPlayerTeams();
