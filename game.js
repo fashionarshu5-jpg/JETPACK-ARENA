@@ -668,14 +668,16 @@ function syncPlayerTeams() {
     player.team = ['tdm','ctf','clan'].includes(state.selectedMode) ? index % 2 : null;
   });
 }
+const bossDamageCooldowns = new Map();
 function resetModeObjectives() {
+  bossDamageCooldowns.clear();
   state.zombies=[]; state.zombieKills=0; state.zombieWave=1; state.zombieSpawnClock=1.5;
   state.ctfScore=[0,0];
   state.ctfFlags=state.selectedMode==='ctf' ? [
     {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
     {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
   ] : null;
-  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:30000,maxHp:30000,attackClock:1.2,phase:1} : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:90000,maxHp:90000,attackClock:1.2,phase:1} : null;
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
@@ -1580,7 +1582,7 @@ function stepHostSimulation(dt, now) {
     b.x += b.vx; b.y += b.vy; b.life -= dt;
 
     const hitWall = platforms.some((pl) => b.x > pl.x && b.x < pl.x + pl.w && b.y > pl.y && b.y < pl.y + pl.h);
-    if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0&&Math.hypot(b.x-state.boss.x,b.y-state.boss.y)<76){state.boss.hp=Math.max(0,state.boss.hp-(b.damage||12));addFxSprite('sparks',b.x,b.y,44,.2);state.bullets.splice(i,1);continue;}
+    if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0&&Math.hypot(b.x-state.boss.x,b.y-state.boss.y)<76){const shooter=state.players[b.ownerId],key=b.ownerId||'unknown',now=performance.now(),last=bossDamageCooldowns.get(key)||0,sniper=shooter&&WEAPONS[shooter.weaponIdx]?.type==='sniper',cooldown=sniper?500:180;if(now-last>=cooldown){const raw=b.damage||12,damage=sniper?Math.min(raw,85):Math.min(30,Math.max(1,Math.round(raw*.35)));state.boss.hp=Math.max(0,state.boss.hp-damage);bossDamageCooldowns.set(key,now);addFxSprite('sparks',b.x,b.y,44,.2);}state.bullets.splice(i,1);continue;}
     let hitPlayer = null;
 
     for (const p of Object.values(state.players)) {
