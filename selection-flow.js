@@ -11,6 +11,7 @@
   const soldierTrigger = document.getElementById('openSoldierFromCard');
   const mapTrigger = document.getElementById('lobbyMapPreview');
   const mapCardTrigger = mapTrigger?.closest('.legacy-map-preview');
+  const mapField = mapCardTrigger?.closest('.map-field');
   if (!modal || !host || !soldierGrid || !mapGrid) return;
 
   const original = new Map();
@@ -61,10 +62,18 @@
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPicker('soldier'); }
   });
 
-  mapCardTrigger?.addEventListener('click', (event) => {
+  const openMapFromTap = (event) => {
+    if (event.target.closest('button, select, input, a')) return;
     event.preventDefault();
+    event.stopPropagation();
     openPicker('map');
-  });
+  };
+  mapCardTrigger?.addEventListener('click', openMapFromTap, true);
+  // The preview is the visible map-selection affordance. Listen on its field too,
+  // so taps on image overlays/caption children still open the picker reliably.
+  mapField?.addEventListener('click', (event) => {
+    if (event.target.closest('.legacy-map-preview')) openMapFromTap(event);
+  }, true);
   mapCardTrigger?.setAttribute('role', 'button');
   mapCardTrigger?.setAttribute('tabindex', '0');
   mapCardTrigger?.setAttribute('aria-label', 'Open map selection');
@@ -74,10 +83,10 @@
 
   // Existing game.js card handlers update/save the selection first; then return home.
   soldierGrid.addEventListener('click', (event) => {
-    if (event.target.closest('.lobby-char-card')) requestAnimationFrame(closePicker);
+    if (event.target.closest('.lobby-char-card')) window.requestAnimationFrame(closePicker);
   });
   mapGrid.addEventListener('click', (event) => {
-    if (event.target.closest('.lobby-map-card')) requestAnimationFrame(closePicker);
+    if (event.target.closest('.lobby-map-card')) window.requestAnimationFrame(closePicker);
   });
   back.addEventListener('click', closePicker);
   modal.addEventListener('click', (event) => { if (event.target === modal) closePicker(); });
