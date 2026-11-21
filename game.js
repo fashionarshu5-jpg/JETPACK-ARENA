@@ -1,3 +1,6 @@
+const progressionKey = 'do_operator_profile_v1';
+const operatorProfile = loadOperatorProfile(); // initialized before startup character rendering
+
 /* ==========================================================================
    DOODLE OUTPOST — STITCH TACTICAL UI, SETTINGS DRAWER, UTILITY CRATES & 10 MAPS
    ========================================================================== */
@@ -2104,7 +2107,6 @@ function updateHudUI() {
 
 // ==========================================================================
 /* MODE SELECTOR, LOCAL OPERATOR PROFILE & MATCH REWARDS */
-const progressionKey = 'do_operator_profile_v1';
 function loadOperatorProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(progressionKey) || '{}');
@@ -2113,7 +2115,6 @@ function loadOperatorProfile() {
       missionKills: Math.max(0, Number(saved.missionKills) || 0) };
   } catch (_) { return { xp: 0, wins: 0, matches: 0, kills: 0, missionKills: 0 }; }
 }
-const operatorProfile = loadOperatorProfile();
 const savedMode=localStorage.getItem('do_mode');
 state.selectedMode=['ffa','tdm','zombie','ctf','boss','br','clan'].includes(savedMode)?savedMode:'ffa';
 function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
