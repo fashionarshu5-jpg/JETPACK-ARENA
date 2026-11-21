@@ -117,3 +117,11 @@
  .selection-grid-host .lobby-char-card,.selection-grid-host .lobby-map-card { min-height:125px; }
  .selection-grid-host .lobby-char-card img,.selection-grid-host .lobby-map-card img { height:clamp(92px,16vh,145px); }
 }
+
+/* Mobile tap reliability: the full preview tile, not just the image, is the target */
+#lobbyScreen .legacy-map-preview { cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+#lobbyScreen .legacy-map-preview > * { pointer-events:none; }
+#lobbyScreen .hero-operator { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.selection-hub { z-index:10000; }
+.selection-grid-host { -webkit-overflow-scrolling:touch; touch-action:pan-y; }
+.selection-grid-host .lobby-char-card,.selection-grid-host .lobby-map-card { touch-action:manipulation; cursor:pointer; }
