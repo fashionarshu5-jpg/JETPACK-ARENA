@@ -49,15 +49,15 @@
       </header>
 
       <!-- FULL-SCREEN ARCADE LOBBY -->
-      <main class="lobby-grid redesign-grid">
-        <section class="tac-panel operator-panel">
+      <main class="lobby-grid redesign-grid" data-screen="lobby" aria-label="Lobby home">
+        <section class="tac-panel operator-panel" data-screen="operator-select" aria-label="Operator selection">
           <div class="panel-heading">
             <div><span class="eyebrow">01 / OPERATOR SELECT</span><div class="panel-label">CHOOSE YOUR SOLDIER</div></div>
             <span class="section-count">09 OPERATORS</span>
           </div>
           <div class="field-group callsign-field">
             <label for="playerNameInput">SOLDIER CALLSIGN</label>
-            <input type="text" id="playerNameInput" maxlength="14" placeholder="Enter callsign..." />
+            <input type="text" id="playerNameInput" maxlength="14" placeholder="Soldier" value="Soldier" />
           </div>
           <div id="openSoldierFromCard" class="operator-preview hero-operator" title="Open soldier settings">
             <div class="hero-glow"></div>
@@ -75,7 +75,7 @@
           <div class="cap-tags"><span>∞ AMMO</span><span>JETPACK</span><span>FRAG</span><span>GAS</span><span>SMOKE</span></div>
         </section>
 
-        <section class="tac-panel mission-panel">
+        <section class="tac-panel mission-panel" data-screen="map-select" aria-label="Battlefield selection">
           <div class="panel-heading">
             <div><span class="eyebrow">02 / BATTLEFIELD</span><div class="panel-label">SELECT YOUR MAP</div></div>
             <span class="section-count" id="mapCardCount">11 MAPS</span>
@@ -120,7 +120,7 @@
           <button type="button" class="mode-card" data-mode="ctf" aria-pressed="false"><span class="mode-icon">🚩</span><strong>CAPTURE THE FLAG</strong><small>Steal the enemy standard and return it to base.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="boss" aria-pressed="false"><span class="mode-icon">👹</span><strong>BOSS BATTLE</strong><small>Co-op raid against the Outpost Titan.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="br" aria-pressed="false"><span class="mode-icon">☢️</span><strong>BATTLE ROYALE</strong><small>Last soldier alive inside the shrinking zone.</small><b>PLAYABLE NOW</b></button>
-          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>6-player 3v3 team battles. Room code required.</small><b>ROOM CODE REQUIRED</b></button>
+          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>Team battles are planned for a future update.</small><b>SOON</b></button>
         </div>
         <p id="modeGuide" class="mode-guide" aria-live="polite">Eliminate everyone. The soldier with the most kills when the timer ends wins.</p>
         <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
@@ -128,7 +128,7 @@
       </section>
 
       <!-- WAITING ROOM (APPEARS WHEN HOSTING OR JOINED) -->
-      <div id="waitingRoom" class="waiting-box hidden">
+      <section id="waitingRoom" class="waiting-box hidden" data-screen="room-lobby" aria-label="Room lobby">
         <div class="room-banner">
           <div>
             <span class="label">ROOM CODE:</span>
@@ -154,7 +154,7 @@
           </label>
           <button id="startMatchBtn" class="btn btn-lime" style="padding:7px 14px;">🚀 START MATCH</button>
         </div>
-      </div>
+      </section>
 
       <!-- FOOTER -->
       <footer class="lobby-footer">
@@ -165,7 +165,7 @@
   </div>
 
   <!-- RIGHT-SIDE SETTINGS & SOLDIER DRAWER (AVAILABLE IN LOBBY & IN-GAME) -->
-  <aside id="settingsDrawer" class="settings-drawer hidden">
+  <aside id="settingsDrawer" class="settings-drawer hidden" data-screen="settings" aria-label="Game settings">
     <div class="drawer-header">
       <h3>SETTINGS</h3>
       <button id="closeSettingsBtn" class="icon-btn">✖</button>
@@ -202,6 +202,9 @@
       </div>
 
       <!-- IN-GAME EXIT ACTION -->
+      <div class="drawer-section drawer-utility-actions">
+        <button type="button" id="drawerInstallAppBtn" class="btn btn-outline-lime" style="width:100%;">INSTALL APP</button>
+      </div>
       <div id="drawerMatchActions" class="drawer-section hidden">
         <button type="button" id="drawerExitMatchBtn" class="btn btn-red" style="width:100%;">EXIT TO LOBBY</button>
       </div>
@@ -283,11 +286,17 @@
     </div>
 
     <!-- MATCH COMPLETE LEADERBOARD MODAL -->
-    <div id="matchOverModal" class="overlay hidden">
+    <div id="matchOverModal" class="overlay hidden" data-screen="match-complete" aria-label="Match complete">
       <div class="lobby-shell" style="max-width:440px; text-align:center;">
-        <div class="pill-badge" style="margin-bottom:6px;">TIME EXPIRED</div>
-        <h2 style="color:#a3e635; font-size:22px; margin-bottom:10px;">MATCH COMPLETE</h2>
-        <div id="finalLeaderboardRows" style="text-align:left; margin-bottom:12px;"></div>
+        <div class="pill-badge match-result-badge" style="margin-bottom:6px;">TIME EXPIRED</div>
+        <h2 id="matchResultTitle" class="match-result-title">MATCH COMPLETE</h2>
+        <div class="match-summary-grid" aria-label="Match statistics">
+          <div class="match-stat-card"><span>KILLS</span><strong id="finalKills">0</strong></div>
+          <div class="match-stat-card"><span>DEATHS</span><strong id="finalDeaths">0</strong></div>
+          <div class="match-stat-card"><span>WINS</span><strong id="finalWins">0</strong></div>
+        </div>
+        <div class="match-xp-panel"><div><span>OPERATOR XP</span><strong id="finalXpText">0 / 250 XP</strong></div><div class="match-xp-track"><span id="finalXpFill"></span></div></div>
+        <div id="finalLeaderboardRows" class="final-scoreboard-list" style="text-align:left; margin-bottom:12px;"></div>
         <div class="row" style="gap:8px;">
           <button id="rematchBtn" class="btn btn-lime" style="flex:1;">🔄 REMATCH</button>
           <button id="matchOverLobbyBtn" class="btn btn-amber" style="flex:1;">🏠 LOBBY</button>
