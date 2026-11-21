@@ -1749,3 +1749,74 @@ button.mode-card.selected{border-color:#a3e635;background:linear-gradient(145deg
 .room-share-status{margin:8px 0 0;padding:8px 10px;border:1px solid rgba(132,204,22,.45);border-radius:8px;background:rgba(132,204,22,.10);color:#d9f99d;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
 .room-share-status.error{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.10);color:#fecaca}
 .room-share-status[hidden]{display:none}
+
+
+/* Multiplayer lobby reliability and responsive room state */
+#lobbyScreen .waiting-box { scroll-margin: 12px; }
+#lobbyScreen .waiting-box .player-chip { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+#lobbyScreen .waiting-box .row { flex-wrap: wrap; }
+#lobbyScreen .waiting-box .room-banner > div:first-child { min-width: 0; }
+#lobbyScreen .waiting-box .code-text { overflow-wrap: anywhere; }
+
+@media screen and (orientation: landscape) and (max-width: 1100px) and (max-height: 700px) {
+  #lobbyScreen.overlay { align-items: flex-start; overflow-x: hidden; overflow-y: auto; }
+  #lobbyScreen .lobby-shell {
+    height: auto;
+    min-height: calc(100dvh - 8px);
+    max-height: calc(100dvh - 8px);
+    flex: 0 0 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  #lobbyScreen .lobby-grid.redesign-grid {
+    flex: 0 0 auto;
+    height: min(68dvh, 310px);
+    min-height: 250px;
+  }
+  #lobbyScreen .waiting-box { flex: 0 0 auto; }
+  #lobbyScreen .mission-controls {
+    grid-template-rows: auto auto auto auto;
+    align-items: start;
+    row-gap: 4px;
+  }
+  #lobbyScreen .action-stack { align-self: stretch; }
+  #lobbyScreen .join-divider {
+    position: relative;
+    z-index: 2;
+    padding: 2px 0;
+    background: #161e17;
+    line-height: 1.2;
+  }
+}
+
+@media (pointer: coarse) {
+  #mobileControls { display: block; }
+}
+#mobileControls { display: none; }
+html.has-touch-input #mobileControls { display: block; }
+
+.fuel-wrap { min-width: 0; }
+.fuel-wrap span {
+  max-width: 100%;
+  padding: 0 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  font-size: clamp(6px, 1.7vw, 8px);
+}
+.kill-feed { max-width: min(30vw, 220px); overflow: hidden; }
+.kill-item { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media screen and (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  #rightActionCluster {
+    bottom: 116px;
+    right: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    gap: 4px;
+  }
+  #rightActionCluster .action-circle { width: 34px; height: 34px; font-size: 12px; }
+  #rightActionCluster .action-circle small { font-size: 6px; }
+  .kill-feed { max-width: 125px; }
+  .kill-item { font-size: 7px; padding: 2px 4px; }
+}

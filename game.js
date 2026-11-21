@@ -689,33 +689,84 @@ function generateRoomCode() {
   return c;
 }
 
-document.getElementById('createRoomBtn').onclick = () => {
+const createRoomBtn = document.getElementById('createRoomBtn');
+let roomCreateTimer = null;
+let roomCreateSettled = false;
+
+function finishRoomCreateFailure(message) {
+  if (roomCreateSettled) return;
+  roomCreateSettled = true;
+  if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
+  if (peer) {
+    const failedPeer = peer;
+    peer = null;
+    try { failedPeer.destroy(); } catch (_) {}
+  }
+  createRoomBtn.disabled = false;
+  createRoomBtn.textContent = '⚔ CREATE ROOM';
+  document.getElementById('connectionStatus').textContent = message;
+}
+
+createRoomBtn.onclick = () => {
+  if (createRoomBtn.disabled) return;
   state.isHost = true;
   state.roomCode = generateRoomCode();
+  roomCreateSettled = false;
+  createRoomBtn.disabled = true;
+  createRoomBtn.textContent = 'CREATING…';
   document.getElementById('connectionStatus').textContent = 'Creating Room...';
+  roomCreateTimer = setTimeout(() => {
+    finishRoomCreateFailure('Could not create room. The server did not respond. Please try again.');
+  }, 15000);
 
-  peer = new Peer('DOODLE_OUTPOST_' + state.roomCode);
-  bindIncomingVoiceCalls();
-  peer.on('open', () => {
-    state.players = {};
-    state.players[state.myId] = createPlayer(state.myId, state.myName, state.myCharId, false, 0);
-    document.getElementById('waitingRoom').classList.remove('hidden');
-    document.getElementById('displayRoomCode').textContent = state.roomCode;
-    document.getElementById('connectionStatus').textContent = 'Room Ready! Share code with up to 5 friends.';
-    updateLobbyPlayersUI();
-  });
+  try {
+    peer = new Peer('DOODLE_OUTPOST_' + state.roomCode);
+    bindIncomingVoiceCalls();
+    peer.on('open', () => {
+      if (roomCreateSettled) return;
+      roomCreateSettled = true;
+      if (roomCreateTimer) { clearTimeout(roomCreateTimer); roomCreateTimer = null; }
+      createRoomBtn.textContent = 'ROOM READY';
+      state.players = {};
+      state.players[state.myId] = createPlayer(state.myId, state.myName, state.myCharId, false, 0);
+      document.getElementById('waitingRoom').classList.remove('hidden');
+      document.getElementById('displayRoomCode').textContent = state.roomCode;
+      document.getElementById('connectionStatus').textContent = 'Room Ready! Share code with up to 5 friends.';
+      updateLobbyPlayersUI();
+      requestAnimationFrame(() => {
+        const waitingRoom = document.getElementById('waitingRoom');
+        waitingRoom.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
 
-  peer.on('connection', (conn) => {
-    conn.on('data', (msg) => handleHostReceive(conn, msg));
-    conn.on('close', () => {
-      if (conn.playerId && state.players[conn.playerId]) {
-        delete state.players[conn.playerId];
-        delete connections[conn.playerId];
-        updateLobbyPlayersUI();
-        broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+    peer.on('connection', (conn) => {
+      conn.on('data', (msg) => handleHostReceive(conn, msg));
+      conn.on('close', () => {
+        if (conn.playerId && state.players[conn.playerId]) {
+          delete state.players[conn.playerId];
+          delete connections[conn.playerId];
+          updateLobbyPlayersUI();
+          broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+        }
+      });
+    });
+    peer.on('error', (error) => {
+      const type = error && error.type;
+      if (!roomCreateSettled) {
+        finishRoomCreateFailure(type === 'unavailable-id'
+          ? 'That room code is already in use. Please create the room again.'
+          : 'Could not create room. Check your connection and try again.');
+      } else {
+        document.getElementById('connectionStatus').textContent = 'Room connection issue. Your room may be unavailable.';
       }
     });
-  });
+    peer.on('disconnected', () => {
+      if (!roomCreateSettled) finishRoomCreateFailure('Lost connection while creating the room. Please try again.');
+      else document.getElementById('connectionStatus').textContent = 'Room connection lost. Reconnect and try again.';
+    });
+  } catch (_) {
+    finishRoomCreateFailure('Could not start room creation. Please try again.');
+  }
 };
 
 const joinRoomBtn = document.getElementById('joinRoomBtn');
@@ -732,8 +783,15 @@ function finishJoinFailure(message) {
   document.getElementById('connectionStatus').textContent = message;
 }
 joinRoomBtn.onclick = () => {
-  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  if (code.length !== 4 || joinRoomBtn.disabled) return;
+  const codeInput = document.getElementById('roomCodeInput');
+  const code = codeInput.value.trim().toUpperCase();
+  if (joinRoomBtn.disabled) return;
+  if (!/^[A-Z0-9]{4}$/.test(code)) {
+    document.getElementById('connectionStatus').textContent = 'Enter a valid 4-character room code.';
+    codeInput.focus();
+    return;
+  }
+  codeInput.value = code;
   state.isHost = false;
   state.roomCode = code;
   joinAttemptSettled = false;
@@ -1037,6 +1095,9 @@ function broadcastToClients(payload) {
 // ==========================================================================
 // 7. INPUTS (PC KEYBOARD/MOUSE + MOBILE DUAL JOYSTICKS)
 // ==========================================================================
+if (window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0) {
+  document.documentElement.classList.add('has-touch-input');
+}
 const input = { moveX: 0, moveY: 0, aimX: 1, aimY: 0, shooting: false };
 const keys = {};
 
