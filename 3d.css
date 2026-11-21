@@ -36,3 +36,6 @@
 .inventory-slot button{padding:8px;background:#c4ef65;border:0;border-radius:4px;color:#152014;font-weight:900;font-size:9px}
 @media(max-width:650px){.mobile-actions{max-width:62vw;grid-template-columns:repeat(4,minmax(40px,1fr));gap:4px}.mobile-actions button{height:34px;font-size:8px}.mobile-actions #mobileFire{width:54px;height:54px}.mobile-actions #mobileJump{width:46px;height:46px}}
 @media(max-width:650px) and (orientation:landscape) and (max-height:500px){.mobile-actions{max-width:64vw;grid-template-columns:repeat(4,42px)}.mobile-actions button{height:30px}.mobile-actions #mobileFire{width:44px;height:44px}.mobile-actions #mobileJump{width:40px;height:40px}}
+
+/* Crouch control stays compact in portrait and landscape layouts. */
+.mobile-actions #mobileCrouch{border-color:#9fb4a0;color:#d7e2d4;background:#202c23}
