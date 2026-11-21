@@ -166,7 +166,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   width: 58px;
   height: 58px;
   object-fit: contain;
-  background: #fff;
+  background: transparent;
   border-radius: 6px;
   padding: 2px;
 }
@@ -350,7 +350,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
 .soldier-accordion-btn img {
   width: 36px;
   height: 36px;
-  background: #fff;
+  background: transparent;
   border-radius: 5px;
   object-fit: contain;
 }
@@ -388,7 +388,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   width: 40px;
   height: 40px;
   object-fit: contain;
-  background: #fff;
+  background: transparent;
   border-radius: 5px;
   margin-top: 6px;
 }
@@ -458,7 +458,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   width: 38px;
   height: 38px;
   border-radius: 6px;
-  background: #fff;
+  background: transparent;
   object-fit: contain;
   border: 2px solid #a3e635;
 }
@@ -672,7 +672,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   cursor: pointer;
 }
 .action-circle small { font-size: 7.5px; color: #a3e635; }
-.btn-gtype { border-color: #a3e635; font-size: 9px; }
+.btn-gtype { border-color: #a3e635; font-size: 8px; line-height: 1; }
 .btn-gas { border-color: #22c55e; }
 .btn-zoom { border-color: #38bdf8; }
 .btn-swap { border-color: #facc15; }
@@ -944,7 +944,7 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
 }
 .lobby-char-card:hover { transform:translateY(-2px); border-color:#91c83a; }
 .lobby-char-card.selected { border:1.5px solid #b6f34b; background:linear-gradient(145deg,#314b24,#1b2d18); box-shadow:0 0 0 1px rgba(163,230,53,.12),0 0 18px rgba(163,230,53,.1); }
-.lobby-char-card img { width:48px; height:62px; flex:0 0 48px; object-fit:contain; background:rgba(255,255,255,.95); border-radius:6px; }
+.lobby-char-card img { width:48px; height:62px; flex:0 0 48px; object-fit:contain; background:transparent; border-radius:6px; }
 .lobby-char-card strong { display:block; font-size:9px; line-height:1.2; text-transform:uppercase; }
 .lobby-char-card small { display:block; margin-top:4px; color:#9eb196; font-size:8px; font-weight:800; }
 .lobby-char-card .pick-check { position:absolute; right:6px; top:5px; color:#c6f56d; font-size:12px; opacity:0; }
@@ -952,7 +952,7 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
 #lobbyScreen .cap-tags { margin-top:auto; }
 .map-field { min-height:0; }
 .visually-hidden-select { position:absolute!important; width:1px!important; height:1px!important; opacity:0!important; pointer-events:none!important; }
-.lobby-map-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.lobby-map-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
 .lobby-map-card {
   position:relative; min-width:0; overflow:hidden; aspect-ratio:1.35; padding:0; border-radius:9px;
   border:1.5px solid #40543b; background:#101a11; cursor:pointer; color:white; text-align:left;
@@ -985,7 +985,7 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
   #lobbyScreen .lobby-shell { max-height:98vh; }
   #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:1fr; }
   #lobbyScreen .lobby-character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
-  #lobbyScreen .lobby-map-grid { grid-template-columns:repeat(5,minmax(0,1fr)); }
+  #lobbyScreen .lobby-map-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 @media (max-width: 560px) {
   #lobbyScreen.overlay { padding:6px; }
@@ -1819,4 +1819,19 @@ html.has-touch-input #mobileControls { display: block; }
   #rightActionCluster .action-circle small { font-size: 6px; }
   .kill-feed { max-width: 125px; }
   .kill-item { font-size: 7px; padding: 2px 4px; }
+}
+
+
+/* Landscape HUD safeguards: avoid clipped action labels and truncated kill-feed names. */
+.kill-feed { width: min(30vw, 290px); max-width: calc(100vw - 24px); }
+.kill-item { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: right; }
+@media (max-height: 450px) {
+  #rightActionCluster { bottom: 92px; right: 10px; gap: 4px; }
+  #rightActionCluster .action-circle { width: 36px; height: 36px; border-width: 1.5px; }
+  #rightActionCluster .btn-gtype { font-size: 7px; letter-spacing: -.2px; }
+  #rightActionCluster .action-circle small { font-size: 6px; line-height: 1; }
+  .kill-feed { width: min(34vw, 220px); max-height: 30vh; overflow: hidden; }
+  .kill-item { font-size: 8px; line-height: 1.15; }
+  #gameContainer { width: 100vw; min-width: 100vw; }
+  #gameCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 }
