@@ -1,31 +1,38 @@
 # Doodle Outpost
 
-A browser-based 2D jetpack shooter. The game includes a solo practice mode, configurable matches, character and weapon assets, and peer-to-peer friend rooms powered by PeerJS.
+Doodle Outpost is a browser-based 2D jetpack shooter with seven playable modes, eleven selectable battlefields, bot practice, and optional PeerJS friend rooms. The separate `3d.html` page is an experimental single-player 3D prototype; it is not multiplayer and does not share match state with the 2D game.
 
-## Play locally
+## Run locally
 
-Open `index.html` in a local static web server. For example, with Python installed:
+Serve this folder with any static HTTP server (recommended; opening files directly can limit browser APIs):
 
 ```bash
 python -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`.
+Open `http://localhost:8000`.
 
-## Publish with GitHub Pages
+## Play
 
-1. Create a public GitHub repository named `doodle-outpost`.
-2. Upload the **contents** of this folder to the repository root (so `index.html` is at the top level).
-3. In the repository, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**.
-5. Select branch `main` and folder `/ (root)`, then save.
-6. Wait for the Pages deployment to finish. Your site URL will be `https://YOUR-USERNAME.github.io/doodle-outpost/`.
+- Choose a soldier, battlefield, and match duration in the lobby.
+- Use **PRACTICE VS BOTS** for offline solo practice. This mode does not create a PeerJS connection.
+- Create a room to host up to six players (Clan Wars is a 3v3 match), or join using its four-character room code. Anyone who knows the code can join; the room is not invite-list restricted.
+- Zombie Survival always uses Quarantine District. Other modes use the battlefield selected in the lobby.
+- Ammo is unlimited; there is no reload mechanic.
+- Returning to the lobby from a hosted match keeps the room open for another round. Closing the browser or losing the host connection ends the room.
 
-## Important notes
+## Multiplayer and offline behavior
 
-- GitHub Pages hosts the static game files; it does not provide a multiplayer signaling server. Friend-room connectivity uses the PeerJS cloud service loaded from jsDelivr and can be affected by that service, browser networking, or firewall restrictions.
-- The game uses a service worker for offline asset caching. After updates, refresh the page once if an older cached version appears.
-- This repository contains a fan-made game project. Make sure you have the rights to publish all included artwork, audio, and other assets before making the repository public.
+Friend rooms use PeerJS signaling and reliable data connections. Connectivity depends on the PeerJS cloud service, browser networking, and firewall/NAT behavior. The lobby status shows signaling readiness rather than claiming a game server is always online. The service worker caches the app shell and assets for offline practice after a successful first load; multiplayer still requires network access.
 
-## Visual refresh
-The deployment lobby has been refreshed with an illustrated map preview, larger operator presentation, military-green arcade styling, responsive layout, and the Doodle Outpost logo. The original canvas game, controls, bot practice, and PeerJS room flow are retained. Select a map in Mission Setup to update its preview.
+## 3D prototype assets
+
+The separate 3D prototype loads Three.js from jsDelivr and rigged GLB soldier models at runtime from Gobkit. Those external models require an internet connection; procedural fallback characters remain if they cannot load. The prototype is single-player only.
+
+## Repository
+
+This project is maintained in the `fashionarshu5-jpg/JETPACK-ARENA` repository and can be published with GitHub Pages from the repository root. GitHub Pages is static hosting; it does not provide a multiplayer signaling server.
+
+## Project notes
+
+Keep the original 2D game and the 3D prototype separate. Do not rename or remove the existing maps, modes, characters, weapons, sounds, or art assets.
