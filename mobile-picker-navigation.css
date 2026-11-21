@@ -1,0 +1,11 @@
+/* Phone picker navigation and minimal settings drawer */
+@media (pointer: coarse) {
+  #settingsDrawer .drawer-body { overflow: hidden !important; }
+  #settingsDrawer .drawer-section { display: block !important; }
+  #settingsDrawer .toggle-row { min-height: 54px; }
+  #settingsDrawer .drawer-header button { min-width: 44px; min-height: 44px; }
+  #selectionHub { touch-action: pan-y; }
+  #selectionHub .lobby-char-card, #selectionHub .lobby-map-card {
+    min-height: 64px; touch-action: manipulation; pointer-events: auto !important;
+  }
+}
