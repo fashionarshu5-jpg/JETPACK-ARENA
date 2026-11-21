@@ -713,6 +713,7 @@ function finishRoomCreateFailure(message) {
   createRoomBtn.disabled = false;
   createRoomBtn.textContent = '⚔ CREATE ROOM';
   document.getElementById('connectionStatus').textContent = message;
+  setServerStatus('OFFLINE',false);
 }
 
 createRoomBtn.onclick = () => {
@@ -1055,7 +1056,7 @@ function handleHostReceive(conn, msg) {
 }
 
 function handleClientReceive(msg) {
-  if (msg.type === 'room_full') { finishJoinFailure('This room is full (6/6).'); return; }
+  if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full (6/6).'); return; }
   if (msg.type === 'fx') { if(msg.fx && state.fxList.length<180)state.fxList.push(msg.fx); }
   else if (msg.type === 'lobby_sync') {
     state.players = msg.players;
@@ -2081,6 +2082,7 @@ function renderModeSelection() {
   const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'6-player 3v3 team battle. Room code required; up to three players per side.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
   document.getElementById('modeNotice').textContent=modeName+' selected';
+  if(typeof syncLobbyMapPreview==='function')syncLobbyMapPreview();
 }
 document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener('click', () => {
   state.selectedMode = b.dataset.mode;
