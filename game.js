@@ -783,6 +783,7 @@ createRoomBtn.onclick = () => {
 const joinRoomBtn = document.getElementById('joinRoomBtn');
 let joinAttemptTimer = null;
 let joinAttemptSettled = false;
+let joinCompleted = false;
 function finishJoinFailure(message) {
   if (joinAttemptSettled) return;
   joinAttemptSettled = true;
@@ -807,6 +808,7 @@ joinRoomBtn.onclick = () => {
   state.isHost = false;
   state.roomCode = code;
   joinAttemptSettled = false;
+  joinCompleted = false;
   joinRoomBtn.disabled = true;
   joinRoomBtn.textContent = 'JOINING…';
   document.getElementById('connectionStatus').textContent = 'Joining room ' + code + '...';
@@ -831,10 +833,10 @@ joinRoomBtn.onclick = () => {
           if (voiceChat.stream) attachVoiceCall(peer.call(hostConn.peer, voiceChat.stream));
         });
         hostConn.on('data', (msg) => handleClientReceive(msg));
-        hostConn.on('error', () => { if(!joinAttemptSettled)finishJoinFailure('Room not found / could not join. Check the code and try again.'); else {state.roomCode='';returnToLobby();document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.';} });
+        hostConn.on('error', () => { if(!joinAttemptSettled)finishJoinFailure('Room not found / could not join. Check the code and try again.'); else if(joinCompleted){state.roomCode='';returnToLobby();document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.';} });
         hostConn.on('close', () => {
           if (!joinAttemptSettled) finishJoinFailure('Room not found / could not join. Check the code and try again.');
-          else { state.roomCode=''; returnToLobby(); document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.'; }
+          else if(joinCompleted){ state.roomCode=''; returnToLobby(); document.getElementById('connectionStatus').textContent='Host disconnected. You have returned to the lobby.'; }
         });
       } catch (_) {
         finishJoinFailure('Could not connect to that room. Check the code and try again.');
@@ -1059,6 +1061,7 @@ function handleClientReceive(msg) {
   if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full (6/6).'); return; }
   if (msg.type === 'fx') { if(msg.fx && state.fxList.length<180)state.fxList.push(msg.fx); }
   else if (msg.type === 'lobby_sync') {
+    if(!state.isHost)joinCompleted=true;
     state.players = msg.players;
     state.mapId = msg.mapId || 0;
     if (msg.selectedMode) state.selectedMode = msg.selectedMode;
@@ -1070,6 +1073,7 @@ function handleClientReceive(msg) {
     document.getElementById('startMatchBtn').classList.add('hidden');
     updateLobbyPlayersUI();
   } else if (msg.type === 'start') {
+    if(!state.isHost)joinCompleted=true;
     state.players = msg.players;
     state.roomCode = msg.roomCode;
     state.matchTime = msg.matchTime;
@@ -1091,6 +1095,8 @@ function handleClientReceive(msg) {
     state.killFeed = msg.killFeed;
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
+  } else if (msg.type === 'return_lobby') {
+    returnToLobby();
   } else if (msg.type === 'room_closed') {
     alert('The room host has closed this room.');
     if (hostConn) {
@@ -1364,7 +1370,7 @@ function returnToLobby() {
     if(hostConn){try{hostConn.close();}catch(_){}hostConn=null;}
     if(peer){try{peer.destroy();}catch(_){}peer=null;}
     state.players={};state.roomCode='';state.isHost=true;
-  } else if(wasHost) broadcastToClients({type:'lobby_sync',players:state.players,mapId:state.mapId,selectedMode:state.selectedMode});
+  } else if(wasHost) broadcastToClients({type:'return_lobby',players:state.players,mapId:state.mapId,selectedMode:state.selectedMode});
   state.mode='menu';state.matchTime=state.selectedDuration;
   state.bullets=[];state.grenades=[];state.clouds=[];state.fxList=[];state.killFeed=[];
   state.zombies=[];state.zombieKills=0;state.zombieWave=1;state.ctfFlags=null;state.ctfScore=[0,0];state.boss=null;state._progressAwarded=false;
@@ -1441,6 +1447,7 @@ function gameLoop(now) {
     }
   }
 
+  if(!state.isHost&&state.fxList.length){state.fxList.forEach(fx=>{fx.life-=dt;});state.fxList=state.fxList.filter(fx=>fx.life>0);}
   updateProximityVoiceVolumes();
   updateCamera();
   renderGame();
