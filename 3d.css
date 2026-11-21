@@ -342,3 +342,58 @@ html, body, #gameRoot {
 @media (min-width:651px) and (pointer:fine) {
   .mobile-pad { display:none!important; }
 }
+
+
+/* LANDSCAPE-ONLY 3D MODE — match the 2D app orientation behavior. */
+@media screen and (max-width: 900px) and (orientation: portrait) {
+  body::before {
+    content: "↻  ROTATE YOUR PHONE\A\A DOODLE OUTPOST 3D PLAYS IN LANDSCAPE";
+    white-space: pre-wrap;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: grid;
+    place-content: center;
+    padding: 28px;
+    text-align: center;
+    background: #0b120d;
+    color: #c4ef65;
+    font: 900 clamp(18px, 5vw, 26px)/1.5 Inter, Arial, sans-serif;
+    letter-spacing: 1.5px;
+  }
+  #gameRoot > * { visibility: hidden !important; }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  html, body, #gameRoot {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+  .screen {
+    overflow: hidden !important;
+    touch-action: none;
+    padding: calc(5px + var(--safe-t)) calc(8px + var(--safe-r))
+             calc(5px + var(--safe-b)) calc(8px + var(--safe-l));
+  }
+  .menu-card {
+    width: min(430px, 48vw);
+    max-height: calc(100dvh - var(--safe-t) - var(--safe-b) - 10px);
+    margin: auto;
+    padding: 10px 16px;
+    overflow: hidden !important;
+  }
+  .menu-card h1 { font-size: clamp(28px, 4vw, 42px); margin: 7px 0; }
+  .menu-card h2 { font-size: 30px; margin: 7px 0; }
+  .menu-card .intro { font-size: 10px; line-height: 1.35; margin: 6px 0 8px; }
+  .menu-card label { margin: 6px 0; font-size: 9px; }
+  .menu-card select { margin-top: 3px; padding: 7px; min-height: 32px; }
+  .menu-card .primary, .menu-card .secondary { min-height: 36px; padding: 8px; margin-top: 6px; }
+  .menu-card .back { min-height: 28px; margin-top: 5px; font-size: 9px; }
+  .mobile-pad { overflow: hidden; }
+}
