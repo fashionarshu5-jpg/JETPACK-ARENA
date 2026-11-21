@@ -2338,3 +2338,13 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
 }
 #rightActionCluster { gap:8px; }
 #lobbyScreen button:disabled, button:disabled { opacity:.55; }
+
+
+/* Preserve legacy game hooks and keep the selected-map preview visible. */
+#lobbyScreen .map-field { display:flex; flex-direction:column; gap:8px; }
+#lobbyScreen .map-preview-card.legacy-map-preview { display:block!important; order:-1; }
+#lobbyScreen .map-preview-card { flex:0 0 auto; }
+#weaponSelectorBar { gap:8px; }
+#weaponSelectorBar .w-slot { min-width:44px; min-height:44px; }
+.hud-top-btns, .live-timer-box { gap:8px; }
+#settingsDrawer .drawer-utility-actions { grid-template-columns:minmax(0,1fr); }
