@@ -27,7 +27,8 @@
     subtitle.textContent = isSoldier
       ? 'Tap a soldier to equip them and return home.'
       : 'Choose your arena. You will return to the home screen.';
-    count.textContent = isSoldier ? '09 OPERATORS' : (grid.querySelectorAll('.lobby-map-card:not([hidden])').length + ' MAPS');
+    if (!isSoldier) grid.querySelectorAll('.lobby-map-card').forEach((card) => { card.hidden = false; });
+    count.textContent = isSoldier ? '09 OPERATORS' : (grid.querySelectorAll('.lobby-map-card').length + ' MAPS');
     modal.classList.remove('hidden');
     document.body.classList.add('picker-open');
     back.focus();
