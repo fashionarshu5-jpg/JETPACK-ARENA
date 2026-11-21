@@ -542,7 +542,7 @@ function syncLobbyMapPreview() {
   const name = document.getElementById('lobbyMapName');
   const index = document.getElementById('lobbyMapIndex');
   if (preview) { preview.src = map.file || './assets/map_outpost.png'; preview.alt = `${map.name} map preview`; }
-  if (name) name.textContent = map.name.toUpperCase();
+  if (name) name.textContent = map.name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
   if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / ${MAPS.length}`;
 }
 syncMapCountLabels();
@@ -1463,6 +1463,7 @@ function returnToLobby() {
 
   state.mode = 'menu';
   state.isHost = true;
+  if (!wasHost) { joinRoomBtn.disabled = false; joinRoomBtn.textContent = 'JOIN'; }
   state.matchTime = state.selectedDuration;
   state.bullets = []; state.grenades = []; state.clouds = [];
   state.fxList = []; state.fxEvents = []; state.killFeed = [];
