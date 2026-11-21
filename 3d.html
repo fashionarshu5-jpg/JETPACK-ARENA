@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101610"><title>JETPACK ARENA — 3D Tactical Ops</title>
+<meta name="theme-color" content="#101610"><title>Doodle Outpost — 3D Tactical Prototype</title>
 <link rel="stylesheet" href="./3d.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
 <div id="gameRoot">
   <canvas id="battlefield" aria-label="3D battlefield"></canvas>
-  <header class="top-hud"><a class="brand" href="./index.html">JETPACK ARENA <small>3D TACTICAL OPS</small></a><div class="hud-stats"><span class="health-stat">HEALTH <b id="healthValue">100</b><i class="health-track"><i id="healthFill"></i></i></span><span id="score">ELIMS <b>0</b></span><span id="fps">FPS --</span><span class="ammo-stat"><b id="weaponName">ASSAULT RIFLE</b><span id="ammo">30 / 120</span></span></div></header>
+  <header class="top-hud"><a class="brand" href="./index.html">DOODLE OUTPOST <small>3D SINGLE-PLAYER PROTOTYPE</small></a><div class="hud-stats"><span class="health-stat">HEALTH <b id="healthValue">100</b><i class="health-track"><i id="healthFill"></i></i></span><span id="score">ELIMS <b>0</b></span><span id="fps">FPS --</span><span class="ammo-stat"><b id="weaponName">ASSAULT RIFLE</b><span id="ammo">30 / 120</span></span></div></header>
   <section id="menu" class="screen">
     <div class="menu-card"><p class="eyebrow">TACTICAL SIMULATION / 01</p><h1>DEPLOY TO<br><em>THE OUTPOST</em></h1><p class="intro">Enter the outpost, eliminate hostile operators and survive. Choose your camera and graphics quality before deployment.</p>
       <label>CAMERA VIEW<select id="cameraChoice"><option value="third">THIRD PERSON</option><option value="first">FIRST PERSON</option></select></label>
       <label>GRAPHICS QUALITY<select id="quality"><option value="low">LOW — PERFORMANCE</option><option value="medium" selected>MEDIUM — BALANCED</option><option value="high">HIGH — VISUALS</option></select></label>
-      <button id="deploy" class="primary">DEPLOY / PRACTICE</button><a class="back" href="./index.html">← BACK TO CLASSIC GAME</a>
+      <button id="deploy" class="primary">DEPLOY / PRACTICE</button><a class="back" href="./index.html">← BACK TO 2D GAME</a>
     </div>
   </section>
   <section id="pause" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">OPERATOR PAUSED</p><h2>MISSION PAUSED</h2><button id="resume" class="primary">RESUME MISSION</button><button id="returnMenu" class="secondary">RETURN TO MENU</button></div></section><section id="gameOver" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">OPERATION FAILED</p><h2>OPERATOR DOWN</h2><p class="intro">You were eliminated. Return to the menu and deploy again.</p><button id="gameOverMenu" class="primary">RETURN TO MENU</button></div></section><section id="victory" class="screen hidden"><div class="menu-card compact"><p class="eyebrow">MISSION COMPLETE</p><h2>OUTPOST SECURED</h2><p class="intro">All hostile operators have been eliminated.</p><button id="victoryMenu" class="primary">PLAY AGAIN</button></div></section>
