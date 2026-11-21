@@ -581,6 +581,8 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('room')) document.getElementById('roomCodeInput').value = urlParams.get('room').toUpperCase();
 
 document.getElementById('installAppBtn').onclick = () => document.getElementById('installModal').classList.remove('hidden');
+const drawerInstallButton = document.getElementById('drawerInstallAppBtn');
+if (drawerInstallButton) drawerInstallButton.onclick = () => document.getElementById('installAppBtn').click();
 document.getElementById('closeInstallModal').onclick = () => document.getElementById('installModal').classList.add('hidden');
 
 // Proximity Voice Chat
@@ -886,9 +888,16 @@ function updateLobbyPlayersUI() {
   playersArr.forEach((p) => {
     const chip = document.createElement('div');
     chip.className = 'player-chip';
+    chip.dataset.host = String(!!state.isHost && p.id === state.myId);
     chip.textContent = `🪖 ${p.name} (${CHARACTERS[p.charId]?.name || 'Soldier'})`;
     listEl.appendChild(chip);
   });
+  for (let slot = playersArr.length; slot < MAX_PLAYERS; slot++) {
+    const empty = document.createElement('div');
+    empty.className = 'player-chip empty-slot';
+    empty.textContent = 'OPEN SLOT';
+    listEl.appendChild(empty);
+  }
 }
 
 // Copy the complete invite URL and expose the result as readable page text.
@@ -1421,7 +1430,22 @@ function showMatchOverScreen() {
   state.mode = 'gameover';
   const rows = document.getElementById('finalLeaderboardRows');
   rows.innerHTML = '';
-  Object.values(state.players).sort((a, b) => b.kills - a.kills).forEach((p, i) => {
+  const standings = Object.values(state.players).sort((a, b) => b.kills - a.kills);
+  const me = state.players[state.myId];
+  const myRank = standings.findIndex((p) => p.id === state.myId);
+  const resultTitle = document.getElementById('matchResultTitle');
+  if (resultTitle) resultTitle.textContent = myRank === 0 ? 'VICTORY' : 'MATCH COMPLETE';
+  const statKills = document.getElementById('finalKills');
+  const statDeaths = document.getElementById('finalDeaths');
+  const statWins = document.getElementById('finalWins');
+  if (statKills) statKills.textContent = String(me ? me.kills : 0);
+  if (statDeaths) statDeaths.textContent = String(me ? me.deaths : 0);
+  if (statWins) statWins.textContent = String(operatorProfile.wins);
+  const xpText = document.getElementById('finalXpText');
+  const xpFill = document.getElementById('finalXpFill');
+  if (xpText) xpText.textContent = (operatorProfile.xp % 250) + ' / 250 XP';
+  if (xpFill) xpFill.style.width = ((operatorProfile.xp % 250) / 250 * 100) + '%';
+  standings.forEach((p, i) => {
     const row = document.createElement('div');
     row.className = 'sb-row';
     row.innerHTML = `<span>#${i + 1} ${p.name}</span><span>Kills: <b>${p.kills}</b> • Deaths: ${p.deaths}</span>`;
@@ -2032,7 +2056,10 @@ function updateHudUI() {
 
   function refreshMapCards() {
     mapGrid.querySelectorAll('.lobby-map-card').forEach((card) => {
-      const selected = Number(card.dataset.map) === state.mapId;
+      const mapId = Number(card.dataset.map);
+      const selected = mapId === state.mapId;
+      const zombieOnly = mapId === 10;
+      card.hidden = zombieOnly && state.selectedMode !== 'zombie';
       card.classList.toggle('selected', selected);
       card.setAttribute('aria-pressed', String(selected));
     });
@@ -2043,6 +2070,8 @@ function updateHudUI() {
     card.type = 'button';
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
     card.dataset.map = String(map.id);
+    card.dataset.zombieOnly = String(map.id === 10);
+    card.hidden = map.id === 10 && state.selectedMode !== 'zombie';
     card.setAttribute('aria-pressed', String(map.id === state.mapId));
     card.innerHTML = '<img src="' + (map.file || './assets/map_outpost.png') + '" alt="" loading="lazy"><span class="map-number">' +
       String(map.id + 1).padStart(2, '0') + '</span><strong>' + map.name +
@@ -2099,6 +2128,10 @@ function renderModeSelection() {
   const guide=document.getElementById('modeGuide');
   const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'6-player 3v3 team battle. Room code required; up to three players per side.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
+  const mapTenOption = mapSelectEl.querySelector('option[value="10"]');
+  if (mapTenOption) mapTenOption.hidden = state.selectedMode !== 'zombie';
+  const lobbyMapGrid = document.getElementById('lobbyMapGrid');
+  if (lobbyMapGrid) lobbyMapGrid.querySelectorAll('.lobby-map-card[data-map="10"]').forEach((card) => { card.hidden = state.selectedMode !== 'zombie'; });
   document.getElementById('modeNotice').textContent=modeName+' selected';
   if(typeof syncLobbyMapPreview==='function')syncLobbyMapPreview();
 }
