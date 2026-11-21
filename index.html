@@ -41,7 +41,7 @@
         </div>
         <div class="topbar-actions">
           <span class="pill-badge">MAX 6 PLAYERS</span>
-          <span class="pill-badge online"><i class="dot"></i> SERVER ONLINE</span>
+          <span id="serverStatusBadge" class="pill-badge"><i class="dot"></i> SIGNALING IDLE</span>
           <a class="pill-badge" href="./3d.html" style="color:#c4ef65;text-decoration:none;border-color:#71864e;" aria-label="Launch 3D tactical prototype">3D TACTICAL ↗</a>
           <button id="lobbyGameModesBtn" class="icon-btn mode-launch-btn" type="button" title="Game modes" aria-label="Open game modes" aria-controls="modeHub" aria-expanded="false">🎮</button>
           <button id="lobbySettingsBtn" class="icon-btn" title="Settings & Soldiers">⚙️</button>
@@ -90,7 +90,7 @@
               <img id="lobbyMapPreview" src="./assets/map1.png.jpeg" alt="Desert Outpost map preview" />
               <div class="map-preview-shade"></div>
               <div class="map-preview-caption"><span>ACTIVE THEATER</span><strong id="lobbyMapName">DESERT OUTPOST</strong></div>
-              <span class="map-preview-index" id="lobbyMapIndex">01 / 10</span>
+              <span class="map-preview-index" id="lobbyMapIndex">01 / 11</span>
             </div>
           </div>
           <div class="mission-controls">
@@ -104,7 +104,7 @@
             </div>
             <div class="join-divider"><span>OR JOIN YOUR FRIEND</span></div>
             <div class="join-row"><input type="text" id="roomCodeInput" maxlength="4" inputmode="text" autocomplete="off" aria-label="Four-character room code" placeholder="ROOM CODE (E.G. K9X2)" style="text-transform:uppercase;" /><button id="joinRoomBtn" class="btn btn-outline-lime">JOIN</button></div>
-            <div id="connectionStatus" class="status-text">Up to 6 players • Friends only in private rooms</div>
+            <div id="connectionStatus" class="status-text">Up to 6 players • Room code required</div>
           </div>
         </section>
       </main>
@@ -113,10 +113,6 @@
       <!-- GAME MODE & OPERATOR PROGRESSION -->
       <section id="modeHub" class="mode-hub">
         <div class="mode-hub-head"><div><span class="eyebrow">03 / PLAYLIST</span><h2>CHOOSE YOUR BATTLE</h2><p>Pick the rules before creating a room or starting practice.</p></div><div class="mode-hub-head-actions"><div class="mode-profile"><span id="profileLevel">LEVEL 1</span><strong id="profileXp">0 XP</strong></div><button id="closeModeHubBtn" class="icon-btn mode-close-btn" type="button" aria-label="Close game modes">✕</button></div></div>
-        <div class="mode-tabs" role="group" aria-label="Playlist">
-          <button type="button" class="mode-tab selected" data-playlist="arcade" aria-pressed="true">🎮 ARCADE</button>
-          <button type="button" class="mode-tab" data-playlist="competitive" aria-pressed="false">🏆 COMPETITIVE</button>
-        </div>
         <div class="mode-cards">
           <button type="button" class="mode-card selected" data-mode="ffa" aria-pressed="true"><span class="mode-icon">⚔️</span><strong>FREE FOR ALL</strong><small>Every soldier fights for themselves. First to dominate.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="tdm" aria-pressed="false"><span class="mode-icon">🛡️</span><strong>TEAM DEATHMATCH</strong><small>Two teams. Work together and lead the score.</small><b>PLAYABLE NOW</b></button>
@@ -124,7 +120,7 @@
           <button type="button" class="mode-card" data-mode="ctf" aria-pressed="false"><span class="mode-icon">🚩</span><strong>CAPTURE THE FLAG</strong><small>Steal the enemy standard and return it to base.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="boss" aria-pressed="false"><span class="mode-icon">👹</span><strong>BOSS BATTLE</strong><small>Co-op raid against the Outpost Titan.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="br" aria-pressed="false"><span class="mode-icon">☢️</span><strong>BATTLE ROYALE</strong><small>Last soldier alive inside the shrinking zone.</small><b>PLAYABLE NOW</b></button>
-          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>Private 3v3 team battles with operator progression.</small><b>PRIVATE MATCH</b></button>
+          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>6-player 3v3 team battles. Room code required.</small><b>PRIVATE MATCH</b></button>
         </div>
         <p id="modeGuide" class="mode-guide" aria-live="polite">Eliminate everyone. The soldier with the most kills when the timer ends wins.</p>
         <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
@@ -310,7 +306,6 @@
         <button id="btnGrenadeType" class="action-circle btn-gtype" title="Switch Grenade">FRAG<small>TYPE</small></button>
         <button id="btnGrenade" class="action-circle btn-gas" title="Throw Grenade">💣<small>∞</small></button>
         <button id="btnZoom" class="action-circle btn-zoom" title="Sniper Zoom">🔍</button>
-        <button id="btnReload" class="action-circle btn-reload" title="Ammo is unlimited">↻<small>AMMO</small></button>
         <button id="btnSwap" class="action-circle btn-swap" title="Next Weapon">🔄</button>
       </div>
 
