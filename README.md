@@ -21,7 +21,7 @@ Open `http://localhost:8000`. Solo practice against bots does not require PeerJS
 
 ## Game modes and rooms
 
-The 2D game includes Free for All, Team Deathmatch, Zombie Survival, Capture the Flag, Boss Battle, Battle Royale, and Clan Wars. Boss Battle is an untimed raid on the map you selected in the lobby; it ends only when the Titan is defeated. Zombie Survival instead uses the locked Quarantine District arena. Clan Wars is a room-code 3v3 mode (six players maximum). Competitive playlist locks live match-time adjustments after deployment; Arcade allows the host to adjust the timer during a match. Ammo is unlimited in the 2D game.
+The 2D game includes Free for All, Team Deathmatch, Zombie Survival, Capture the Flag, Boss Battle, Battle Royale, and Clan Wars. Boss Battle is an untimed raid on the map you selected in the lobby; it ends only when the Titan is defeated. Zombie Survival instead uses the locked Quarantine District arena. Clan Wars is a 3v3 team mode that supports bot practice or room-code matches (six players maximum). Competitive playlist locks live match-time adjustments during a match; Arcade allows the host to adjust the timer during a match. Ammo is unlimited in the 2D game.
 
 Peer-to-peer rooms use PeerJS and the PeerJS cloud signaling service loaded from jsDelivr. Room connectivity therefore requires internet access and can be affected by the signaling service, browser networking, or firewalls. A room code is required to join; rooms are not restricted to a pre-approved friends list. The host can return to the room lobby without closing the room, or explicitly close it using **LEAVE / CLOSE ROOM**.
 
