@@ -700,7 +700,7 @@ function resetModeObjectives() {
     {team:0,homeX:180,homeY:930,x:180,y:930,carrierId:null},
     {team:1,homeX:2220,homeY:930,x:2220,y:930,carrierId:null}
   ] : null;
-  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:100000,maxHp:100000,attackClock:1.2,phase:1,elapsed:0} : null;
+  state.boss=state.selectedMode==='boss' ? {x:1200,y:520,hp:18000,maxHp:18000,attackClock:1.2,phase:1,elapsed:0} : null;
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
