@@ -432,6 +432,9 @@ function syncSoldierUI() {
   setTransparentPortrait(document.getElementById('hudAvatarImg'), ch.file);
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
+  const showcase = document.getElementById('showcaseCharacterName');
+  if (showcase) showcase.textContent = ch.name.toUpperCase();
+  if (typeof renderPlayerShowcase === 'function') renderPlayerShowcase();
 }
 
 CHARACTERS.forEach((ch) => {
@@ -562,6 +565,8 @@ nameInput.value = state.myName;
 nameInput.addEventListener('input', () => {
   state.myName = nameInput.value.trim() || 'Soldier';
   localStorage.setItem('do_name', state.myName);
+  const displayName = document.getElementById('showcasePlayerName');
+  if (displayName) displayName.textContent = state.myName;
 });
 
 function getSavedFriends() { return JSON.parse(localStorage.getItem('do_friends') || '[]'); }
@@ -2176,8 +2181,34 @@ function awardMatchProgress() {
   const reward = document.getElementById('profileRewardLine');
   if (reward) reward.textContent = '+' + xpGain + ' XP earned' + (won ? ' • VICTORY BONUS +100 XP' : '');
 }
+function renderPlayerShowcase() {
+  const character = CHARACTERS[state.myCharId] || CHARACTERS[0];
+  const weapon = WEAPONS[state.players[state.myId]?.weaponIdx ?? 1] || WEAPONS[1];
+  const grenade = GRENADE_TYPES[state.myGrenadeType] || GRENADE_TYPES[0];
+  const level = operatorLevel();
+  const xpIntoLevel = operatorProfile.xp % 250;
+  const xpFill = document.getElementById('showcaseXpFill');
+  document.getElementById('showcaseLevel').textContent = 'LEVEL ' + level;
+  document.getElementById('showcaseLevelBadge').textContent = 'LVL ' + String(level).padStart(2,'0');
+  document.getElementById('showcaseXpText').textContent = xpIntoLevel + ' / 250 XP';
+  if (xpFill) xpFill.style.width = (xpIntoLevel / 250 * 100) + '%';
+  document.getElementById('showcasePrimaryWeapon').src = weapon.file;
+  document.getElementById('showcasePrimaryWeapon').alt = weapon.name;
+  document.getElementById('showcasePrimaryName').textContent = weapon.name;
+  document.getElementById('showcaseGrenade').src = grenade.file;
+  document.getElementById('showcaseGrenade').alt = grenade.name;
+  document.getElementById('showcaseGrenadeName').textContent = grenade.name;
+  document.getElementById('showcaseRole').textContent = 'JETPACK ASSAULT SPECIALIST';
+  document.getElementById('showcaseStats').hidden = !(operatorProfile.matches || operatorProfile.kills || operatorProfile.wins);
+  document.getElementById('showcaseWins').textContent = operatorProfile.wins;
+  document.getElementById('showcaseMatches').textContent = operatorProfile.matches;
+  document.getElementById('showcaseKills').textContent = operatorProfile.kills;
+  const callsign = document.getElementById('playerNameInput');
+  if (callsign && callsign.value !== state.myName) callsign.value = state.myName;
+}
 renderModeSelection();
 renderOperatorProfile();
+renderPlayerShowcase();
 
 // Quick-access game mode panel. Selection still uses the existing live mode state.
 (function wireGameModePanel() {
