@@ -2819,3 +2819,28 @@ html, body, #lobbyScreen, #gameContainer {
 }
 #modeHub .mode-card { min-width: 0; overflow-wrap: anywhere; }
 #matchOverModal .row { min-width: 0; flex-wrap: wrap; }
+
+
+/* Vertical-only scrolling for the few panels that need overflow handling. */
+#lobbyScreen .lobby-grid.redesign-grid,
+#lobbyScreen .waiting-box,
+#settingsDrawer,
+#settingsDrawer .drawer-body,
+#installModal .lobby-shell,
+#matchOverModal,
+#matchOverModal .lobby-shell,
+#matchOverModal .final-scoreboard-list,
+#modeHub,
+#scoreboardModal {
+  overflow-x: hidden;
+}
+#lobbyScreen .lobby-grid.redesign-grid,
+#lobbyScreen .waiting-box,
+#settingsDrawer .drawer-body,
+#installModal .lobby-shell,
+#matchOverModal,
+#matchOverModal .lobby-shell,
+#matchOverModal .final-scoreboard-list,
+#modeHub {
+  overscroll-behavior-x: none;
+}
