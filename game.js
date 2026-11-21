@@ -2193,8 +2193,6 @@ function renderModeSelection() {
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
   const lobbyMapName = document.getElementById('lobbyMapName');
   if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
-  const lobbyMapName = document.getElementById('lobbyMapName');
-  if (lobbyMapName) lobbyMapName.textContent = (MAPS[getActiveMapId()] || MAPS[0]).name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
   document.getElementById('modeNotice').textContent=playlistName+' • '+modeName+' selected';
 }
 document.querySelectorAll('[data-playlist]').forEach((b) => b.addEventListener('click', () => {
