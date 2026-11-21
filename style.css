@@ -1922,7 +1922,7 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
   grid-template-columns: minmax(0,.88fr) minmax(0,1.12fr);
   align-items: stretch;
   gap: clamp(10px,1.2vw,16px);
-  overflow: auto;
+  overflow-y: auto; overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   padding: 1px 2px 8px 1px;
@@ -2052,7 +2052,7 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
   min-width:0;
   min-height:0;
   max-height:100%;
-  overflow:auto;
+  overflow-y: auto; overflow-x: hidden;
   overscroll-behavior:contain;
   padding:clamp(10px,1.5vw,18px);
   border:1px solid var(--do-border);
@@ -2080,7 +2080,7 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
   border-radius:16px;
   background:var(--do-panel);
 }
-#settingsDrawer .drawer-body { min-width:0; overflow:auto; overscroll-behavior:contain; padding-bottom:var(--do-safe-bottom); }
+#settingsDrawer .drawer-body { min-width:0; overflow-y: auto; overflow-x: hidden; overscroll-behavior:contain; padding-bottom:var(--do-safe-bottom); }
 #settingsDrawer .drawer-section { min-width:0; padding:10px; border-bottom:1px solid var(--do-border); }
 #settingsDrawer .soldier-accordion-btn { width:100%; min-height:64px; display:flex; align-items:center; gap:10px; }
 #settingsDrawer .soldier-accordion-btn img { width:58px; height:58px; object-fit:contain; aspect-ratio:1; background:transparent; }
@@ -2150,7 +2150,7 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
   width:min(420px,calc(100vw - 24px - var(--do-safe-left) - var(--do-safe-right)));
   max-width:100%;
   max-height:calc(100dvh - 24px - var(--do-safe-top) - var(--do-safe-bottom));
-  overflow:auto;
+  overflow-y: auto; overflow-x: hidden;
 }
 #scoreboardRows .sb-row, #finalLeaderboardRows .sb-row {
   min-width:0;
@@ -2166,14 +2166,14 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
 #matchOverModal {
   padding:calc(12px + var(--do-safe-top)) calc(12px + var(--do-safe-right))
     calc(12px + var(--do-safe-bottom)) calc(12px + var(--do-safe-left));
-  overflow:auto;
+  overflow-y: auto; overflow-x: hidden;
   overscroll-behavior:contain;
 }
 #matchOverModal .lobby-shell {
   width:min(520px,100%);
   max-height:100%;
   min-height:0;
-  overflow:auto;
+  overflow-y: auto; overflow-x: hidden;
   padding:clamp(14px,3vw,24px);
   border:1px solid var(--do-border);
   border-radius:16px;
@@ -2189,13 +2189,13 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
 .match-xp-panel > div:first-child strong { color:var(--do-text); }
 .match-xp-track { height:9px; margin-top:8px; overflow:hidden; border-radius:20px; background:#0d120e; }
 .match-xp-track span { display:block; width:0; height:100%; border-radius:inherit; background:var(--do-lime); }
-.final-scoreboard-list { min-width:0; max-height:32dvh; overflow:auto; overscroll-behavior:contain; }
+.final-scoreboard-list { min-width:0; max-height:32dvh; overflow-y: auto; overflow-x: hidden; overscroll-behavior:contain; }
 #matchOverModal .row { display:flex; gap:8px; }
 #matchOverModal .row > button { flex:1 1 0; }
 .mode-hub.mode-hub-open {
   width:min(760px,calc(100vw - 20px - var(--do-safe-left) - var(--do-safe-right)));
   max-height:calc(100dvh - 20px - var(--do-safe-top) - var(--do-safe-bottom));
-  overflow:auto;
+  overflow-y: auto; overflow-x: hidden;
 }
 
 /* Portrait phones and portrait tablets: one column, scroll content only. */
@@ -2230,7 +2230,7 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
   #lobbyScreen .join-divider { display:none; }
   #lobbyScreen .join-row { grid-column:1/-1; }
   #lobbyScreen .status-text { grid-column:1/-1; font-size:10px; }
-  #lobbyScreen .waiting-box { flex:1 1 auto; max-height:none; overflow:auto; }
+  #lobbyScreen .waiting-box { flex:1 1 auto; max-height:none; overflow-y: auto; overflow-x: hidden; }
   #lobbyScreen .waiting-box .row { display:grid; grid-template-columns:1fr; }
   #lobbyScreen #startMatchBtn { position:fixed; z-index:45; left:calc(12px + var(--do-safe-left)); right:calc(12px + var(--do-safe-right)); bottom:calc(12px + var(--do-safe-bottom)); width:auto; }
   #lobbyScreen .room-danger-actions { margin-bottom:10px; }
@@ -2652,7 +2652,7 @@ body { position:relative; }
   #lobbyScreen .mission-panel { padding-bottom:0; }
   #lobbyScreen:has(#waitingRoom:not(.hidden)) .lobby-grid { display:none; }
   #lobbyScreen:has(#waitingRoom:not(.hidden)) .mission-controls { display:none; }
-  #lobbyScreen .waiting-box { overflow:auto; padding:8px; }
+  #lobbyScreen .waiting-box { overflow-y: auto; overflow-x: hidden; padding:8px; }
   #lobbyScreen .players-list { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
   #lobbyScreen .player-chip { min-height:44px; padding:5px; font-size:11px; }
   #lobbyScreen .room-banner { gap:6px; }
