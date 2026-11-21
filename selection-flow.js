@@ -154,6 +154,25 @@
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPicker('map'); }
   });
 
+  // On touch screens, dispatch the same card click action explicitly. The
+  // delegated click handler below then closes the picker after game.js saves it.
+  soldierGrid.addEventListener('pointerup', (event) => {
+    if (event.pointerType === 'mouse') return;
+    const card = event.target.closest('.lobby-char-card');
+    if (!card) return;
+    event.preventDefault();
+    event.stopPropagation();
+    card.click();
+  }, true);
+  mapGrid.addEventListener('pointerup', (event) => {
+    if (event.pointerType === 'mouse') return;
+    const card = event.target.closest('.lobby-map-card');
+    if (!card || card.hidden) return;
+    event.preventDefault();
+    event.stopPropagation();
+    card.click();
+  }, true);
+
   // Existing game.js card handlers update/save the selection first; then return home.
   soldierGrid.addEventListener('click', (event) => {
     if (event.target.closest('.lobby-char-card')) window.requestAnimationFrame(closePicker);
