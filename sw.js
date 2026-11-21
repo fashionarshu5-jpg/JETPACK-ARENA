@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v29-mobile-touch-fix';
+const CACHE_NAME = 'doodle-outpost-all-modes-v30-mobile-picker-settings';
 const ASSETS = [
   './',
   './index.html',
