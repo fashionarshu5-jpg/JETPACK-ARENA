@@ -166,7 +166,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   width: 58px;
   height: 58px;
   object-fit: contain;
-  background: #fff;
+  background: transparent;
   border-radius: 6px;
   padding: 2px;
 }
@@ -388,7 +388,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   width: 40px;
   height: 40px;
   object-fit: contain;
-  background: #fff;
+  background: transparent;
   border-radius: 5px;
   margin-top: 6px;
 }
@@ -534,7 +534,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
 }
 .gear-btn { border-color: #a3e635; color: #a3e635; }
 .kill-feed { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 9.5px; font-weight: 800; }
-.kill-item { background: rgba(14, 20, 15, 0.85); padding: 2px 7px; border-radius: 4px; border-right: 3px solid #ef4444; }
+.kill-item { background: rgba(14, 20, 15, 0.85); padding: 2px 7px; border-radius: 4px; border-right: 3px solid #ef4444; max-width:min(42vw,320px); white-space:normal; overflow-wrap:anywhere; text-align:right; }
 
 /* BOTTOM-CENTER 10-WEAPON DOCK (BETWEEN JOYSTICKS) */
 #weaponSelectorBar {
@@ -952,7 +952,7 @@ input[type="text"], select { min-height: 42px; padding: 10px 12px; border-radius
 #lobbyScreen .cap-tags { margin-top:auto; }
 .map-field { min-height:0; }
 .visually-hidden-select { position:absolute!important; width:1px!important; height:1px!important; opacity:0!important; pointer-events:none!important; }
-.lobby-map-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.lobby-map-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:8px; }
 .lobby-map-card {
   position:relative; min-width:0; overflow:hidden; aspect-ratio:1.35; padding:0; border-radius:9px;
   border:1.5px solid #40543b; background:#101a11; cursor:pointer; color:white; text-align:left;
@@ -1820,3 +1820,7 @@ html.has-touch-input #mobileControls { display: block; }
   .kill-feed { max-width: 125px; }
   .kill-item { font-size: 7px; padding: 2px 4px; }
 }
+
+/* Doodle Outpost responsive polish */
+@media(max-height:450px) and (orientation:landscape){#rightActionCluster{gap:4px;bottom:108px}.action-circle{width:36px;height:36px;font-size:12px}.action-circle small{font-size:6px;line-height:1}.btn-gtype{font-size:8px;letter-spacing:-.2px}}
+@media(max-width:900px){.lobby-map-grid{grid-template-columns:repeat(auto-fit,minmax(82px,1fr))}}
