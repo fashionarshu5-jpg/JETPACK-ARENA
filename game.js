@@ -103,6 +103,8 @@ const PROP_FILES = {
 };
 
 const SPRITES = { chars: [], weapons: [], grenades: [], fx: {}, props: {}, zombies: [], boss: null };
+// Raw image fallback keeps the chosen operator visible even while transparent sprites are decoding.
+const CHARACTER_IMAGE_FALLBACK = CHARACTERS.map((ch) => { const img = new Image(); img.decoding = 'async'; img.src = ch.file; return img; });
 ['./assets/zombie-grunt.svg','./assets/zombie-armored.svg'].forEach((src,idx) => { const img=new Image(); img.onload=()=>{ SPRITES.zombies[idx]=img; }; img.src=src; });
 { const img=new Image(); img.onload=()=>{ SPRITES.boss=img; }; img.src='./assets/outpost-titan.svg'; }
 CHARACTERS.forEach((ch, idx) => loadTransparentSprite(ch.file, (c) => { SPRITES.chars[idx] = c; }));
@@ -1978,11 +1980,17 @@ function drawCharacterAndWeapon(p) {
   ctx.fillStyle = p.hp > 35 ? '#22c55e' : '#ef4444';
   ctx.fillRect(-22, -38, 44 * (p.hp / p.maxHp), 5);
 
-  const charImg = SPRITES.chars[p.charId];
+  const charImg = SPRITES.chars[p.charId] || CHARACTER_IMAGE_FALLBACK[p.charId];
   ctx.save();
   ctx.scale(p.facing, 1);
-  if (charImg) ctx.drawImage(charImg, -34, -34, 68, 68);
-  else { ctx.fillStyle = '#4b633c'; ctx.fillRect(-16, -26, 32, 54); }
+  if (charImg && charImg.complete !== false && (charImg.naturalWidth || charImg.width)) ctx.drawImage(charImg, -34, -34, 68, 68);
+  else {
+    // Visible tactical-soldier fallback instead of a blank rectangle during image loading.
+    ctx.fillStyle = '#354b35'; ctx.strokeStyle = '#b7d58a'; ctx.lineWidth = 2;
+    ctx.fillRect(-15, -25, 30, 48); ctx.strokeRect(-15, -25, 30, 48);
+    ctx.fillStyle = '#202b27'; ctx.beginPath(); ctx.arc(0, -28, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#b7d58a'; ctx.fillRect(-9, -30, 18, 4);
+  }
   ctx.restore();
   ctx.restore();
 

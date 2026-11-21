@@ -10,6 +10,7 @@
   const mapGrid = document.getElementById('lobbyMapGrid');
   const soldierTrigger = document.getElementById('openSoldierFromCard');
   const mapTrigger = document.getElementById('lobbyMapPreview');
+  const mapCardTrigger = mapTrigger?.closest('.legacy-map-preview');
   if (!modal || !host || !soldierGrid || !mapGrid) return;
 
   const original = new Map();
@@ -58,11 +59,14 @@
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPicker('soldier'); }
   });
 
-  mapTrigger?.addEventListener('click', () => openPicker('map'));
-  mapTrigger?.setAttribute('role', 'button');
-  mapTrigger?.setAttribute('tabindex', '0');
-  mapTrigger?.setAttribute('aria-label', 'Change selected map');
-  mapTrigger?.addEventListener('keydown', (event) => {
+  mapCardTrigger?.addEventListener('click', (event) => {
+    event.preventDefault();
+    openPicker('map');
+  });
+  mapCardTrigger?.setAttribute('role', 'button');
+  mapCardTrigger?.setAttribute('tabindex', '0');
+  mapCardTrigger?.setAttribute('aria-label', 'Open map selection');
+  mapCardTrigger?.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPicker('map'); }
   });
 
