@@ -550,7 +550,7 @@ input[type="text"]:focus, select:focus { border-color: #a3e635; }
   border-radius: 8px;
   z-index: 14;
   max-width: calc(100vw - 260px);
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 .w-slot {
   background: #1a231b;
@@ -2505,7 +2505,7 @@ body { position:relative; }
 #weaponSelectorBar {
   min-width:0;
   max-width:calc(100vw - var(--do-safe-left) - var(--do-safe-right) - 16px);
-  overflow-x:auto;
+  overflow-x: hidden;
   overflow-y:hidden;
   touch-action:pan-x;
   scrollbar-width:none;
