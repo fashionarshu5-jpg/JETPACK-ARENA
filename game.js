@@ -1057,7 +1057,7 @@ document.getElementById('startMatchBtn').onclick = () => {
     const sp = (MAPS[getActiveMapId()] || MAPS[0]).spawns[idx % 6];
     p.x = sp.x; p.y = sp.y; p.vx = 0; p.vy = 0; p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
   resetModeObjectives();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
@@ -1115,7 +1115,7 @@ function handleClientReceive(msg) {
     if (gameLoopRafId !== null) cancelAnimationFrame(gameLoopRafId);
     gameLoopRafId = null; window.removeEventListener('resize', resizeCanvas);
     state.mode = 'menu'; state.players = msg.players || state.players;
-    state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+    state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
     document.getElementById('gameContainer').classList.add('hidden');
     document.getElementById('lobbyScreen').classList.remove('hidden');
     document.getElementById('waitingRoom').classList.remove('hidden');
@@ -1310,7 +1310,7 @@ document.getElementById('rematchBtn').onclick = () => {
     p.hp = p.maxHp || 100; p.armor = 0; p.kills = 0; p.deaths = 0;
     p.deadTimer = 0; p.lastShot = 0; p.lastGrenade = 0;
   });
-  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.killFeed = [];
+  state.bullets = []; state.grenades = []; state.clouds = []; state.fxList = []; state.fxEvents = []; state.killFeed = [];
   resetModeObjectives(); syncPlayerTeams();
   broadcastToClients({ type: 'start', players: state.players, roomCode: state.roomCode, matchTime: state.matchTime, mapId: state.mapId, selectedMode: state.selectedMode });
   startMatch();
