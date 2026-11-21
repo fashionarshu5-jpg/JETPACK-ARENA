@@ -1,9 +1,9 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v21';
+const CACHE_NAME = 'doodle-outpost-all-modes-v22';
 const ASSETS = [
   './',
   './index.html',
-  './style.css',
-  './game.js',
+  './style.css?v=22',
+  './game.js?v=22',
   './3d.html', './3d.css', './3d.js',
   './manifest.json', './README.md',
   './assets/doodle-outpost-logo.png', './assets/favicon.png',
