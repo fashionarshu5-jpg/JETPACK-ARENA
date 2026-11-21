@@ -1,0 +1,40 @@
+/* picker-fix.css: show the existing soldier/map grids inside the picker. */
+#selectionHub.selection-hub:not(.hidden) {
+  display:flex!important; position:fixed!important; inset:0!important; z-index:10000;
+  width:100vw; height:100vh; height:100dvh; box-sizing:border-box;
+  background:rgba(5,8,6,.95);
+  padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right))
+          max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  overflow:hidden;
+}
+#selectionHub .selection-shell {
+  display:flex; flex-direction:column; gap:12px; width:100%; max-width:1100px;
+  height:100%; min-height:0; margin:0 auto; box-sizing:border-box;
+}
+#selectionHub .selection-grid-host {
+  flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+}
+#selectionHub #lobbyCharacterGrid,
+#selectionHub #lobbyMapGrid {
+  display:grid!important;
+  grid-template-columns:repeat(auto-fill,minmax(clamp(120px,22vw,180px),1fr));
+  gap:10px; width:100%; height:auto; padding:4px;
+}
+#selectionHub #lobbyMapGrid {
+  grid-template-columns:repeat(auto-fill,minmax(clamp(120px,24vw,200px),1fr));
+}
+#selectionHub .lobby-char-card,
+#selectionHub .lobby-map-card { display:flex!important; min-width:0; min-height:56px; }
+#selectionHub .lobby-map-card[hidden],
+#selectionHub .lobby-char-card[hidden] { display:none!important; }
+
+/* On the target landscape phone, show the complete 3x3 / 4x3 grid without scrolling. */
+@media screen and (max-width:900px) and (orientation:landscape) {
+  #selectionHub .selection-grid-host { overflow:hidden!important; }
+  #selectionHub #lobbyCharacterGrid,
+  #selectionHub #lobbyMapGrid {
+    height:100%!important; grid-template-rows:repeat(3,minmax(0,1fr))!important;
+    align-content:stretch!important; overflow:hidden!important;
+  }
+}
