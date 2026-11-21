@@ -543,7 +543,10 @@ function syncLobbyMapPreview() {
   const index = document.getElementById('lobbyMapIndex');
   if (preview) { preview.src = map.file || './assets/map_outpost.png'; preview.alt = `${map.name} map preview`; }
   if (name) name.textContent = map.name.toUpperCase() + (state.selectedMode === 'zombie' ? ' • ZOMBIE ARENA' : '');
-  if (index) index.textContent = `${String(map.id + 1).padStart(2, '0')} / ${MAPS.length}`;
+  const pickerPosition = PICKER_MAPS.findIndex((item) => item.id === map.id) + 1;
+  const mapPosition = state.selectedMode === 'zombie' ? map.id + 1 : pickerPosition;
+  const mapTotal = state.selectedMode === 'zombie' ? MAPS.length : PICKER_MAPS.length;
+  if (index) index.textContent = `${String(mapPosition).padStart(2, '0')} / ${String(mapTotal).padStart(2, '0')}`;
 }
 syncMapCountLabels();
 syncLobbyMapPreview();
