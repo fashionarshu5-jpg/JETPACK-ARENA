@@ -325,3 +325,77 @@
   #gameCanvas { display:block;width:100%;height:100%;touch-action:none; }
   #mobileControls { position:fixed;inset:0;overflow:hidden;touch-action:none; }
 }
+
+
+/* LANDSCAPE-ONLY PHONE EXPERIENCE — portrait is a rotate prompt, never a second layout. */
+@media screen and (max-width: 900px) and (orientation: portrait) {
+  body::before {
+    content: "↻  ROTATE YOUR PHONE\A\A DOODLE OUTPOST PLAYS IN LANDSCAPE";
+    white-space: pre-wrap;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: grid;
+    place-content: center;
+    padding: 28px;
+    text-align: center;
+    background: #0b120d;
+    color: #c4ef65;
+    font: 900 clamp(18px, 5vw, 26px)/1.5 Inter, Arial, sans-serif;
+    letter-spacing: 1.5px;
+  }
+  #lobbyScreen, #gameContainer, #selectionHub, #modeHub,
+  #waitingRoom, #settingsDrawer, #installModal {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  html, body {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+  body { position: fixed; inset: 0; }
+  #lobbyScreen.overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0 !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
+  #lobbyScreen .lobby-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
+  #lobbyScreen .lobby-grid.redesign-grid {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) !important;
+    overflow: hidden !important;
+  }
+  #gameContainer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  #gameCanvas, #mobileControls, #mobilePad {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+}
