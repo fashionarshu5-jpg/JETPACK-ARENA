@@ -1052,6 +1052,10 @@ function handleHostReceive(conn, msg) {
       if(msg.use&&typeof msg.weaponIdx==='number'&&['heal','ammo_boost','armor_boost'].includes(WEAPONS[msg.weaponIdx]?.type)){p.weaponIdx=msg.weaponIdx;fireWeapon(p,performance.now());}
       if (msg.throwGrenade) spawnGrenade(p, msg.grenadeType ?? 0);
     }
+  } else if (msg.type === 'leave') {
+    const playerId=msg.id;
+    if(playerId&&state.players[playerId]){delete state.players[playerId];delete connections[playerId];updateLobbyPlayersUI();broadcastToClients({type:'lobby_sync',players:state.players,mapId:state.mapId,selectedMode:state.selectedMode});}
+    try{conn.close();}catch(_){}
   } else if (msg.type === 'adjust_time') {
     state.matchTime = Math.max(10, Math.min(3600, state.matchTime + msg.delta));
   }
@@ -1096,7 +1100,7 @@ function handleClientReceive(msg) {
     state.matchTime = msg.matchTime;
     state.mapId = msg.mapId || 0;
   } else if (msg.type === 'return_lobby') {
-    returnToLobby();
+    returnToLobby(true);
   } else if (msg.type === 'room_closed') {
     alert('The room host has closed this room.');
     if (hostConn) {
@@ -1360,12 +1364,15 @@ async function startMatch() {
 
 // Return to the lobby without a page reload. This stops the render loop,
 // clears match-only state, and tears down any room connection cleanly.
-function returnToLobby() {
+function returnToLobby(keepJoinedRoom = false) {
   ++matchStartToken; matchStarting=false;
   if(gameLoopRafId!==null){cancelAnimationFrame(gameLoopRafId);gameLoopRafId=null;}
   window.removeEventListener('resize',resizeCanvas);
   const wasRoom=Boolean(state.roomCode&&state.roomCode!=='BOTS'), wasHost=Boolean(state.isHost);
-  if(!wasRoom){
+  const preserveRoom=wasRoom&&(wasHost||keepJoinedRoom);
+  if(!preserveRoom){
+    if(wasRoom&&!wasHost&&hostConn&&hostConn.open){try{hostConn.send({type:'leave',id:state.myId});}catch(_){}}
+    joinCompleted=false;
     Object.values(connections).forEach(c=>{try{c.close();}catch(_){}}); connections={};
     if(hostConn){try{hostConn.close();}catch(_){}hostConn=null;}
     if(peer){try{peer.destroy();}catch(_){}peer=null;}
@@ -1375,13 +1382,13 @@ function returnToLobby() {
   state.bullets=[];state.grenades=[];state.clouds=[];state.fxList=[];state.killFeed=[];
   state.zombies=[];state.zombieKills=0;state.zombieWave=1;state.ctfFlags=null;state.ctfScore=[0,0];state.boss=null;state._progressAwarded=false;
   document.getElementById('gameContainer').classList.add('hidden');document.getElementById('lobbyScreen').classList.remove('hidden');
-  document.getElementById('waitingRoom').classList.toggle('hidden',!wasRoom);
+  document.getElementById('waitingRoom').classList.toggle('hidden',!preserveRoom);
   document.getElementById('scoreboardModal').classList.add('hidden');document.getElementById('matchOverModal').classList.add('hidden');document.getElementById('settingsDrawer').classList.add('hidden');
   const hub=document.getElementById('modeHub');if(hub)hub.classList.add('hidden');
-  document.getElementById('displayRoomCode').textContent=wasRoom?state.roomCode:'----';
-  document.getElementById('connectionStatus').textContent=wasRoom?(wasHost?'Room stays open. Invite players or start another match.':'Back in the room lobby. Waiting for the host.'):'Practice ended. Ready for another deployment.';
+  document.getElementById('displayRoomCode').textContent=preserveRoom?state.roomCode:'----';
+  document.getElementById('connectionStatus').textContent=preserveRoom?(wasHost?'Room stays open. Invite players or start another match.':'Back in the room lobby. Waiting for the host.'):'Back in the lobby. Ready for another deployment.';
   document.getElementById('matchTimer').textContent=formatClock(state.matchTime);
-  if(wasRoom){updateLobbyPlayersUI();document.getElementById('startMatchBtn').classList.toggle('hidden',!wasHost);}
+  if(preserveRoom){updateLobbyPlayersUI();document.getElementById('startMatchBtn').classList.toggle('hidden',!wasHost);}
 }
 
 let viewWidth = 0, viewHeight = 0, renderDpr = 1;
