@@ -22,6 +22,42 @@
   <div id="mission" class="mission hidden"><b>OUTPOST // HOSTILE CONTACT</b><span>WASD MOVE · MOUSE AIM · CLICK FIRE · SPACE JUMP · R RELOAD · 1–5 WEAPONS</span><span id="cameraLabel">THIRD PERSON</span><span id="statusText">ELIMINATE ALL HOSTILES</span></div>
   <button id="cameraToggle" class="camera-toggle hidden">SWITCH CAMERA</button>
   <div id="mobilePad" class="mobile-pad hidden"><div id="movePad" aria-label="Movement joystick"><i></i></div><div id="lookPad" aria-label="Drag to aim"></div><div class="mobile-actions"><button id="mobileFire">FIRE</button><button id="mobileJump">JUMP</button><button id="mobileReload">RELOAD</button><button id="mobileWeapon">WEAPON</button><button id="mobilePause" aria-label="Pause game">Ⅱ</button></div></div>
+  <nav id="quickTabs" class="quick-tabs hidden" aria-label="Game panels">
+    <button type="button" data-panel="map" aria-label="Map" aria-pressed="false"><span>⌖</span><small>MAP</small></button>
+    <button type="button" data-panel="weapons" aria-label="Weapons" aria-pressed="false"><span>⚔</span><small>GUNS</small></button>
+    <button type="button" data-panel="mission" aria-label="Mission" aria-pressed="false"><span>◎</span><small>OPS</small></button>
+    <button type="button" data-panel="settings" aria-label="Settings" aria-pressed="false"><span>⚙</span><small>SET</small></button>
+  </nav>
+  <aside id="quickPanel" class="quick-panel hidden" aria-live="polite">
+    <header><b id="quickPanelTitle">TACTICAL MAP</b><button id="closeQuickPanel" type="button" aria-label="Close panel">×</button></header>
+    <div class="quick-panel-body">
+      <section class="quick-panel-view" data-view="map">
+        <canvas id="miniMap" width="240" height="160" aria-label="Live minimap"></canvas>
+        <div class="panel-stats"><span>HOSTILES <b id="mapHostiles">5</b></span><span>ELIMS <b id="mapElims">0</b></span></div>
+      </section>
+      <section class="quick-panel-view" data-view="weapons">
+        <p class="panel-hint">SELECT YOUR LOADOUT</p>
+        <div class="weapon-grid">
+          <button data-weapon="0" type="button">01 <b>ASSAULT</b><small>Balanced rifle</small></button>
+          <button data-weapon="1" type="button">02 <b>SMG</b><small>Fast fire rate</small></button>
+          <button data-weapon="2" type="button">03 <b>SHOTGUN</b><small>Close range</small></button>
+          <button data-weapon="3" type="button">04 <b>SNIPER</b><small>High damage</small></button>
+          <button data-weapon="4" type="button">05 <b>PISTOL</b><small>Sidearm</small></button>
+        </div>
+      </section>
+      <section class="quick-panel-view" data-view="mission">
+        <p class="panel-hint">CURRENT OPERATION</p><h3>OUTPOST // HOSTILE CONTACT</h3>
+        <p>Clear the outpost by eliminating every hostile operator.</p>
+        <div class="mission-progress"><i id="missionProgress"></i></div>
+        <div class="panel-stats"><span>REMAINING <b id="panelRemaining">5</b></span><span>ELIMS <b id="panelElims">0</b></span></div>
+      </section>
+      <section class="quick-panel-view" data-view="settings">
+        <label class="panel-label">GRAPHICS QUALITY<select id="qualityPanel"><option value="low">LOW — PERFORMANCE</option><option value="medium" selected>MEDIUM — BALANCED</option><option value="high">HIGH — VISUALS</option></select></label>
+        <button id="panelCamera" class="panel-action" type="button">SWITCH CAMERA</button>
+        <p class="panel-hint">Tip: choose Low on older phones for smoother play.</p>
+      </section>
+    </div>
+  </aside>
   <div id="hitMarker" class="hit-marker"></div>
   <div id="toast" role="status"></div>
 </div>
