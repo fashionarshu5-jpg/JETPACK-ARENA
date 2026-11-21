@@ -21,10 +21,11 @@
   <div id="crosshair" class="crosshair hidden">+</div>
   <div id="mission" class="mission hidden"><b>OUTPOST // HOSTILE CONTACT</b><span>WASD MOVE · MOUSE AIM · CLICK FIRE · SPACE JUMP · R RELOAD · 1–5 WEAPONS</span><span id="cameraLabel">THIRD PERSON</span><span id="statusText">ELIMINATE ALL HOSTILES</span></div>
   <button id="cameraToggle" class="camera-toggle hidden">SWITCH CAMERA</button>
-  <div id="mobilePad" class="mobile-pad hidden"><div id="movePad" aria-label="Movement joystick"><i></i></div><div id="lookPad" aria-label="Drag to aim"></div><div class="mobile-actions"><button id="mobileFire">FIRE</button><button id="mobileJump">JUMP</button><button id="mobileReload">RELOAD</button><button id="mobileWeapon">WEAPON</button><button id="mobilePause" aria-label="Pause game">Ⅱ</button></div></div>
+  <div id="mobilePad" class="mobile-pad hidden"><div id="movePad" aria-label="Movement joystick"><i></i></div><div id="lookPad" aria-label="Drag to aim"></div><div class="mobile-actions"><button id="mobileRun" aria-label="Hold to sprint">RUN</button><button id="mobileFire" aria-label="Hold to fire">FIRE</button><button id="mobileJump">JUMP</button><button id="mobileBag" aria-label="Open inventory">BAG</button><button id="mobileMedkit" aria-label="Use medkit">MED <b id="medkitCount">2</b></button><button id="mobileReload">RELOAD</button><button id="mobileWeapon">WEAPON</button><button id="mobilePause" aria-label="Pause game">Ⅱ</button></div></div>
   <nav id="quickTabs" class="quick-tabs hidden" aria-label="Game panels">
     <button type="button" data-panel="map" aria-label="Map" aria-pressed="false"><span>⌖</span><small>MAP</small></button>
     <button type="button" data-panel="weapons" aria-label="Weapons" aria-pressed="false"><span>⚔</span><small>GUNS</small></button>
+    <button type="button" data-panel="inventory" aria-label="Inventory" aria-pressed="false"><span>▣</span><small>BAG</small></button>
     <button type="button" data-panel="mission" aria-label="Mission" aria-pressed="false"><span>◎</span><small>OPS</small></button>
     <button type="button" data-panel="settings" aria-label="Settings" aria-pressed="false"><span>⚙</span><small>SET</small></button>
   </nav>
@@ -51,6 +52,7 @@
         <div class="mission-progress"><i id="missionProgress"></i></div>
         <div class="panel-stats"><span>REMAINING <b id="panelRemaining">5</b></span><span>ELIMS <b id="panelElims">0</b></span></div>
       </section>
+      <section class="quick-panel-view" data-view="inventory"><p class="panel-hint">OPERATOR BACKPACK</p><div class="inventory-slot"><b>MEDKIT × <span id="bagMedkitCount">2</span></b><small>Restore up to 35 health. Two kits per deployment.</small><button id="bagUseMedkit" type="button">USE MEDKIT</button></div><div class="inventory-slot"><b>WEAPON LOADOUT</b><small id="bagWeaponName">ASSAULT RIFLE</small><button id="bagNextWeapon" type="button">NEXT WEAPON</button></div></section>
       <section class="quick-panel-view" data-view="settings">
         <label class="panel-label">GRAPHICS QUALITY<select id="qualityPanel"><option value="low">LOW — PERFORMANCE</option><option value="medium" selected>MEDIUM — BALANCED</option><option value="high">HIGH — VISUALS</option></select></label>
         <button id="panelCamera" class="panel-action" type="button">SWITCH CAMERA</button>
