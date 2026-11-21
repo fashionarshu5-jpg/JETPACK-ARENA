@@ -1,0 +1,72 @@
+/* Phone-first, no-page-scroll lobby skin */
+@media (max-width: 600px) and (orientation: portrait) {
+  html, body { width:100%; height:100%; height:100dvh; overflow:hidden!important; }
+  #lobbyScreen.overlay { position:fixed; inset:0; height:100dvh; min-height:0; padding: max(5px,env(safe-area-inset-top)) 7px max(5px,env(safe-area-inset-bottom)); overflow:hidden!important; align-items:stretch; }
+  #lobbyScreen .lobby-shell { width:100%; height:100%; min-height:0; max-height:100%; padding:7px; gap:6px; overflow:hidden; border-radius:14px; }
+  #lobbyScreen .lobby-topbar { flex:0 0 auto; padding:4px 2px 7px; gap:5px; min-height:48px; }
+  #lobbyScreen .brand-icon { width:34px; height:34px; }
+  #lobbyScreen .lobby-topbar h1 { font-size:clamp(14px,4vw,18px); line-height:1.05; }
+  #lobbyScreen .subtitle { display:none; }
+  #lobbyScreen .topbar-actions { display:flex; flex-wrap:nowrap; gap:4px; }
+  #lobbyScreen .topbar-actions .pill-badge { display:none!important; }
+  #lobbyScreen .topbar-actions button { min-width:42px; min-height:42px; padding:4px; }
+  #lobbyScreen .lobby-grid.redesign-grid { display:grid; flex:1 1 auto; min-height:0; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:6px; padding:0; overflow:hidden!important; }
+  #lobbyScreen .tac-panel { padding:8px; gap:5px; border-radius:10px; min-height:0; }
+  #lobbyScreen .operator-panel { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; }
+  #lobbyScreen .operator-panel .panel-heading { margin:0; }
+  #lobbyScreen .operator-panel .callsign-field,
+  #lobbyScreen .operator-panel .operator-stats,
+  #lobbyScreen .operator-panel .subsection-title,
+  #lobbyScreen .operator-panel .lobby-character-grid,
+  #lobbyScreen .operator-panel .cap-tags { display:none!important; }
+  #lobbyScreen .hero-operator { display:flex; align-items:center; min-height:0; padding:4px 8px; gap:9px; }
+  #lobbyScreen .hero-operator > img { width:52px; height:52px; object-fit:contain; }
+  #lobbyScreen .hero-operator .op-meta h2 { font-size:14px; margin:1px 0; }
+  #lobbyScreen .hero-operator .op-meta small,
+  #lobbyScreen .hero-operator .op-index,
+  #lobbyScreen .hero-level { display:none; }
+  #lobbyScreen .mission-panel { display:flex; flex-direction:column; min-height:0; gap:6px; }
+  #lobbyScreen .mission-panel .panel-heading { flex:0 0 auto; }
+  #lobbyScreen .map-field { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); min-height:0; gap:5px; }
+  #lobbyScreen .map-field > label { display:block; font-size:10px; }
+  #lobbyScreen .visually-hidden-select { position:static!important; width:100%!important; height:40px!important; clip:auto!important; clip-path:none!important; overflow:visible!important; white-space:normal!important; border:1px solid #52684b!important; border-radius:8px; padding:0 10px!important; background:#172219!important; color:#efffe4!important; font:700 12px system-ui; }
+  #lobbyScreen .legacy-map-preview { display:block!important; order:2; width:100%; height:auto; min-height:90px; max-height:clamp(96px,18vh,145px); aspect-ratio:16/5; overflow:hidden; }
+  #lobbyScreen .legacy-map-preview img { width:100%; height:100%; object-fit:cover; }
+  #lobbyScreen .lobby-map-grid { display:none!important; }
+  #lobbyScreen .mission-controls { flex:0 0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:6px; margin:0; padding-top:7px; border-top:1px solid #3b5035; }
+  #lobbyScreen .mission-controls > .field-group:first-child label { display:flex; justify-content:space-between; font-size:10px; }
+  #lobbyScreen .preset-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  #lobbyScreen .preset-btn { height:46px!important; min-height:46px!important; max-height:46px!important; padding:4px; font-size:12px; }
+  #lobbyScreen .action-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  #lobbyScreen .action-stack .btn { min-height:46px; height:46px; padding:4px; font-size:clamp(9px,2.7vw,11px); white-space:normal; line-height:1.05; }
+  #lobbyScreen .join-divider, #lobbyScreen .status-text, #lobbyScreen .lobby-footer { display:none!important; }
+  #lobbyScreen .join-row { display:flex; gap:6px; }
+  #lobbyScreen .join-row input { flex:1 1 0; width:1%; min-width:0; min-height:44px; font-size:12px; }
+  #lobbyScreen .join-row button { flex:0 0 68px; min-width:68px; min-height:44px; }
+  #lobbyScreen:has(#waitingRoom:not(.hidden)) .lobby-grid { display:none; }
+  #lobbyScreen:has(#waitingRoom:not(.hidden)) .waiting-box { display:block; flex:1; min-height:0; overflow-y:auto; }
+  #lobbyScreen .waiting-box { margin:0; padding:8px; }
+  #lobbyScreen .players-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #lobbyScreen .waiting-box .row { display:grid; grid-template-columns:1fr; }
+  #lobbyScreen #startMatchBtn { position:static; width:100%; }
+  #modeHub { max-height:calc(100dvh - 16px); }
+  #settingsDrawer { top:auto; bottom:max(6px,env(safe-area-inset-bottom)); left:6px; right:6px; width:auto; max-height:calc(100dvh - 12px); }
+}
+@media (max-width: 380px) and (orientation:portrait) {
+  #lobbyScreen .hero-operator > img { width:44px; height:44px; }
+  #lobbyScreen .legacy-map-preview { min-height:82px; }
+  #lobbyScreen .preset-btn { font-size:11px; }
+}
+@media (orientation:landscape) and (max-height:520px) {
+  #lobbyScreen.overlay { padding:4px; }
+  #lobbyScreen .lobby-shell { height:100%; padding:5px; gap:4px; }
+  #lobbyScreen .lobby-grid.redesign-grid { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows:minmax(0,1fr); gap:5px; overflow:hidden!important; }
+  #lobbyScreen .operator-panel .callsign-field, #lobbyScreen .operator-panel .operator-stats, #lobbyScreen .operator-panel .cap-tags { display:none; }
+  #lobbyScreen .operator-panel .lobby-character-grid { grid-template-columns:repeat(3,minmax(0,1fr)); overflow:hidden; }
+  #lobbyScreen .lobby-map-grid { max-height:none; overflow:hidden; grid-template-columns:repeat(4,minmax(0,1fr)); }
+  #lobbyScreen .legacy-map-preview { max-height:76px; }
+  #lobbyScreen .mission-controls { gap:4px; padding-top:4px; }
+  #lobbyScreen .preset-btn { height:42px!important; min-height:42px!important; max-height:42px!important; }
+  #lobbyScreen .action-stack .btn { min-height:42px; height:42px; }
+  #lobbyScreen .join-row button, #lobbyScreen .join-row input { min-height:40px; }
+}
