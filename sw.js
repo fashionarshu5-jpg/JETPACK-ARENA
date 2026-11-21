@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v26-lobby-controls';
+const CACHE_NAME = 'doodle-outpost-all-modes-v27-picker-data-recovery';
 const ASSETS = [
   './',
   './index.html',
