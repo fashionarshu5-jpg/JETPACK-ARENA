@@ -1091,6 +1091,7 @@ function handleHostReceive(conn, msg) {
 
 function handleClientReceive(msg) {
   if (msg.type === 'room_full') {
+    setServerStatus('OFFLINE');
     document.getElementById('connectionStatus').textContent = 'This room is full (6/6).';
     joinRoomBtn.disabled = false; joinRoomBtn.textContent = 'JOIN';
     if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
