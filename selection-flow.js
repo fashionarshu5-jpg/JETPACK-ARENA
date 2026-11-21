@@ -115,7 +115,11 @@
   }
 
   // Capture phase prevents the old settings-drawer click from also opening.
-  soldierTrigger?.addEventListener('pointerup', (event) => {\n    if (event.pointerType !== 'touch') return;\n    event.preventDefault(); event.stopImmediatePropagation(); openPicker('soldier');\n  }, true);\n  soldierTrigger?.addEventListener('click', (event) => {
+  soldierTrigger?.addEventListener('pointerup', (event) => {
+    if (event.pointerType !== 'touch') return;
+    event.preventDefault(); event.stopImmediatePropagation(); openPicker('soldier');
+  }, true);
+  soldierTrigger?.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
     openPicker('soldier');
@@ -133,7 +137,11 @@
     event.stopPropagation();
     openPicker('map');
   };
-  mapCardTrigger?.addEventListener('pointerup', (event) => {\n    if (event.pointerType !== 'touch') return;\n    event.preventDefault(); event.stopImmediatePropagation(); openPicker('map');\n  }, true);\n  mapCardTrigger?.addEventListener('click', openMapFromTap, true);
+  mapCardTrigger?.addEventListener('pointerup', (event) => {
+    if (event.pointerType !== 'touch') return;
+    event.preventDefault(); event.stopImmediatePropagation(); openPicker('map');
+  }, true);
+  mapCardTrigger?.addEventListener('click', openMapFromTap, true);
   // The preview is the visible map-selection affordance. Listen on its field too,
   // so taps on image overlays/caption children still open the picker reliably.
   mapField?.addEventListener('click', (event) => {
