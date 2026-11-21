@@ -1984,7 +1984,7 @@ function updateHudUI() {
   document.getElementById('fuelText').textContent = `JET FUEL ${Math.ceil(me.jetFuel == null ? 100 : me.jetFuel)}`;
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
-  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${modeTeamMode()?'TEAM '+(me.team===0?'GREEN':'GOLD'):getModeLabel().toUpperCase()} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
+  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${getModeLabel().toUpperCase()}${modeTeamMode()?' • TEAM '+(me.team===0?'GREEN':'GOLD'):''} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
