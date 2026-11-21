@@ -112,6 +112,19 @@
       </main>
 
 
+
+  <!-- Dedicated full-screen pickers: select once, then return to home -->
+  <section id="selectionHub" class="selection-hub hidden" aria-modal="true" role="dialog" aria-labelledby="selectionTitle">
+    <div class="selection-shell">
+      <header class="selection-header">
+        <button type="button" id="selectionBackBtn" class="selection-back" aria-label="Back to home">←</button>
+        <div><span class="eyebrow">DOODLE OUTPOST</span><h2 id="selectionTitle">SELECT OPERATOR</h2><p id="selectionSubtitle">Choose your soldier for the next deployment.</p></div>
+        <span id="selectionCount" class="selection-count">09 OPERATORS</span>
+      </header>
+      <div id="selectionGridHost" class="selection-grid-host"></div>
+    </div>
+  </section>
+
       <!-- GAME MODE & OPERATOR PROGRESSION -->
       <section id="modeHub" class="mode-hub">
         <div class="mode-hub-head"><div><span class="eyebrow">03 / PLAYLIST</span><h2>CHOOSE YOUR BATTLE</h2><p>Pick the rules before creating a room or starting practice.</p></div><div class="mode-hub-head-actions"><div class="mode-profile"><span id="profileLevel">LEVEL 1</span><strong id="profileXp">0 XP</strong></div><button id="closeModeHubBtn" class="icon-btn mode-close-btn" type="button" aria-label="Close game modes">✕</button></div></div>
@@ -328,5 +341,6 @@
   </div>
 
   <script src="game.js"></script>
+  <script src="selection-flow.js"></script>
 </body>
 </html>
