@@ -2348,3 +2348,6 @@ button, .preset-btn, .switch-pill, .lobby-map-card, .lobby-char-card {
 #weaponSelectorBar .w-slot { min-width:44px; min-height:44px; }
 .hud-top-btns, .live-timer-box { gap:8px; }
 #settingsDrawer .drawer-utility-actions { grid-template-columns:minmax(0,1fr); }
+
+/* Global fallback: every native button keeps a finger-sized hit area. */
+button { min-width:44px; min-height:44px; }
