@@ -692,7 +692,8 @@ function resetModeObjectives() {
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
 function modeTeamMode(){ return ['tdm','ctf','clan','1v1','2v2','3v3'].includes(state.selectedMode); }
-function practicePlayerLimit(){ return ({'1v1':2,'2v2':4,'3v3':6,'1v6':7})[state.selectedMode] || PRACTICE_MAX_PLAYERS; }
+function practicePlayerLimit(){ return ({'1v1':2,'2v2':4,'3v3':6,'1v6':7,tdm:6,ctf:6,clan:6})[state.selectedMode] || PRACTICE_MAX_PLAYERS; }
+function roomPlayerLimit(){ return ({'1v1':2,'2v2':4,'3v3':6})[state.selectedMode] || MAX_PLAYERS; }
 function getModeLabel(){ return ({ffa:'Free for All',tdm:'Team Deathmatch',zombie:'Zombie Survival',ctf:'Capture the Flag',boss:'Boss Battle',br:'Battle Royale',clan:'Clan Wars','1v1':'1 vs 1','2v2':'2 vs 2','3v3':'3 vs 3','1v6':'1 vs 6 AI Survival'})[state.selectedMode] || 'Free for All'; }
 function checkObjectiveEnd(){
   const alive=Object.values(state.players).filter(p=>p.hp>0);
@@ -1037,7 +1038,8 @@ document.getElementById('whatsappShareBtn').onclick = () => {
 };
 
 document.getElementById('startMatchBtn').onclick = () => {
-  if (document.getElementById('fillBotsCheck').checked) addBotsUpTo(MAX_PLAYERS);
+  if (state.selectedMode === '1v6') { document.getElementById('connectionStatus').textContent = '1 vs 6 AI is Practice-only. Start it with Practice vs Bots.'; return; }
+  if (document.getElementById('fillBotsCheck').checked) addBotsUpTo(roomPlayerLimit());
   state.matchTime = state.selectedDuration;
   syncPlayerTeams();
   Object.values(state.players).forEach((p, idx) => {
@@ -1054,7 +1056,7 @@ function handleHostReceive(conn, msg) {
   if (msg.type === 'join') {
     if (state.players[msg.id]) { conn.send({ type:'lobby_sync', players:state.players, mapId:state.mapId, selectedMode:state.selectedMode }); return; }
     const count = Object.keys(state.players).length;
-    if (count >= MAX_PLAYERS) { try { conn.send({type:'room_full'}); } catch (_) {} setTimeout(()=>{try{conn.close();}catch(_){}},120); return; }
+    if (count >= roomPlayerLimit() || state.selectedMode === '1v6') { try { conn.send({type:'room_full'}); } catch (_) {} setTimeout(()=>{try{conn.close();}catch(_){}},120); return; }
     conn.playerId = msg.id;
     connections[msg.id] = conn;
     state.players[msg.id] = createPlayer(msg.id, msg.name, msg.charId, false, count);
@@ -1491,7 +1493,7 @@ function showMatchOverScreen() {
   document.getElementById('matchOverModal').classList.remove('hidden');
 }
 
-let lastStateBroadcastAt=0,lastInputSentAt=0,lastInputSignature='',lastHudUpdateAt=0,lastVoiceUpdateAt=0;
+let lastStateBroadcastAt=0,lastInputSentAt=0,lastInputSignature='',lastHudUpdateAt=0,lastVoiceUpdateAt=0,lastRenderedKillFeed='';
 function gameLoop(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
   lastFrameTime = now;
@@ -1905,7 +1907,7 @@ function updateCamera() {
 function renderGame() {
   ctx.setTransform(renderDpr, 0, 0, renderDpr, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'medium';
   ctx.fillStyle = '#0d120e';
   ctx.fillRect(0, 0, viewWidth, viewHeight);
   ctx.save();
@@ -2071,7 +2073,8 @@ function updateHudUI() {
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
   document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${getModeLabel().toUpperCase()}${modeTeamMode()?' • TEAM '+(me.team===0?'GREEN':'GOLD'):''} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${playerLimit}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
-  document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
+  const feedHtml = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
+  if (feedHtml !== lastRenderedKillFeed) { document.getElementById('killFeed').innerHTML = feedHtml; lastRenderedKillFeed = feedHtml; }
 }
 
 
