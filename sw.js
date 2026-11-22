@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v30-mobile-picker-settings';
+const CACHE_NAME = 'doodle-outpost-all-modes-v31-map-selection-persistence';
 const ASSETS = [
   './',
   './index.html',
