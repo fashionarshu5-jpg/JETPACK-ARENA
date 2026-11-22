@@ -295,7 +295,7 @@ lobbyArtwork.onload = () => reportAsset('./assets/lobby_bg.png', true);
 lobbyArtwork.onerror = () => reportAsset('./assets/lobby_bg.png', false);
 lobbyArtwork.src = './assets/lobby_bg.png';
 
-function getActiveMapId() { return state.selectedMode === 'zombie' ? 10 : state.mapId; }
+function getActiveMapId() { return state.mapId; }
 function getActivePlatforms() {
   const mapId = getActiveMapId();
   return BORDER_PLATFORMS.concat((MAPS[mapId] || MAPS[0]).platforms);
@@ -432,30 +432,30 @@ function syncSoldierUI() {
   setTransparentPortrait(document.getElementById('showcasePlayerAvatar'), ch.file);
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
-  setTransparentPortrait(document.getElementById('drawerCharIcon'), ch.file);
-  document.getElementById('drawerCharName').textContent = ch.name;
   setTransparentPortrait(document.getElementById('hudAvatarImg'), ch.file);
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
   if (typeof renderPlayerShowcase === 'function') renderPlayerShowcase();
 }
 
-CHARACTERS.forEach((ch) => {
-  const card = document.createElement('div');
-  card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
-  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
-  setTransparentPortrait(card.querySelector('img'), ch.file);
-  card.onclick = () => {
-    state.myCharId = ch.id;
-    localStorage.setItem('do_char', String(ch.id));
-    syncSoldierUI();
-    if (state.players[state.myId]) {
-      state.players[state.myId].charId = ch.id;
-      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
-    }
-  };
-  charGridEl.appendChild(card);
-});
+if (charGridEl) {
+  CHARACTERS.forEach((ch) => {
+    const card = document.createElement('div');
+    card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
+    card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+    setTransparentPortrait(card.querySelector('img'), ch.file);
+    card.onclick = () => {
+      state.myCharId = ch.id;
+      localStorage.setItem('do_char', String(ch.id));
+      syncSoldierUI();
+      if (state.players[state.myId]) {
+        state.players[state.myId].charId = ch.id;
+        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+      }
+    };
+    charGridEl.appendChild(card);
+  });
+}
 syncSoldierUI();
 
 // Build Bottom-Center 10-Weapon Dock
@@ -472,7 +472,8 @@ WEAPONS.forEach((wp) => {
 // Settings Drawer Controls
 const settingsDrawer = document.getElementById('settingsDrawer');
 function openSettings() {
-  document.getElementById('drawerMatchActions').classList.toggle('hidden', state.mode !== 'playing');
+  const matchActions = document.getElementById('drawerMatchActions');
+  if (matchActions) matchActions.classList.toggle('hidden', state.mode !== 'playing');
   settingsDrawer.classList.remove('hidden');
 }
 document.getElementById('lobbySettingsBtn').onclick = openSettings;
@@ -480,10 +481,6 @@ document.getElementById('openSoldierFromCard').onclick = openSettings;
 document.getElementById('inGameSettingsBtn').onclick = openSettings;
 document.getElementById('closeSettingsBtn').onclick = () => settingsDrawer.classList.add('hidden');
 
-document.getElementById('toggleSoldierPickerBtn').onclick = () => {
-  charGridEl.classList.toggle('hidden');
-  document.getElementById('soldierExpandArrow').textContent = charGridEl.classList.contains('hidden') ? '▶' : '▼';
-};
 
 const sfxBtn = document.getElementById('toggleSfxBtn');
 const musicBtn = document.getElementById('toggleMusicBtn');
@@ -509,7 +506,8 @@ musicBtn.onclick = () => {
   refreshAudioButtons();
 };
 
-document.getElementById('drawerExitMatchBtn').onclick = returnToLobby;
+const drawerExitMatchBtn = document.getElementById('drawerExitMatchBtn');
+if (drawerExitMatchBtn) drawerExitMatchBtn.onclick = returnToLobby;
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
@@ -610,8 +608,7 @@ async function toggleProximityMic() {
       voiceChat.stream.getAudioTracks().forEach((t) => { t.enabled = true; });
       voiceChat.enabled = true;
       hudBtn.textContent = 'MIC ON';
-      drawerBtn.textContent = 'ON';
-      drawerBtn.className = 'switch-pill on';
+      if (drawerBtn) { drawerBtn.textContent = 'ON'; drawerBtn.className = 'switch-pill on'; }
     } catch (err) {
       alert('Microphone permission is needed for voice chat.');
     }
@@ -619,8 +616,7 @@ async function toggleProximityMic() {
     if (voiceChat.stream) voiceChat.stream.getAudioTracks().forEach((t) => { t.enabled = false; });
     voiceChat.enabled = false;
     hudBtn.textContent = 'MIC OFF';
-    drawerBtn.textContent = 'OFF';
-    drawerBtn.className = 'switch-pill off';
+    if (drawerBtn) { drawerBtn.textContent = 'OFF'; drawerBtn.className = 'switch-pill off'; }
   }
 }
 
@@ -655,7 +651,8 @@ function updateProximityVoiceVolumes() {
   });
 }
 document.getElementById('toggleMicBtn').onclick = toggleProximityMic;
-document.getElementById('drawerMicBtn').onclick = toggleProximityMic;
+const drawerMicBtn = document.getElementById('drawerMicBtn');
+if (drawerMicBtn) drawerMicBtn.onclick = toggleProximityMic;
 
 // ==========================================================================
 // 6. ROOM CREATION, JOINING & EXACT PLAYER COUNT
@@ -1848,7 +1845,21 @@ function computeBotAI(bot, dt) {
   if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0){const dx=state.boss.x-bot.x,dy=state.boss.y-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:d>330?Math.sign(dx)*.45:0,moveY:dy< -90?-.65:0,aimX:dx/d,aimY:dy/d,shooting:d<760};}
   if(state.selectedMode==='ctf'){
     const own=state.ctfFlags&&state.ctfFlags[bot.team],enemy=state.ctfFlags&&state.ctfFlags[1-bot.team];
-    if(own&&enemy){const tx=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeX:enemy.x,ty=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeY:enemy.y;const dx=tx-bot.x,dy=ty-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:Math.sign(dx)*.72,moveY:dy< -70?-.65:0,aimX:dx/d,aimY:dy/d,shooting:false};}
+    if(own&&enemy){
+      const tx=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeX:enemy.x;
+      const ty=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeY:enemy.y;
+      const moveDx=tx-bot.x,moveDy=ty-bot.y,moveDist=Math.hypot(moveDx,moveDy)||1;
+      let target=null,bestDist=Infinity;
+      Object.values(state.players).forEach((other)=>{
+        if(other.id!==bot.id&&other.hp>0&&other.team!==bot.team){
+          const distance=Math.hypot(other.x-bot.x,other.y-bot.y);
+          if(distance<bestDist){bestDist=distance;target=other;}
+        }
+      });
+      const aimDx=target?target.x-bot.x:moveDx,aimDy=target?target.y-bot.y:moveDy;
+      const aimDist=Math.hypot(aimDx,aimDy)||1;
+      return {moveX:Math.sign(moveDx)*.72,moveY:moveDy< -70?-.65:0,aimX:aimDx/aimDist,aimY:aimDy/aimDist,shooting:!!target&&bestDist<650};
+    }
   }
   bot.aiTimer -= dt;
   if (bot.aiTimer <= 0) {
@@ -2100,8 +2111,6 @@ function updateHudUI() {
     mapGrid.querySelectorAll('.lobby-map-card').forEach((card) => {
       const mapId = Number(card.dataset.map);
       const selected = mapId === state.mapId;
-      const zombieOnly = mapId === 10;
-      card.hidden = zombieOnly && state.selectedMode !== 'zombie';
       card.classList.toggle('selected', selected);
       card.setAttribute('aria-pressed', String(selected));
     });
@@ -2113,7 +2122,6 @@ function updateHudUI() {
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
     card.dataset.map = String(map.id);
     card.dataset.zombieOnly = String(map.id === 10);
-    card.hidden = map.id === 10 && state.selectedMode !== 'zombie';
     card.setAttribute('aria-pressed', String(map.id === state.mapId));
     card.innerHTML = '<img src="' + (map.file || './assets/map_outpost.png') + '" alt="" loading="lazy"><span class="map-number">' +
       String(map.id + 1).padStart(2, '0') + '</span><strong>' + map.name +
@@ -2168,12 +2176,8 @@ function renderModeSelection() {
   });
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'6-player 3v3 team battle. Room code required; up to three players per side.'};
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Play against bots in Practice or invite friends with a room code.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
-  const mapTenOption = mapSelectEl.querySelector('option[value="10"]');
-  if (mapTenOption) mapTenOption.hidden = state.selectedMode !== 'zombie';
-  const lobbyMapGrid = document.getElementById('lobbyMapGrid');
-  if (lobbyMapGrid) lobbyMapGrid.querySelectorAll('.lobby-map-card[data-map="10"]').forEach((card) => { card.hidden = state.selectedMode !== 'zombie'; });
   document.getElementById('modeNotice').textContent=modeName+' selected';
   if(typeof syncLobbyMapPreview==='function')syncLobbyMapPreview();
 }

@@ -16,7 +16,8 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="mobile-ui.css" />
-  <link rel="stylesheet" href="picker-fix.css" />\n  <link rel="stylesheet" href="mobile-interaction-fix.css" />
+  <link rel="stylesheet" href="picker-fix.css" />
+  <link rel="stylesheet" href="mobile-interaction-fix.css" />
   <link rel="stylesheet" href="mobile-picker-navigation.css" />
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
@@ -47,7 +48,6 @@
           <span id="serverStatusBadge" class="pill-badge"><i class="dot"></i> Offline</span>
           
           <button id="lobbyGameModesBtn" class="icon-btn mode-launch-btn" type="button" title="Game modes" aria-label="Open game modes" aria-controls="modeHub" aria-expanded="false">🎮</button>
-          <a class="icon-btn" href="./3d.html" aria-label="Launch 3D tactical game" title="3D Tactical">3D</a>
           <button id="lobbySettingsBtn" class="icon-btn" title="Settings & Soldiers">⚙️</button>
         </div>
       </header>
@@ -145,7 +145,7 @@
           <button type="button" class="mode-card" data-mode="ctf" aria-pressed="false"><span class="mode-icon">🚩</span><strong>CAPTURE THE FLAG</strong><small>Steal the enemy standard and return it to base.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="boss" aria-pressed="false"><span class="mode-icon">👹</span><strong>BOSS BATTLE</strong><small>Co-op raid against the Outpost Titan.</small><b>PLAYABLE NOW</b></button>
           <button type="button" class="mode-card" data-mode="br" aria-pressed="false"><span class="mode-icon">☢️</span><strong>BATTLE ROYALE</strong><small>Last soldier alive inside the shrinking zone.</small><b>PLAYABLE NOW</b></button>
-          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>Team battles are planned for a future update.</small><b>SOON</b></button>
+          <button type="button" class="mode-card" data-mode="clan" aria-pressed="false"><span class="mode-icon">🏴</span><strong>CLAN WARS</strong><small>3v3 team battle. Practice with bots or invite friends.</small><b>PLAYABLE NOW</b></button>
         </div>
         <p id="modeGuide" class="mode-guide" aria-live="polite">Eliminate everyone. The soldier with the most kills when the timer ends wins.</p>
         <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
@@ -193,7 +193,7 @@
   <aside id="settingsDrawer" class="settings-drawer hidden" data-screen="settings" aria-label="Game settings">
     <div class="drawer-header">
       <h3>SETTINGS</h3>
-      <button id="closeSettingsBtn" class="icon-btn">✖</button>
+      <button id="closeSettingsBtn" class="icon-btn" aria-label="Back to lobby">← BACK</button>
     </div>
 
     <div class="drawer-body">

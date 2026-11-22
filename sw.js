@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v37-v36-mobile-fixes';
+const CACHE_NAME = 'doodle-outpost-2d-mobile-playable-v38';
 const ASSETS = [
   './',
   './index.html',
@@ -6,8 +6,8 @@ const ASSETS = [
   './mobile-ui.css',
   './picker-fix.css',
   './mobile-interaction-fix.css',
+  './mobile-picker-navigation.css',
   './game.js', './selection-flow.js',
-  './3d.html', './3d.css', './3d.js',
   './manifest.json',
   './assets/doodle-outpost-logo.png', './assets/favicon.png',
   './assets/zombie-grunt.svg', './assets/zombie-armored.svg', './assets/outpost-titan.svg',

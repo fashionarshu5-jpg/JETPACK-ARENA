@@ -96,7 +96,6 @@
     subtitle.textContent = isSoldier
       ? 'Tap a soldier to equip them and return home.'
       : 'Choose your arena. You will return to the home screen.';
-    if (!isSoldier) grid.querySelectorAll('.lobby-map-card').forEach((card) => { card.hidden = card.dataset.map === '10' && state.selectedMode !== 'zombie'; });
     count.textContent = isSoldier ? (grid.querySelectorAll('.lobby-char-card:not([hidden])').length + ' OPERATORS') : (grid.querySelectorAll('.lobby-map-card:not([hidden])').length + ' MAPS');
     modal.classList.remove('hidden');
     document.body.classList.add('picker-open');
