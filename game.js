@@ -1845,7 +1845,21 @@ function computeBotAI(bot, dt) {
   if(state.selectedMode==='boss'&&state.boss&&state.boss.hp>0){const dx=state.boss.x-bot.x,dy=state.boss.y-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:d>330?Math.sign(dx)*.45:0,moveY:dy< -90?-.65:0,aimX:dx/d,aimY:dy/d,shooting:d<760};}
   if(state.selectedMode==='ctf'){
     const own=state.ctfFlags&&state.ctfFlags[bot.team],enemy=state.ctfFlags&&state.ctfFlags[1-bot.team];
-    if(own&&enemy){const tx=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeX:enemy.x,ty=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeY:enemy.y;const dx=tx-bot.x,dy=ty-bot.y,d=Math.hypot(dx,dy)||1;return {moveX:Math.sign(dx)*.72,moveY:dy< -70?-.65:0,aimX:dx/d,aimY:dy/d,shooting:false};}
+    if(own&&enemy){
+      const tx=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeX:enemy.x;
+      const ty=bot.carryingFlag!==null&&bot.carryingFlag!==undefined?own.homeY:enemy.y;
+      const moveDx=tx-bot.x,moveDy=ty-bot.y,moveDist=Math.hypot(moveDx,moveDy)||1;
+      let target=null,bestDist=Infinity;
+      Object.values(state.players).forEach((other)=>{
+        if(other.id!==bot.id&&other.hp>0&&other.team!==bot.team){
+          const distance=Math.hypot(other.x-bot.x,other.y-bot.y);
+          if(distance<bestDist){bestDist=distance;target=other;}
+        }
+      });
+      const aimDx=target?target.x-bot.x:moveDx,aimDy=target?target.y-bot.y:moveDy;
+      const aimDist=Math.hypot(aimDx,aimDy)||1;
+      return {moveX:Math.sign(moveDx)*.72,moveY:moveDy< -70?-.65:0,aimX:aimDx/aimDist,aimY:aimDy/aimDist,shooting:!!target&&bestDist<650};
+    }
   }
   bot.aiTimer -= dt;
   if (bot.aiTimer <= 0) {
