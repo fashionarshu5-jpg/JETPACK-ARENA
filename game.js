@@ -732,6 +732,14 @@ function finishRoomCreateFailure(message) {
 
 createRoomBtn.onclick = () => {
   if (createRoomBtn.disabled) return;
+  if (state.selectedMode === '1v6') {
+    document.getElementById('connectionStatus').textContent = '1 vs 6 AI is offline Practice-only. Choose another mode for online play.';
+    return;
+  }
+  if (typeof Peer !== 'function') {
+    document.getElementById('connectionStatus').textContent = 'Online multiplayer could not load. Check your internet connection and refresh. Offline Practice is still available.';
+    return;
+  }
   state.isHost = true;
   state.roomCode = generateRoomCode();
   roomCreateSettled = false;
@@ -818,6 +826,10 @@ joinRoomBtn.onclick = () => {
     codeInput.focus();
     return;
   }
+  if (typeof Peer !== 'function') {
+    document.getElementById('connectionStatus').textContent = 'Online multiplayer could not load. Check your internet connection and refresh. Offline Practice is still available.';
+    return;
+  }
   codeInput.value = code;
   state.isHost = false;
   state.roomCode = code;
@@ -869,6 +881,17 @@ joinRoomBtn.onclick = () => {
 };
 
 document.getElementById('soloBotsBtn').onclick = () => {
+  // End any previous online session before starting a local-only match.
+  if (state.roomCode && state.roomCode !== 'BOTS') {
+    if (state.isHost) broadcastToClients({ type: 'room_closed' });
+    else if (hostConn && hostConn.open) {
+      try { hostConn.send({ type: 'leave', id: state.myId }); } catch (_) {}
+    }
+  }
+  Object.values(connections).forEach((connection) => { try { connection.close(); } catch (_) {} });
+  connections = {};
+  if (hostConn) { try { hostConn.close(); } catch (_) {} hostConn = null; }
+  if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
   state.isHost = true;
   state.roomCode = 'BOTS';
   state.matchTime = state.selectedDuration;
@@ -892,7 +915,8 @@ function addBotsUpTo(limit) {
 
 function updateLobbyPlayersUI() {
   const playersArr = Object.values(state.players);
-  document.getElementById('roomCountBadge').textContent = `${playersArr.length} / ${MAX_PLAYERS} Players`;
+  const lobbyLimit = state.roomCode === 'BOTS' ? practicePlayerLimit() : roomPlayerLimit();
+  document.getElementById('roomCountBadge').textContent = `${playersArr.length} / ${lobbyLimit} Players`;
   const listEl = document.getElementById('lobbyPlayersList');
   listEl.innerHTML = '';
   playersArr.forEach((p) => {
@@ -902,7 +926,7 @@ function updateLobbyPlayersUI() {
     chip.textContent = `🪖 ${p.name} (${CHARACTERS[p.charId]?.name || 'Soldier'})`;
     listEl.appendChild(chip);
   });
-  for (let slot = playersArr.length; slot < MAX_PLAYERS; slot++) {
+  for (let slot = playersArr.length; slot < lobbyLimit; slot++) {
     const empty = document.createElement('div');
     empty.className = 'player-chip empty-slot';
     empty.textContent = 'OPEN SLOT';
@@ -1085,7 +1109,7 @@ function handleHostReceive(conn, msg) {
 }
 
 function handleClientReceive(msg) {
-  if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full (6/6).'); return; }
+  if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full for the selected game mode. Ask the host to choose a larger mode or create another room.'); return; }
   if (msg.type === 'fx') { if(msg.fx && state.fxList.length<180)state.fxList.push(msg.fx); }
   else if (msg.type === 'lobby_sync') {
     if(!state.isHost)joinCompleted=true;
@@ -2201,7 +2225,25 @@ document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener
     }
   }
   renderModeSelection();
+  if (!document.getElementById('waitingRoom').classList.contains('hidden')) updateLobbyPlayersUI();
 }));
+document.getElementById('playOfflineModeBtn').addEventListener('click', () => {
+  document.getElementById('soloBotsBtn').click();
+});
+document.getElementById('playOnlineModeBtn').addEventListener('click', () => {
+  if (state.selectedMode === '1v6') {
+    document.getElementById('connectionStatus').textContent = '1 vs 6 AI is Practice-only. Choose 1v1, 2v2, 3v3 or another online mode.';
+    document.getElementById('createRoomBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  document.getElementById('createRoomBtn').click();
+});
+document.getElementById('joinOnlineModeBtn').addEventListener('click', () => {
+  const codeInput = document.getElementById('roomCodeInput');
+  document.getElementById('connectionStatus').textContent = 'Enter your friend’s 4-character room code, then tap JOIN.';
+  codeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  codeInput.focus();
+});
 function awardMatchProgress() {
   if (state._progressAwarded) return;
   state._progressAwarded = true;
