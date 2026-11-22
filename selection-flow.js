@@ -68,6 +68,7 @@
           map.name + '</strong><b class="map-check">✓</b>';
         card.addEventListener('click', () => {
           state.mapId = map.id;
+          localStorage.setItem('do_map', String(map.id));
           if (typeof mapSelectEl !== 'undefined' && mapSelectEl) mapSelectEl.value = String(map.id);
           if (typeof syncLobbyMapPreview === 'function') syncLobbyMapPreview();
           mapGrid.querySelectorAll('.lobby-map-card').forEach((item) => {
