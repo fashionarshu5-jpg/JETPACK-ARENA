@@ -432,30 +432,30 @@ function syncSoldierUI() {
   setTransparentPortrait(document.getElementById('showcasePlayerAvatar'), ch.file);
   document.getElementById('lobbyCharIndex').textContent = `SOLDIER 0${ch.id + 1} / 09`;
   document.getElementById('lobbyCharName').textContent = ch.name.toUpperCase();
-  setTransparentPortrait(document.getElementById('drawerCharIcon'), ch.file);
-  document.getElementById('drawerCharName').textContent = ch.name;
   setTransparentPortrait(document.getElementById('hudAvatarImg'), ch.file);
   document.getElementById('hudCharRole').textContent = ch.name.toUpperCase();
   document.querySelectorAll('.char-card').forEach((el, i) => el.classList.toggle('selected', i === ch.id));
   if (typeof renderPlayerShowcase === 'function') renderPlayerShowcase();
 }
 
-CHARACTERS.forEach((ch) => {
-  const card = document.createElement('div');
-  card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
-  card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
-  setTransparentPortrait(card.querySelector('img'), ch.file);
-  card.onclick = () => {
-    state.myCharId = ch.id;
-    localStorage.setItem('do_char', String(ch.id));
-    syncSoldierUI();
-    if (state.players[state.myId]) {
-      state.players[state.myId].charId = ch.id;
-      if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
-    }
-  };
-  charGridEl.appendChild(card);
-});
+if (charGridEl) {
+  CHARACTERS.forEach((ch) => {
+    const card = document.createElement('div');
+    card.className = 'char-card' + (ch.id === state.myCharId ? ' selected' : '');
+    card.innerHTML = `<span class="char-num">0${ch.id + 1}</span><img alt="${ch.name}" /><div class="char-name">${ch.name}</div>`;
+    setTransparentPortrait(card.querySelector('img'), ch.file);
+    card.onclick = () => {
+      state.myCharId = ch.id;
+      localStorage.setItem('do_char', String(ch.id));
+      syncSoldierUI();
+      if (state.players[state.myId]) {
+        state.players[state.myId].charId = ch.id;
+        if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
+      }
+    };
+    charGridEl.appendChild(card);
+  });
+}
 syncSoldierUI();
 
 // Build Bottom-Center 10-Weapon Dock
@@ -472,7 +472,8 @@ WEAPONS.forEach((wp) => {
 // Settings Drawer Controls
 const settingsDrawer = document.getElementById('settingsDrawer');
 function openSettings() {
-  document.getElementById('drawerMatchActions').classList.toggle('hidden', state.mode !== 'playing');
+  const matchActions = document.getElementById('drawerMatchActions');
+  if (matchActions) matchActions.classList.toggle('hidden', state.mode !== 'playing');
   settingsDrawer.classList.remove('hidden');
 }
 document.getElementById('lobbySettingsBtn').onclick = openSettings;
@@ -480,10 +481,6 @@ document.getElementById('openSoldierFromCard').onclick = openSettings;
 document.getElementById('inGameSettingsBtn').onclick = openSettings;
 document.getElementById('closeSettingsBtn').onclick = () => settingsDrawer.classList.add('hidden');
 
-document.getElementById('toggleSoldierPickerBtn').onclick = () => {
-  charGridEl.classList.toggle('hidden');
-  document.getElementById('soldierExpandArrow').textContent = charGridEl.classList.contains('hidden') ? '▶' : '▼';
-};
 
 const sfxBtn = document.getElementById('toggleSfxBtn');
 const musicBtn = document.getElementById('toggleMusicBtn');
@@ -509,7 +506,8 @@ musicBtn.onclick = () => {
   refreshAudioButtons();
 };
 
-document.getElementById('drawerExitMatchBtn').onclick = returnToLobby;
+const drawerExitMatchBtn = document.getElementById('drawerExitMatchBtn');
+if (drawerExitMatchBtn) drawerExitMatchBtn.onclick = returnToLobby;
 
 // Map & Timer Presets
 const mapSelectEl = document.getElementById('mapSelect');
@@ -610,8 +608,7 @@ async function toggleProximityMic() {
       voiceChat.stream.getAudioTracks().forEach((t) => { t.enabled = true; });
       voiceChat.enabled = true;
       hudBtn.textContent = 'MIC ON';
-      drawerBtn.textContent = 'ON';
-      drawerBtn.className = 'switch-pill on';
+      if (drawerBtn) { drawerBtn.textContent = 'ON'; drawerBtn.className = 'switch-pill on'; }
     } catch (err) {
       alert('Microphone permission is needed for voice chat.');
     }
@@ -619,8 +616,7 @@ async function toggleProximityMic() {
     if (voiceChat.stream) voiceChat.stream.getAudioTracks().forEach((t) => { t.enabled = false; });
     voiceChat.enabled = false;
     hudBtn.textContent = 'MIC OFF';
-    drawerBtn.textContent = 'OFF';
-    drawerBtn.className = 'switch-pill off';
+    if (drawerBtn) { drawerBtn.textContent = 'OFF'; drawerBtn.className = 'switch-pill off'; }
   }
 }
 
@@ -655,7 +651,8 @@ function updateProximityVoiceVolumes() {
   });
 }
 document.getElementById('toggleMicBtn').onclick = toggleProximityMic;
-document.getElementById('drawerMicBtn').onclick = toggleProximityMic;
+const drawerMicBtn = document.getElementById('drawerMicBtn');
+if (drawerMicBtn) drawerMicBtn.onclick = toggleProximityMic;
 
 // ==========================================================================
 // 6. ROOM CREATION, JOINING & EXACT PLAYER COUNT
@@ -2168,7 +2165,7 @@ function renderModeSelection() {
   });
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'6-player 3v3 team battle. Room code required; up to three players per side.'};
+  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Play against bots in Practice or invite friends with a room code.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
   const mapTenOption = mapSelectEl.querySelector('option[value="10"]');
   if (mapTenOption) mapTenOption.hidden = state.selectedMode !== 'zombie';
