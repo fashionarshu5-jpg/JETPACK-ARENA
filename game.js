@@ -394,13 +394,14 @@ function stopBackgroundMusic() {
 // 5. STATE, SETTINGS DRAWER & PEERJS MULTIPLAYER
 // ==========================================================================
 const MAX_PLAYERS = 6;
+const savedMapId = Number.parseInt(localStorage.getItem('do_map') || '0', 10);
 const state = {
   mode: 'menu',
   zombies: [], zombieKills: 0, zombieWave: 1, zombieSpawnClock: 1.5,
   ctfFlags: null, ctfScore: [0, 0], boss: null, battleZone: { x: 1200, y: 600, radius: 1120, minRadius: 180 },
   isHost: true,
   roomCode: '',
-  mapId: 0,
+  mapId: Number.isInteger(savedMapId) && savedMapId >= 0 && savedMapId < MAPS.length ? savedMapId : 0,
   myId: 'p_' + Math.random().toString(36).substring(2, 7),
   myName: localStorage.getItem('do_name') || 'Soldier',
   myCharId: Math.max(0, Math.min(CHARACTERS.length - 1, Number.parseInt(localStorage.getItem('do_char') || '0', 10) || 0)),
@@ -536,6 +537,7 @@ syncLobbyMapPreview();
 mapSelectEl.onchange = (e) => {
   state.mapId = Number.parseInt(e.target.value, 10);
   if (!Number.isInteger(state.mapId) || !MAPS[state.mapId]) state.mapId = 0;
+  localStorage.setItem('do_map', String(state.mapId));
   syncLobbyMapPreview();
   if (state.isHost) broadcastToClients({ type: 'lobby_sync', players: state.players, mapId: state.mapId, selectedMode: state.selectedMode });
 };
@@ -2118,6 +2120,7 @@ function updateHudUI() {
       '</strong><b class="map-check">✓</b>';
     card.addEventListener('click', () => {
       state.mapId = map.id;
+      localStorage.setItem('do_map', String(map.id));
       mapSelectEl.value = String(map.id);
       syncLobbyMapPreview();
       refreshMapCards();
