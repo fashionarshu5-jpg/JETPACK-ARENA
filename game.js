@@ -2160,7 +2160,7 @@ function loadOperatorProfile() {
   } catch (_) { return { xp: 0, wins: 0, matches: 0, kills: 0, missionKills: 0 }; }
 }
 const savedMode=localStorage.getItem('do_mode');
-state.selectedMode=['ffa','tdm','zombie','ctf','boss','br','clan'].includes(savedMode)?savedMode:'ffa';
+state.selectedMode=['ffa','tdm','zombie','ctf','boss','br','clan','1v1','2v2','3v3','1v6'].includes(savedMode)?savedMode:'ffa';
 function operatorLevel() { return Math.floor(operatorProfile.xp / 250) + 1; }
 function saveOperatorProfile() {
   localStorage.setItem(progressionKey, JSON.stringify(operatorProfile));
@@ -2182,7 +2182,7 @@ function renderModeSelection() {
   });
   const modeName=getModeLabel();
   const guide=document.getElementById('modeGuide');
-  const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Play against bots in Practice or invite friends with a room code.'};
+  const guides={ffa:'Free-for-all combat. Practice puts you against six AI soldiers.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Play against bots or invite friends with a room code.','1v1':'One soldier on each team. Practice adds one AI opponent.','2v2':'Two soldiers on each team. Practice adds three AI soldiers.','3v3':'Three soldiers on each team. Practice adds five AI soldiers.','1v6':'You alone against six AI soldiers. All six bots target you; survive and eliminate them.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
   document.getElementById('modeNotice').textContent=modeName+' selected';
   if(typeof syncLobbyMapPreview==='function')syncLobbyMapPreview();
