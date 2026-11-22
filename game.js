@@ -997,8 +997,7 @@ copyLinkBtn.onclick = async () => {
     if (fallbackCopyText(inviteUrl)) {
       setCopyLinkStatus(`Invite link copied for room ${roomCode}: ${inviteUrl}`);
     } else {
-      console.error('Could not copy invite link:', error);
-      setCopyLinkStatus(`Copy failed. Share this link manually: ${inviteUrl}`, true);
+      console.error('Could not copy invite link:', error);      setCopyLinkStatus(`Copy failed. Share this link manually: ${inviteUrl}`, true);
     }
   }
 };
@@ -1997,8 +1996,7 @@ function renderGame() {
   for (const cl of state.clouds) {
     const cSprite = cl.kind === 'gas' ? SPRITES.fx.smokeGreen : SPRITES.fx.smokeWhite;
     ctx.save();
-    ctx.globalAlpha = Math.min(0.92, cl.life * 0.45);
-    if (cSprite) ctx.drawImage(cSprite, cl.x - cl.r, cl.y - cl.r * 0.85, cl.r * 2, cl.r * 1.6);
+    ctx.globalAlpha = Math.min(0.92, cl.life * 0.45);    if (cSprite) ctx.drawImage(cSprite, cl.x - cl.r, cl.y - cl.r * 0.85, cl.r * 2, cl.r * 1.6);
     else {
       ctx.fillStyle = cl.kind === 'gas' ? 'rgba(34,197,94,0.6)' : 'rgba(226,232,240,0.75)';
       ctx.beginPath(); ctx.arc(cl.x, cl.y, cl.r, 0, Math.PI * 2); ctx.fill();
@@ -2052,6 +2050,18 @@ function drawCharacterAndWeapon(p) {
   ctx.strokeText(p.name, 0, -44);
   ctx.fillText(p.name, 0, -44);
 
+  if (modeTeamMode() && p.team !== null && p.team !== undefined) {
+    ctx.strokeStyle = p.team === 0 ? '#38bdf8' : '#fb7185';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 28, 22, 7, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (state.selectedMode === '1v6' && p.isBot) {
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '900 9px sans-serif';
+    ctx.fillText('TARGET', 0, -54);
+  }
   ctx.fillStyle = '#111';
   ctx.fillRect(-22, -38, 44, 5);
   ctx.fillStyle = p.hp > 35 ? '#22c55e' : '#ef4444';
@@ -2098,6 +2108,36 @@ function updateHudUI() {
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
   document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${getModeLabel().toUpperCase()}${modeTeamMode()?' • TEAM '+(me.team===0?'GREEN':'GOLD'):''} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${playerLimit}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
+  const dynHud = document.getElementById('modeDynamicHud');
+  if (dynHud) {
+    const allPlayers = Object.values(state.players);
+    if (state.selectedMode === 'boss' && state.boss) {
+      const pct = Math.max(0, Math.min(100, (state.boss.hp / state.boss.maxHp) * 100));
+      dynHud.innerHTML = `<div class="boss-hud-wrap"><div class="boss-hud-label"><span>👹 OUTPOST TITAN • PHASE ${state.boss.phase || 1}</span><span>${Math.ceil(state.boss.hp).toLocaleString()} / ${state.boss.maxHp.toLocaleString()}</span></div><div class="boss-hud-track"><div class="boss-hud-fill" style="width:${pct}%"></div></div></div>`;
+    } else if (state.selectedMode === 'ctf' && state.ctfFlags) {
+      const f0 = state.ctfFlags[0]?.carrierId ? 'CARRIED' : 'AT BASE';
+      const f1 = state.ctfFlags[1]?.carrierId ? 'CARRIED' : 'AT BASE';
+      dynHud.innerHTML = `<span class="md-team-blue">BLUE ${state.ctfScore[0]} (${f0})</span><span class="md-vs">🚩 CTF</span><span class="md-team-red">RED ${state.ctfScore[1]} (${f1})</span>`;
+    } else if (state.selectedMode === 'zombie') {
+      dynHud.innerHTML = `<span class="md-badge-lime">🧟 WAVE ${String(state.zombieWave || 1).padStart(2,'0')} / 10</span><span>ZOMBIES SLAIN: ${state.zombieKills || 0}</span>`;
+    } else if (state.selectedMode === 'br') {
+      const aliveCount = allPlayers.filter(p => p.hp > 0).length;
+      dynHud.innerHTML = `<span class="md-badge-warn">☢️ ALIVE: ${aliveCount} / ${allPlayers.length}</span><span>ZONE RADIUS: ${Math.ceil(state.battleZone?.radius || 0)}M</span>`;
+    } else if (state.selectedMode === '1v6') {
+      const botsAlive = allPlayers.filter(p => p.isBot && p.hp > 0).length;
+      dynHud.innerHTML = `<span class="md-badge-warn">🤖 1 VS 6 AI GAUNTLET</span><span>BOTS ACTIVE: ${botsAlive} • KILLS: ${me.kills}</span>`;
+    } else if (modeTeamMode()) {
+      const t0Kills = allPlayers.filter(p => p.team === 0).reduce((s, p) => s + (p.kills || 0), 0);
+      const t1Kills = allPlayers.filter(p => p.team === 1).reduce((s, p) => s + (p.kills || 0), 0);
+      const labelA = state.selectedMode === 'clan' ? '[ALPHA]' : state.selectedMode === '1v1' ? 'YOU' : 'TEAM A';
+      const labelB = state.selectedMode === 'clan' ? '[OMEGA]' : state.selectedMode === '1v1' ? 'RIVAL' : 'TEAM B';
+      dynHud.innerHTML = `<span class="md-team-blue">${labelA} ${t0Kills}</span><span class="md-vs">VS</span><span class="md-team-red">${t1Kills} ${labelB}</span>`;
+    } else {
+      const sorted = [...allPlayers].sort((a, b) => b.kills - a.kills);
+      const rank = sorted.findIndex(p => p.id === state.myId) + 1;
+      dynHud.innerHTML = `<span class="md-badge-lime">⚔️ FREE FOR ALL</span><span>RANK #${rank || 1} • KILLS: ${me.kills}</span>`;
+    }
+  }
   const feedHtml = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
   if (feedHtml !== lastRenderedKillFeed) { document.getElementById('killFeed').innerHTML = feedHtml; lastRenderedKillFeed = feedHtml; }
 }
@@ -2308,4 +2348,3 @@ renderPlayerShowcase();
     if (event.key === 'Escape' && panel.classList.contains('mode-hub-open')) setOpen(false);
   });
 })();
-
