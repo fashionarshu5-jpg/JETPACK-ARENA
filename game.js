@@ -2225,6 +2225,7 @@ document.querySelectorAll('button[data-mode]').forEach((b) => b.addEventListener
     }
   }
   renderModeSelection();
+  if (!document.getElementById('waitingRoom').classList.contains('hidden')) updateLobbyPlayersUI();
 }));
 document.getElementById('playOfflineModeBtn').addEventListener('click', () => {
   document.getElementById('soloBotsBtn').click();
