@@ -295,7 +295,7 @@ lobbyArtwork.onload = () => reportAsset('./assets/lobby_bg.png', true);
 lobbyArtwork.onerror = () => reportAsset('./assets/lobby_bg.png', false);
 lobbyArtwork.src = './assets/lobby_bg.png';
 
-function getActiveMapId() { return state.selectedMode === 'zombie' ? 10 : state.mapId; }
+function getActiveMapId() { return state.mapId; }
 function getActivePlatforms() {
   const mapId = getActiveMapId();
   return BORDER_PLATFORMS.concat((MAPS[mapId] || MAPS[0]).platforms);
@@ -2097,8 +2097,6 @@ function updateHudUI() {
     mapGrid.querySelectorAll('.lobby-map-card').forEach((card) => {
       const mapId = Number(card.dataset.map);
       const selected = mapId === state.mapId;
-      const zombieOnly = mapId === 10;
-      card.hidden = zombieOnly && state.selectedMode !== 'zombie';
       card.classList.toggle('selected', selected);
       card.setAttribute('aria-pressed', String(selected));
     });
@@ -2110,7 +2108,6 @@ function updateHudUI() {
     card.className = 'lobby-map-card' + (map.id === state.mapId ? ' selected' : '');
     card.dataset.map = String(map.id);
     card.dataset.zombieOnly = String(map.id === 10);
-    card.hidden = map.id === 10 && state.selectedMode !== 'zombie';
     card.setAttribute('aria-pressed', String(map.id === state.mapId));
     card.innerHTML = '<img src="' + (map.file || './assets/map_outpost.png') + '" alt="" loading="lazy"><span class="map-number">' +
       String(map.id + 1).padStart(2, '0') + '</span><strong>' + map.name +
@@ -2167,10 +2164,6 @@ function renderModeSelection() {
   const guide=document.getElementById('modeGuide');
   const guides={ffa:'Eliminate everyone. The soldier with the most kills when the timer ends wins.',tdm:'Two teams fight together. Friendly fire is disabled; the team with the most eliminations wins.',zombie:'Survive escalating undead waves. Protect teammates, clear the horde and stay alive until time expires.',ctf:'Grab the enemy flag and return it to your base while your own flag is home. First team to 3 captures wins.',boss:'Co-op raid: all survivors fight the Outpost Titan. Aim at the boss, dodge its close-range strikes and defeat it before time runs out.',br:'Last soldier standing. No respawns. Stay inside the shrinking safe zone; the final survivor wins.',clan:'3v3 team battle. Play against bots in Practice or invite friends with a room code.'};
   if(guide)guide.textContent=guides[state.selectedMode]||guides.ffa;
-  const mapTenOption = mapSelectEl.querySelector('option[value="10"]');
-  if (mapTenOption) mapTenOption.hidden = state.selectedMode !== 'zombie';
-  const lobbyMapGrid = document.getElementById('lobbyMapGrid');
-  if (lobbyMapGrid) lobbyMapGrid.querySelectorAll('.lobby-map-card[data-map="10"]').forEach((card) => { card.hidden = state.selectedMode !== 'zombie'; });
   document.getElementById('modeNotice').textContent=modeName+' selected';
   if(typeof syncLobbyMapPreview==='function')syncLobbyMapPreview();
 }
