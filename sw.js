@@ -1,10 +1,11 @@
-const CACHE_NAME = 'doodle-outpost-all-modes-v31-map-selection-persistence';
+const CACHE_NAME = 'doodle-outpost-all-modes-v37-v36-mobile-fixes';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './mobile-ui.css',
-  './picker-fix.css',\n  './mobile-interaction-fix.css',
+  './picker-fix.css',
+  './mobile-interaction-fix.css',
   './game.js', './selection-flow.js',
   './3d.html', './3d.css', './3d.js',
   './manifest.json',
