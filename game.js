@@ -1039,6 +1039,7 @@ document.getElementById('whatsappShareBtn').onclick = () => {
 
 document.getElementById('startMatchBtn').onclick = () => {
   if (state.selectedMode === '1v6') { document.getElementById('connectionStatus').textContent = '1 vs 6 AI is Practice-only. Start it with Practice vs Bots.'; return; }
+  if (Object.keys(state.players).length > roomPlayerLimit()) { document.getElementById('connectionStatus').textContent = 'Too many players for ' + getModeLabel() + '. Choose a larger team mode.'; return; }
   if (document.getElementById('fillBotsCheck').checked) addBotsUpTo(roomPlayerLimit());
   state.matchTime = state.selectedDuration;
   syncPlayerTeams();
