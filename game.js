@@ -915,7 +915,8 @@ function addBotsUpTo(limit) {
 
 function updateLobbyPlayersUI() {
   const playersArr = Object.values(state.players);
-  document.getElementById('roomCountBadge').textContent = `${playersArr.length} / ${MAX_PLAYERS} Players`;
+  const lobbyLimit = state.roomCode === 'BOTS' ? practicePlayerLimit() : roomPlayerLimit();
+  document.getElementById('roomCountBadge').textContent = `${playersArr.length} / ${lobbyLimit} Players`;
   const listEl = document.getElementById('lobbyPlayersList');
   listEl.innerHTML = '';
   playersArr.forEach((p) => {
@@ -925,7 +926,7 @@ function updateLobbyPlayersUI() {
     chip.textContent = `🪖 ${p.name} (${CHARACTERS[p.charId]?.name || 'Soldier'})`;
     listEl.appendChild(chip);
   });
-  for (let slot = playersArr.length; slot < MAX_PLAYERS; slot++) {
+  for (let slot = playersArr.length; slot < lobbyLimit; slot++) {
     const empty = document.createElement('div');
     empty.className = 'player-chip empty-slot';
     empty.textContent = 'OPEN SLOT';
@@ -1108,7 +1109,7 @@ function handleHostReceive(conn, msg) {
 }
 
 function handleClientReceive(msg) {
-  if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full (6/6).'); return; }
+  if (msg.type === 'room_full') { joinAttemptSettled=false; finishJoinFailure('This room is full for the selected game mode. Ask the host to choose a larger mode or create another room.'); return; }
   if (msg.type === 'fx') { if(msg.fx && state.fxList.length<180)state.fxList.push(msg.fx); }
   else if (msg.type === 'lobby_sync') {
     if(!state.isHost)joinCompleted=true;
