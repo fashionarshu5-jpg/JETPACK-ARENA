@@ -3070,3 +3070,27 @@ html, body, #lobbyScreen, #gameContainer {
   #lobbyScreen .action-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #lobbyScreen .preset-btn { height: 56px; min-height: 56px; max-height: 56px; }
 }
+
+
+/* Clear, touch-friendly launch actions for the selected game mode. */
+.mode-launch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+.mode-launch-actions .btn {
+  flex: 1 1 180px;
+  min-height: 46px;
+  white-space: normal;
+}
+.mode-launch-help {
+  margin: 4px 0 12px;
+  color: var(--muted, #a3a3a3);
+  font-size: 12px;
+  line-height: 1.45;
+}
+@media (max-width: 560px) {
+  .mode-launch-actions { display: grid; grid-template-columns: 1fr; }
+  .mode-launch-actions .btn { width: 100%; min-height: 48px; }
+}
