@@ -152,6 +152,12 @@
           <button type="button" class="mode-card" data-mode="1v6" aria-pressed="false"><span class="mode-icon">🤖</span><strong>1 VS 6 AI</strong><small>Practice only: you against six enemy AI soldiers in one match.</small><b>PLAYABLE NOW</b></button>
         </div>
         <p id="modeGuide" class="mode-guide" aria-live="polite">Eliminate everyone. The soldier with the most kills when the timer ends wins.</p>
+        <div class="mode-launch-actions" aria-label="Start selected game mode">
+          <button type="button" id="playOfflineModeBtn" class="btn btn-amber">▶ PLAY OFFLINE VS BOTS</button>
+          <button type="button" id="playOnlineModeBtn" class="btn btn-lime">⚔ CREATE ONLINE ROOM</button>
+          <button type="button" id="joinOnlineModeBtn" class="btn btn-outline-lime">JOIN ONLINE ROOM</button>
+        </div>
+        <p class="mode-launch-help">Offline Practice works without a connection after the game has been loaded once. Online rooms need an internet connection.</p>
         <div class="progress-panel"><div><span class="eyebrow">OPERATOR RECORD</span><strong id="profileRecord">0 WINS • 0 MATCHES</strong></div><div class="mission-copy"><span class="eyebrow">DAILY FIELD MISSION</span><strong id="missionText">Get 5 eliminations</strong><small id="missionProgress">0 / 5 • Reward: 100 XP</small><small id="profileRewardLine" class="profile-reward" aria-live="polite">Earn XP every match</small></div></div>
         <p id="modeNotice" class="mode-notice" aria-live="polite">Arcade • Free for All selected</p>
       </section>
