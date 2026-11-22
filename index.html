@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0d120e" />
   <meta name="description" content="Doodle Outpost — jump, shoot and survive in a tactical 2D jetpack shooter. Practice against bots or create a room with friends." />
   <meta property="og:title" content="Doodle Outpost — Jump • Shoot • Survive" />
@@ -262,8 +262,11 @@
         </div>
       </div>
 
-      <!-- TOP-CENTER: LIVE TIMER (+/- 30S) & MAP INFO -->
+      <!-- TOP-CENTER: MODE-SPECIFIC SCOREBOARD / BOSS BAR / WAVE / TIMER -->
       <div class="hud-center">
+        <div id="modeDynamicHud" class="mode-dynamic-hud">
+          <span class="md-pill">FREE FOR ALL • 1ST PLACE</span>
+        </div>
         <div class="live-timer-box">
           <button id="timeMinusBtn" class="t-btn" title="Decrease Time">-30s</button>
           <span id="matchTimer">05:00</span>
