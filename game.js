@@ -394,6 +394,7 @@ function stopBackgroundMusic() {
 // 5. STATE, SETTINGS DRAWER & PEERJS MULTIPLAYER
 // ==========================================================================
 const MAX_PLAYERS = 6;
+const PRACTICE_MAX_PLAYERS = MAX_PLAYERS + 1;
 const savedMapId = Number.parseInt(localStorage.getItem('do_map') || '0', 10);
 const state = {
   mode: 'menu',
@@ -642,7 +643,7 @@ function bindIncomingVoiceCalls() {
 
 function updateProximityVoiceVolumes() {
   const me = state.players[state.myId];
-  if (!me) return;
+  if (!me || !voiceChat.enabled) return;
   Object.entries(voiceChat.peerGains).forEach(([peerId, gainNode]) => {
     const other = state.players[peerId];
     if (!other || other.hp <= 0) { gainNode.gain.value = 0; return; }
@@ -662,7 +663,8 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
   const sp = activeMap.spawns[spawnIdx % activeMap.spawns.length];
   return {
     id, name, charId, isBot, kind: 'survivor',
-    team: ['tdm', 'ctf', 'clan'].includes(state.selectedMode) ? (spawnIdx % 2) : null,
+    team: ['tdm', 'ctf', 'clan', '1v1', '2v2', '3v3'].includes(state.selectedMode) ? (spawnIdx % 2) : null,
+    animTime: Math.random() * Math.PI * 2,
     x: sp.x, y: sp.y, vx: 0, vy: 0,
     facing: 1, aimAngle: 0,
     hp: 100, maxHp: 100, armor: 0, jetFuel: 100, boostTimer: 0,
@@ -673,7 +675,7 @@ function createPlayer(id, name, charId, isBot = false, spawnIdx = 0) {
 
 function syncPlayerTeams() {
   Object.values(state.players).forEach((player, index) => {
-    player.team = ['tdm','ctf','clan'].includes(state.selectedMode) ? index % 2 : null;
+    player.team = ['tdm','ctf','clan','1v1','2v2','3v3'].includes(state.selectedMode) ? index % 2 : null;
   });
 }
 const bossDamageCooldowns = new Map();
@@ -689,8 +691,9 @@ function resetModeObjectives() {
   state.battleZone={x:1200,y:600,radius:1120,minRadius:180};
   Object.values(state.players).forEach(p=>{p.carryingFlag=null;});
 }
-function modeTeamMode(){ return ['tdm','ctf','clan'].includes(state.selectedMode); }
-function getModeLabel(){ return ({ffa:'Free for All',tdm:'Team Deathmatch',zombie:'Zombie Survival',ctf:'Capture the Flag',boss:'Boss Battle',br:'Battle Royale',clan:'Clan Wars'})[state.selectedMode] || 'Free for All'; }
+function modeTeamMode(){ return ['tdm','ctf','clan','1v1','2v2','3v3'].includes(state.selectedMode); }
+function practicePlayerLimit(){ return ({'1v1':2,'2v2':4,'3v3':6,'1v6':7})[state.selectedMode] || PRACTICE_MAX_PLAYERS; }
+function getModeLabel(){ return ({ffa:'Free for All',tdm:'Team Deathmatch',zombie:'Zombie Survival',ctf:'Capture the Flag',boss:'Boss Battle',br:'Battle Royale',clan:'Clan Wars','1v1':'1 vs 1','2v2':'2 vs 2','3v3':'3 vs 3','1v6':'1 vs 6 AI Survival'})[state.selectedMode] || 'Free for All'; }
 function checkObjectiveEnd(){
   const alive=Object.values(state.players).filter(p=>p.hp>0);
   if(state.selectedMode==='br' && alive.length<=1) state.matchTime=0;
@@ -870,13 +873,13 @@ document.getElementById('soloBotsBtn').onclick = () => {
   state.matchTime = state.selectedDuration;
   state.players = {};
   state.players[state.myId] = createPlayer(state.myId, state.myName, state.myCharId, false, 0);
-  addBotsUpTo(MAX_PLAYERS);
+  addBotsUpTo(practicePlayerLimit());
   syncPlayerTeams(); resetModeObjectives();
   startMatch();
 };
 
 function addBotsUpTo(limit) {
-  const botNames = ['Sgt. Viper', 'Ghost_Ops', 'Major Boom', 'SniperWolf', 'Cpl. Tank'];
+  const botNames = ['Sgt. Viper', 'Ghost_Ops', 'Major Boom', 'SniperWolf', 'Cpl. Tank', 'Ranger Six'];
   let idx = Object.keys(state.players).length;
   let b = 0;
   while (idx < limit) {
@@ -1355,7 +1358,7 @@ function renderScoreboard() {
 // 8. SIMULATION, UTILITY CRATES (MEDKIT/AMMO/ARMOR) & MATCH OVER
 // ==========================================================================
 function addFxSprite(fxKey, x, y, size, life, eventName = null) {
-  if (state.fxList.length >= 180) state.fxList.shift();
+  if (state.fxList.length >= 100) state.fxList.shift();
   const fx={fxKey,x,y,size,life,maxLife:life}; state.fxList.push(fx);
   if(state.isHost&&state.mode==='playing'&&peer&&state.roomCode&&state.roomCode!=='BOTS'&&['sparks','explosion','smokeGreen'].includes(fxKey))broadcastToClients({type:'fx',event:eventName||(fxKey==='explosion'?'explode':'effect'),fx});
 }
@@ -1439,12 +1442,12 @@ let viewWidth = 0, viewHeight = 0, renderDpr = 1;
 function resizeCanvas() {
   viewWidth = Math.max(1, canvas.clientWidth || window.innerWidth);
   viewHeight = Math.max(1, canvas.clientHeight || window.innerHeight);
-  renderDpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  renderDpr = Math.min(window.devicePixelRatio || 1, 1.5);
   canvas.width = Math.round(viewWidth * renderDpr);
   canvas.height = Math.round(viewHeight * renderDpr);
   ctx.setTransform(renderDpr, 0, 0, renderDpr, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'medium';
 }
 
 function updateKeyboardInput() {
@@ -1488,7 +1491,7 @@ function showMatchOverScreen() {
   document.getElementById('matchOverModal').classList.remove('hidden');
 }
 
-let lastStateBroadcastAt=0,lastInputSentAt=0,lastInputSignature='';
+let lastStateBroadcastAt=0,lastInputSentAt=0,lastInputSignature='',lastHudUpdateAt=0,lastVoiceUpdateAt=0;
 function gameLoop(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
   lastFrameTime = now;
@@ -1514,10 +1517,10 @@ function gameLoop(now) {
   }
 
   if(!state.isHost&&state.fxList.length){state.fxList.forEach(fx=>{fx.life-=dt;});state.fxList=state.fxList.filter(fx=>fx.life>0);}
-  updateProximityVoiceVolumes();
+  if (voiceChat.enabled && now - lastVoiceUpdateAt >= 150) { updateProximityVoiceVolumes(); lastVoiceUpdateAt = now; }
   updateCamera();
   renderGame();
-  updateHudUI();
+  if (now - lastHudUpdateAt >= 100) { updateHudUI(); lastHudUpdateAt = now; }
   gameLoopRafId = state.mode === 'playing' ? requestAnimationFrame(gameLoop) : null;
 }
 
@@ -1543,6 +1546,7 @@ function stepHostSimulation(dt, now) {
     else if (p.id !== state.myId) ctrl = p.remoteInput || { moveX: 0, moveY: 0, aimX: 1, aimY: 0, shooting: false };
 
     p.vx = ctrl.moveX * 350;
+    p.animTime = (p.animTime || 0) + dt * (Math.abs(p.vx) > 15 || Math.abs(p.vy) > 35 ? 10 : 3);
     if (ctrl.moveY < -0.22 && (p.jetFuel == null || p.jetFuel > 0)) {
       p.jetFuel = Math.max(0, (p.jetFuel == null ? 100 : p.jetFuel) - 34 * dt);
       p.vy += ctrl.moveY * 1450 * dt;
@@ -1869,7 +1873,7 @@ function computeBotAI(bot, dt) {
   }
   let nearest = null, bestDist = 9999;
   Object.values(state.players).forEach((o) => {
-    if (o.id !== bot.id && o.hp > 0 && !(modeTeamMode() && o.team === bot.team)) {
+    if (o.id !== bot.id && o.hp > 0 && !(modeTeamMode() && o.team === bot.team) && !(state.selectedMode === '1v6' && bot.isBot && o.isBot)) {
       const d = Math.hypot(o.x - bot.x, o.y - bot.y);
       if (d < bestDist) { bestDist = d; nearest = o; }
     }
@@ -2011,7 +2015,8 @@ function renderGame() {
 
 function drawCharacterAndWeapon(p) {
   ctx.save();
-  ctx.translate(p.x, p.y);
+  const bob = Math.sin(p.animTime || 0) * (Math.abs(p.vx || 0) > 15 ? 2.4 : 0.8);
+  ctx.translate(p.x, p.y + bob);
 
   ctx.fillStyle = '#fff';
   ctx.font = '900 11px sans-serif';
@@ -2062,8 +2067,9 @@ function updateHudUI() {
   document.getElementById('fuelBar').style.width = `${Math.max(0, me.jetFuel == null ? 100 : me.jetFuel)}%`;
   document.getElementById('fuelText').textContent = `JET FUEL ${Math.ceil(me.jetFuel == null ? 100 : me.jetFuel)}`;
   document.getElementById('boostBadge').classList.toggle('hidden', !(me.boostTimer > 0));
+  const playerLimit = state.roomCode === 'BOTS' ? practicePlayerLimit() : MAX_PLAYERS;
   const objective=state.selectedMode==='ctf'?`FLAGS ${state.ctfScore[0]}-${state.ctfScore[1]}`:state.selectedMode==='boss'&&state.boss?`TITAN HP ${Math.ceil(state.boss.hp)}/${state.boss.maxHp}`:state.selectedMode==='br'&&state.battleZone?`SAFE ZONE ${Math.ceil(state.battleZone.radius)}`:state.selectedMode==='zombie'?`WAVE ${state.zombieWave} • KILLS ${state.zombieKills}`:'';
-  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${getModeLabel().toUpperCase()}${modeTeamMode()?' • TEAM '+(me.team===0?'GREEN':'GOLD'):''} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${MAX_PLAYERS}`;
+  document.getElementById('matchScore').textContent = `${activeMap.name.toUpperCase()} • ${getModeLabel().toUpperCase()}${modeTeamMode()?' • TEAM '+(me.team===0?'GREEN':'GOLD'):''} • ${objective||'KILLS: '+me.kills} • ${Object.keys(state.players).length}/${playerLimit}`;
   document.getElementById('matchTimer').textContent = formatClock(state.matchTime);
   document.getElementById('killFeed').innerHTML = state.killFeed.map((item) => `<div class="kill-item">${item}</div>`).join('');
 }
@@ -2200,7 +2206,7 @@ function awardMatchProgress() {
   const gainedKills = Math.max(0, me.kills);
   const ranked = Object.values(state.players).sort((a,b) => b.kills-a.kills);
   const won = state.selectedMode==='ctf' ? state.ctfScore[me.team] > state.ctfScore[1-me.team]
-    : ['tdm','clan'].includes(state.selectedMode) ? ranked.filter(p=>p.team===me.team).reduce((n,p)=>n+p.kills,0)>ranked.filter(p=>p.team!==me.team).reduce((n,p)=>n+p.kills,0)
+    : ['tdm','clan','1v1','2v2','3v3'].includes(state.selectedMode) ? ranked.filter(p=>p.team===me.team).reduce((n,p)=>n+p.kills,0)>ranked.filter(p=>p.team!==me.team).reduce((n,p)=>n+p.kills,0)
     : state.selectedMode==='zombie' ? Object.values(state.players).some(p=>p.hp>0)&&state.matchTime<=0
     : state.selectedMode==='boss' ? !!state.boss&&state.boss.hp<=0
     : state.selectedMode==='br' ? Object.values(state.players).filter(p=>p.hp>0).length===1&&me.hp>0
